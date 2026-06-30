@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36915.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OmniKiosk.Config.Api", "OmniKiosk.Api\OmniKiosk.Config.Api.csproj", "{12913B06-17E6-463C-B5A6-8A82FFE7FC58}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OmniKiosk.Wpf", "KioskApp\KioskApp\OmniKiosk.Wpf.csproj", "{0BBD5FD9-5B4C-9CED-D4FF-BC17F32AD1AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OmniKiosk.MoneyExchange.Api", "OmniKiosk.MoneyExchange.Api\OmniKiosk.MoneyExchange.Api.csproj", "{05BAD114-58FD-42D7-9CAC-C5C53CC4FABE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OmniKiosk.Remittance.Api", "OmniKiosk.Remittance.Api\OmniKiosk.Remittance.Api.csproj", "{8607B4DA-CBEF-486A-AEC9-D57A5084D3D0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12913B06-17E6-463C-B5A6-8A82FFE7FC58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12913B06-17E6-463C-B5A6-8A82FFE7FC58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12913B06-17E6-463C-B5A6-8A82FFE7FC58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12913B06-17E6-463C-B5A6-8A82FFE7FC58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BBD5FD9-5B4C-9CED-D4FF-BC17F32AD1AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BBD5FD9-5B4C-9CED-D4FF-BC17F32AD1AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BBD5FD9-5B4C-9CED-D4FF-BC17F32AD1AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BBD5FD9-5B4C-9CED-D4FF-BC17F32AD1AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05BAD114-58FD-42D7-9CAC-C5C53CC4FABE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05BAD114-58FD-42D7-9CAC-C5C53CC4FABE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05BAD114-58FD-42D7-9CAC-C5C53CC4FABE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05BAD114-58FD-42D7-9CAC-C5C53CC4FABE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8607B4DA-CBEF-486A-AEC9-D57A5084D3D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8607B4DA-CBEF-486A-AEC9-D57A5084D3D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8607B4DA-CBEF-486A-AEC9-D57A5084D3D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8607B4DA-CBEF-486A-AEC9-D57A5084D3D0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2BBC15DF-A98A-4DAF-9A10-57D251F5B529}
+	EndGlobalSection
+EndGlobal

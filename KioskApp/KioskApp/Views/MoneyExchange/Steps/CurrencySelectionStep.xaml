@@ -1,0 +1,120 @@
+﻿<UserControl x:Class="OmniKiosk.Wpf.Views.MoneyExchange.Steps.CurrencySelectionStep"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="UserControl_Loaded" Background="White">
+
+    <UserControl.Resources>
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="16" Padding="32,24">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#E2E8F0"/>
+                    <Setter Property="Foreground" Value="#94A3B8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OutlineButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="4"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16" Padding="32,24">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="60">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,40" HorizontalAlignment="Center">
+            <TextBlock Text="Select Currency" Foreground="#0F172A" FontSize="24" FontWeight="Black" TextAlignment="Center"/>
+            <TextBlock Text="Choose the foreign currency you wish to exchange for Malaysian Ringgit (MYR)." Foreground="#64748B" FontSize="18" Margin="0,16,0,0" TextAlignment="Center"/>
+        </StackPanel>
+
+        <ListBox x:Name="LstCurrencies" Grid.Row="1" Background="White" BorderThickness="0" 
+                 SelectionChanged="LstCurrencies_SelectionChanged" 
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Background" Value="White"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Setter Property="BorderThickness" Value="3"/>
+                    <Setter Property="Margin" Value="12"/>
+                    <Setter Property="Padding" Value="16"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="20" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#2563EB"/>
+                                        <Setter TargetName="Bd" Property="BorderThickness" Value="6"/>
+                                        <Setter TargetName="Bd" Property="Background" Value="#F0F9FF"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+                            <Image Source="{Binding FlagUrl}" Width="120" Height="80" Stretch="Uniform" Margin="0,0,0,24"/>
+                            <TextBlock Text="{Binding Code}" Foreground="#0F172A" FontSize="48" FontWeight="Black" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding CountryName}" Foreground="#64748B" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,24"/>
+                            <Border BorderBrush="#2563EB" BorderThickness="2" CornerRadius="12" Padding="16,12" Background="White">
+                                <TextBlock Text="{Binding RateDisplay}" Foreground="#2563EB" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </Viewbox>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid Grid.Row="2" Margin="0,40,0,0">
+            <Button x:Name="BtnBack" Content="Back" Width="260" HorizontalAlignment="Left" Click="Back_Click" Style="{StaticResource OutlineButton}"/>
+            <Button x:Name="BtnNext" Content="Continue ➔" Width="360" HorizontalAlignment="Right" IsEnabled="False" Click="Next_Click" Style="{StaticResource PrimaryButton}"/>
+        </Grid>
+    </Grid>
+</UserControl>

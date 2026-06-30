@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE IDCARD SYSTEM "IDCARD.dtd">
+<IDCARD>
+	<RegionInfo chnName="通用机读旅行证件" engName="Machine Readable Travel Documents" regionRootCode="0">
+		<CardArray regionCode="0" chnName="通用机读常用" engName="MRTD Common" >
+			<CardInfo chnName="签证" engName="Visa" mainId="12" autoClass="1"  sizeType="3"/>
+			<CardInfo chnName="护照" engName="Passport" mainId="13" autoClass="1"  sizeType="3"/>
+			<CardInfo chnName="TD-2型机读旅行证件" engName="TD-2 Machine Readable Travel Documents" mainId="2006" autoClass="1" sizeType="21"/>
+			<CardInfo chnName="TD-1型机读旅行证件" engName="TD-1 Machine Readable Travel Documents" mainId="2009" autoClass="1" sizeType="2"/>
+		</CardArray>
+	</RegionInfo>
+	<RegionInfo chnName="中国大陆地区" engName="Mainland China" regionRootCode="1">
+		<CardArray regionCode="1" chnName="大陆常用" engName="CHN Common" >
+			<CardInfo chnName="居民身份证-照片页" engName="China Resident Identity Card Portrait Page" mainId="2" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="居民身份证-签发机关页" engName="China Resident Identity Card Authority Page" mainId="3" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="临时居民身份证" engName="China Temporary Resident Identity Card" mainId="4" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="机动车驾驶证" engName="China Driving License" mainId="5" autoClass="1" sizeType="1"/>
+			<CardInfo chnName="机动车行驶证" engName="China Vehicle License" mainId="6" autoClass="1" sizeType="1"/>
+			<CardInfo chnName="机动车驾驶证副页" engName="China Driving License sub page" mainId="28" autoClass="1" sizeType="1"/>
+			<CardInfo chnName="机动车行驶证副页" engName="China Vehicle License Vice Page" mainId="30" autoClass="1" sizeType="1"/>
+			<CardInfo chnName="军官证2016版（全幅）" engName="China PLA Officer Card 2016 Edition(Full Page Layout)" mainId="7" autoClass="0" sizeType="4"/>
+			<CardInfo chnName="往来港澳通行证-照片页" engName="China Mainland Residents Travel Permit to HK and Macao 2005 Edition Portrait Page" mainId="9" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="台湾居民来往大陆通行证1992版-照片页" engName="Taiwan Residents Travel Permit to Mainland 1992 Edition Portrait Page" mainId="10" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="往来台湾通行证1992版-照片页" engName="China Mainland Residents Travel Permit to Taiwan 1992 Edition Portrait Page" mainId="11" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="港澳居民来往内地通行证-照片页" engName="China Mainland Travel Permit for HK and Macao Residents  Portrait Page" mainId="14" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="港澳居民来往内地通行证-机读码页" engName="China Mainland Travel Permit for HK and Macao Residents MRZ Page" mainId="15" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="海员证" engName="China Seafarer's Passport" mainId="17" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="往来港澳通行证2014版-照片页" engName="China Mainland Residents Travel Permit to HK and Macao  2014 Edition Portrait Page" mainId="22" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="边境地区出入境通行证2014版-照片页" engName="China  Border Exit and Entry Permit 2014 Editon Portrait Page" mainId="23" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="台湾居民来往大陆通行证2015版-照片页" engName="Taiwan Residents Travel Permit to Mainland 2015 Edition Portrait Page" mainId="25" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="台湾居民来往大陆通行证2015版-机读码页" engName="Taiwan Residents Travel Permit to Mainland 2015 Edition MRZ Page" mainId="26" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="往来台湾通行证2017版-照片页" engName="China Mainland Residents Travel Permit to Taiwan  2017 Edition Portrait Page" mainId="29" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="港澳台居民居住证-照片页" engName="China Residence Permit for HK/Macao/Taiwan Residents Portrait Page" mainId="31" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="港澳台居民居住证-签发机关页" engName="China Residence Permit for HK/Macao/Taiwan Residents Authority Page" mainId="32" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="外国人永久居留身份证-照片页" engName="China Foreign Permanent Resident ID Card  Portrait Page" mainId="33" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="军官证2016版" engName="China PLA Officer Card 2016 Edition" mainId="37" autoClass="0" sizeType="4"/>
+			<CardInfo chnName="外国人入境卡正面" engName="Arrival Card For Foreigner" mainId="40" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="外国人入境卡背面" engName="Arrival Card For Foreigner Reverse Page" mainId="41" autoClass="1" sizeType="3"/>
+			<CardInfo chnName="中国APEC机读旅行证件-照片页" engName="China APEC Machine Readable Travel Documents Portrait Page" mainId="2018" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="APEC机读旅行证件" engName="APEC Machine Readable Travel Documents" mainId="2019" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="蒙古边境地区出入境通行证2005版-照片页" engName="Mongolia Border Exit and Entry Permit 2005 Edition Portrait Page" mainId="1003" autoClass="0" sizeType="7" />
+		</CardArray>
+		<CardArray regionCode="2" chnName="大陆其他" engName="CHN Other" >
+			<CardInfo chnName="律师执业证-照片页" engName="China Lawyer's License Portrait Page" mainId="1008" autoClass="0" sizeType="8"/>
+			<CardInfo chnName="中华人民共和国道路运输证IC卡 " engName="China Road Transport IC Card " mainId="1009" autoClass="0" sizeType="2"/>
+			<CardInfo chnName="深圳经济特区居住证2015版-照片页" engName="China Shenzhen Residence Permit 2015 Edition Portrait Page" mainId="1013" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="临时海员证" engName="Temporary Seafarer's Passport(PRC)" mainId="1017" autoClass="0" sizeType="0"/>
+			<CardInfo chnName="内蒙古自治区人民法院工作证" engName="Inner Mongolia Autonomous Region People 's Court  Work Permit" mainId="1018" autoClass="0" sizeType="1"/>
+			<CardInfo chnName="内蒙古自治区检察机关工作证" engName="Inner Mongolia Autonomous Region  Procuratorial Work Permit" mainId="1019" autoClass="0" sizeType="1"/>
+			<CardInfo chnName="社会保障卡（北京、重庆）-照片页" engName="China Social Security Card(Beijing,Chongqing) Portrait Page" mainId="1021" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="浙江省临时居住证-照片页" engName="China ZheJiang Temporary Residence Permit Portrait Page" mainId="1029" autoClass="0" sizeType="15"/>
+			<CardInfo chnName="神煤集团工作证" engName="Shenhua Shendong Group Work Certificate" mainId="1037" autoClass="0" sizeType="12"/>
+			<CardInfo chnName="厦门市社会保障卡-照片页" engName="China Xiamen Social Security Card Portrait Page" mainId="1039" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="警官证2006版-照片页" engName="China Police Officer Certificate 2006 Edition Portrait Page " mainId="20" autoClass="0" sizeType="19"/>
+			<CardInfo chnName="警官证2006版-信息页" engName="China Police Officer Certificate 2006 Edition Information Page " mainId="21" autoClass="0" sizeType="19"/>
+			<CardInfo chnName="常住人口登记卡" engName="China Register Card for Permanent Resident" mainId="16" autoClass="0" sizeType="5"/>
+			<CardInfo chnName="中国人民解放军车辆驾驶证2010版" engName="China PLA Vehicle Driving License 2010 Edition" mainId="24" autoClass="0" sizeType="2"/>
+			<CardInfo chnName="中国人民解放军行车执照2012版 " engName="China Driving License of PLA 2012 Edition" mainId="27" autoClass="0" sizeType="1"/>
+			<CardInfo chnName="中国退役军人优待卡" engName="The China Ex servicemen's Privilege Card" mainId="42" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="居住证（广东、广西、东莞）-照片页" engName="China Residence Permit Portrait Page" mainId="1000" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="律师执业证-签发机关页 " engName="China Lawyer's License Authority Page" mainId="1007" autoClass="0" sizeType="7"/>
+		</CardArray>
+	</RegionInfo>
+	<RegionInfo chnName="中国港澳台地区" engName="HK,Macao and Taiwan Regions of China" regionRootCode="2">
+		<CardArray regionCode="3" chnName="香港" engName="HK" >
+			<CardInfo chnName="香港居民身份证-照片页" engName=" HK Resident Identity Card Portrait Page" mainId="1001" autoClass="1"  sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="4" chnName="澳门" engName="Macao" >
+			<CardInfo chnName="澳门特别逗留许可证" engName="Special Permit to stay in Macau" mainId="39" autoClass="0" sizeType="2"/>
+			<CardInfo chnName="澳门居民身份证-照片页" engName="Macau Resident Identity Card Portrait Page" mainId="1005" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="澳门蓝卡-照片页" engName="Macau employee ID Portrait Page" mainId="1014" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="5" chnName="台湾" engName="Taiwan" >
+			<CardInfo chnName="台湾地区（金马澎）入出境许可证2015版-照片页" engName="China Taiwan Area Exit-Entry Permit for Jinmen, Mazu and Penghu Islands 2015 Edition Portrait Page" mainId="34" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="台湾地区居留证-照片页" engName="China Taiwan Area Resident Permit Portrait Page" mainId="35" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="台湾全民健康保险卡 " engName="Taiwan National Health Insurance Card  " mainId="1030" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="台湾地区身份证-照片页" engName="Taiwan Identity Card Portrait Page" mainId="1031" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="台湾地区身份证-条码页" engName="Taiwan Identity Card Barcode Page" mainId="1032" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="台湾地区驾驶证" engName="Taiwan Driving License" mainId="1040" autoClass="1" sizeType="2"/>
+		</CardArray>
+	</RegionInfo>
+	<RegionInfo chnName="阿拉伯地区" engName="Arab region " regionRootCode="3">
+		<CardArray regionCode="6" chnName="阿联酋" engName="United Arab Emirates" >
+			<CardInfo chnName="阿联酋身份证-照片页" engName="The United Arab Emirates Resident Identity Card Portrait Page" mainId="2063" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="阿联酋身份证-背面" engName="The United Arab Emirates Identity Card Reverse Page" mainId="2064" autoClass="1" regionCode="14" sizeType="2"/>
+			<CardInfo chnName="阿联酋驾驶证" engName="The United Arab Emirates Driving License" mainId="38" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="7" chnName="埃及" engName="Egypt" >
+			<CardInfo chnName="埃及身份证-照片页" engName="The Egyption Identity Card Portrait Page" mainId="2081" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="埃及身份证-背面" engName="The Egyption Identity Card Reverse Page" mainId="2082" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="埃及驾驶证" engName="Egyptian Driving License" mainId="2083" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="埃及行驶证正面" engName="Egyptian Vehicle License Obverse Page" mainId="2084" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="埃及行驶证背面" engName="Egyptian Vehicle License Reverse Page" mainId="2085" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="8" chnName="卡塔尔" engName="Qatar" >
+			<CardInfo chnName="卡塔尔身份证-照片页" engName="The Qatar Identity Card Portrait Page" mainId="2091" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="卡塔尔身份证-背面" engName="The Qatar Identity Card Reverse Page" mainId="2092" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="9" chnName="沙特" engName="Kingdom of Saudi Arabia" >
+			<CardInfo chnName="沙特身份证" engName="The Kingdom of Saudi Arabia Identity Card" mainId="2110" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="10" chnName="阿曼苏丹国" engName="The Sultanate of Oman" >
+			<CardInfo chnName="阿曼身份证" engName="Sultanate of Oman ID card" mainId="2070" autoClass="1" sizeType="2"/>
+		</CardArray>
+	</RegionInfo>
+	<RegionInfo chnName="东南亚地区" engName="Southeast Asia region" regionRootCode="4">
+		<CardArray regionCode="11" chnName="马来西亚" engName="Malaysia" >
+			<CardInfo chnName="马来西亚身份证-照片页" engName="Malaysia Identity Card Portrait Page" mainId="2001" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="马来西亚驾驶证" engName="Malaysia Driving License" mainId="2021" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="12" chnName="新加坡" engName="Singapore" >
+			<CardInfo chnName="新加坡身份证" engName="Singapore Identity Card" mainId="2004" autoClass="1"  sizeType="2"/>
+			<CardInfo chnName="新加坡身份证-背面" engName="Singapore Identity Card Reverse Page" mainId="2005" autoClass="1"  sizeType="2"/>
+			<CardInfo chnName="新加坡工作证-照片页" engName="Singapore Work Pass and Permit 2017 Edition Portrait Page" mainId="2023" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="新加坡工作证-指纹页" engName="Singapore Work Pass and Permit 2017 Edition Fingerprint Page" mainId="2025" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="新加坡驾驶证" engName="Singapore Driving License" mainId="2031" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="13" chnName="印度尼西亚" engName="Indonesia" >
+			<CardInfo chnName="印度尼西亚居民身份证" engName="Indonesia Resident Identity Card" mainId="2010" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="印度尼西亚驾驶证" engName="Indonesia Driving License" mainId="2041" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="14" chnName="泰国" engName="Thailand" >
+			<CardInfo chnName="泰国国民身份证" engName="Thailand National Identity Card" mainId="2011" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="泰国驾驶证" engName="Thailand Driving License" mainId="2012" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="15" chnName="菲律宾" engName="Philippines" >
+			<CardInfo chnName="菲律宾身份证" engName="Philippines Identity Card" mainId="2022" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="菲律宾驾驶证" engName="Philippine Driving License" mainId="2024" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="16" chnName="越南" engName="Vietnam" >
+			<CardInfo chnName="越南出入境通行证" engName="Vietnam Border Entry and Exit Pass" mainId="36" autoClass="1" sizeType="3"/>
+		</CardArray>
+		<CardArray regionCode="17" chnName="缅甸" engName="Myanmar" >
+			<CardInfo chnName="缅甸CI" engName="Myanmar CI" mainId="2151" autoClass="1" regionCode="25" sizeType="3"/>
+		</CardArray>
+	</RegionInfo>
+	<RegionInfo chnName="拉美地区" engName="Latin America region" regionRootCode="5">
+		<CardArray regionCode="18" chnName="墨西哥" engName="Mexico" >
+			<CardInfo chnName="墨西哥选民证-照片页" engName="Mexico INE&amp;IFE ID Card Portrait Page" mainId="2013" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="墨西哥选民证背面ABC" engName="Mexico INE&amp;IFE ID Card Reverse Page" mainId="2014" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="墨西哥身份证背面ABC" engName="Mexico Identity Card MRZ Page" mainId="2015" autoClass="0" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="19" chnName="智利" engName="Chile" >
+			<CardInfo chnName="智利身份证正面" engName="Chilean Identity Card" mainId="2100" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="20" chnName="秘鲁" engName="Peru" >
+			<CardInfo chnName="秘鲁身份证" engName="The Peru Identity Card" mainId="2120" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="秘鲁身份证背面" engName="The Peru Identity Card Reverse Page" mainId="2121" autoClass="1" regionCode="21" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="21" chnName="厄瓜多尔" engName="Ecuador" >
+			<CardInfo chnName="厄瓜多尔身份证" engName="The Ecuador Identity Card" mainId="2130" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="厄瓜多尔身份证背面" engName="The Ecuador Identity Card Reverse Page" mainId="2131" autoClass="1" regionCode="22" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="22" chnName="玻利维亚" engName="Bolivia" >
+			<CardInfo chnName="玻利维亚身份证" engName="The Bolivia Identity Card" mainId="2140" autoClass="1" regionCode="23" sizeType="2"/>
+			<CardInfo chnName="玻利维亚身份证-背面" engName="The Bolivia Identity Card Reverse Page" mainId="2141" autoClass="1" regionCode="23" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="23" chnName="阿根廷" engName="Argentina " >
+			<CardInfo chnName="阿根廷身份证正面" engName="The Argentina Identity Card" mainId="2150" autoClass="1" regionCode="24" sizeType="2"/>
+		</CardArray>
+	</RegionInfo>
+	<RegionInfo chnName="其他地区" engName="other region" regionRootCode="6">
+		<CardArray regionCode="24" chnName="美国" engName="USA" >
+			<CardInfo chnName="美国加利福尼亚驾驶证" engName="US California Driving License" mainId="2002" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="25" chnName="新西兰" engName="New Zealand" >
+			<CardInfo chnName="新西兰驾驶证" engName="New Zealand Driving License" mainId="2003" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="26" chnName="瑞典" engName="Sweden" >
+			<CardInfo chnName="瑞典驾驶证" engName="Sweden Driving License" mainId="2020" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="27" chnName="法国" engName="France" >
+			<CardInfo chnName="法国身份证" engName="French Identity Card" mainId="2028" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="28" chnName="日本" engName="Japan" >
+			<CardInfo chnName="日本驾驶证" engName="Japan Driving License" mainId="2051" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="29" chnName="肯尼亚" engName="Kenya" >
+			<CardInfo chnName="肯尼亚身份证-照片页" engName="The Kenya Identity Card Portrait Page" mainId="2071" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="30" chnName="韩国" engName="Korea" >
+			<CardInfo chnName="韩国身份证" engName="Korea ID card" mainId="2060" autoClass="1" sizeType="2"/>
+			<CardInfo chnName="韩国驾驶证" engName="Korea Driving License" mainId="2061" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="31" chnName="土耳其" engName="Türkiye" >
+			<CardInfo chnName="土耳其身份证-照片页" engName="Türkiye ID Card" mainId="2152" autoClass="1" sizeType="2"/>
+		</CardArray>
+		<CardArray regionCode="32" chnName="巴基斯坦" engName="Pakistan">
+			<CardInfo chnName="巴基斯坦身份证-照片页" engName="Pakistan ID Card" mainId="2098" autoClass="1" sizeType="2"/>
+		</CardArray>
+	</RegionInfo>
+	
+	
+	
+	
+	
+	
+</IDCARD>

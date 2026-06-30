@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vecSVMClassfier>
+	<!-- imageType: bit0 VI; bit1 IR; bit2 UV -->
+	<!-- <sizeType 0:二代证大小,1:二代证纵向,2:护照大小,3:军官证大小,4:长城吸入式模块图像大小,5:扫描仪军官证大小/> -->
+	<SVMClassfier SVMID="6" imageType="1" sizeType="0" name="二代证大小证件" dataPath="SVMDevice/6">
+		<ID subClassFierID="2002" mainID="2002" subID="1" name="美国加利福尼亚驾照"/>
+		<ID subClassFierID="20131" mainID="2013" subID="1" name="墨西哥选民证AB"/>
+		<ID subClassFierID="20132" mainID="2013" subID="2" name="墨西哥选民证C"/>
+		<ID subClassFierID="20133" mainID="2013" subID="3" name="墨西哥选民证DE"/>
+		<ID subClassFierID="2014" mainID="2014" subID="1" name="墨西哥选民证背面ABC"/>
+		<ID subClassFierID="2100" mainID="2100" subID="1" name="智利身份证"/>
+		<ID subClassFierID="21202" mainID="2120" subID="2" name="秘鲁身份证2代"/>
+		<ID subClassFierID="21203" mainID="2120" subID="3" name="秘鲁身份证3代"/>		
+		<ID subClassFierID="21211" mainID="2121" subID="1" name="秘鲁身份证1代背面"/>			
+		<ID subClassFierID="21301" mainID="2130" subID="1" name="厄瓜多尔身份证照片页2017版"/>	
+		<ID subClassFierID="21302" mainID="2130" subID="2" name="厄瓜多尔身份证照片页2022版"/>	
+		<ID subClassFierID="21303" mainID="2130" subID="3" name="厄瓜多尔身份证照片页2012版"/>	
+		<ID subClassFierID="21401" mainID="2140" subID="1" name="玻利维亚身份证旧版"/>	
+		<ID subClassFierID="21402" mainID="2140" subID="2" name="玻利维亚身份证2020版"/>	
+		<ID subClassFierID="2141" mainID="2141" subID="1" name="玻利维亚身份证背面"/>	
+		<ID subClassFierID="2150" mainID="2150" subID="1" name="阿根廷身份证正面"/>	
+		<ID subClassFierID="2002657" mainID="2002" subID="65537" name="美国加利福尼亚驾照_180度"/>
+		<ID subClassFierID="2013657" mainID="2013" subID="65537" name="墨西哥选民证AB_180度"/>		
+		<ID subClassFierID="2013658" mainID="2013" subID="65538" name="墨西哥选民证C_180度"/>
+		<ID subClassFierID="2013659" mainID="2013" subID="65539" name="墨西哥选民证DE_180度"/>
+		<ID subClassFierID="2014657" mainID="2014" subID="65537" name="墨西哥选民证背面ABC_180度"/>
+		<ID subClassFierID="2100657" mainID="2100" subID="65537" name="智利身份证_180度"/>	
+		<ID subClassFierID="2120658" mainID="2120" subID="65538" name="秘鲁身份证照片页2代_180度"/>			
+		<ID subClassFierID="2120659" mainID="2120" subID="65539" name="秘鲁身份证照片页3代_180度"/>
+		<ID subClassFierID="2121657" mainID="2121" subID="65537" name="秘鲁身份证1代背面_180度"/>	
+		<ID subClassFierID="2130657" mainID="2130" subID="65537" name="厄瓜多尔身份证照片页2017版_180度"/>	
+		<ID subClassFierID="2130658" mainID="2130" subID="65538" name="厄瓜多尔身份证照片页2022版_180度"/>
+		<ID subClassFierID="2130659" mainID="2130" subID="65539" name="厄瓜多尔身份证照片页2012版_180度"/>
+		<ID subClassFierID="2140657" mainID="2140" subID="65537" name="玻利维亚身份证旧版_180度"/>
+		<ID subClassFierID="2140658" mainID="2140" subID="65538" name="玻利维亚身份证2020版_180度"/>
+		<ID subClassFierID="2141657" mainID="2141" subID="65537" name="玻利维亚身份证背面_180度"/>
+		<ID subClassFierID="2150657" mainID="2150" subID="65537" name="阿根廷身份证正面_180度"/>
+	</SVMClassfier>
+</vecSVMClassfier>

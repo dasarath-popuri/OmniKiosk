@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- nPlatform 0:安卓;1:IOS;2:设备端;3:云端;4:移动端 -->
+<Classifier bMRZ="0" nPlatform="2">
+	<FilterList>
+		<!--尺度滤波器，根据证件的尺寸进行分类-->
+		<Filter Index="0" Type="1" Name="Size" ValidThresh="750">
+			<SizeInfoList>
+				<SizeInfo Type="0" Width="3543" Height="2361" /><!--二代证驾照的平均值，单位英寸*1000-->
+				<SizeInfo Type="2" Width="4973" Height="3500" /><!--护照-->
+				<SizeInfo Type="4" Width="4133" Height="2913"/><!--ID2-->
+			</SizeInfoList>
+		</Filter>
+		<!--SVM分类器-->
+		<Filter Index="1" Type="3" Name="SVM" FilterThresh="800">
+			<vecSVMClassfier>
+				<SVMClassfier SVMID="1" dataPath="/SVMDevice/1" configPath="IDCDF/SVMClassfier_ALL.xml" name="所有地区"/>
+				<SVMClassfier SVMID="2" dataPath="/SVMDevice/2" configPath="IDCDF/SVMClassfier_CHN.xml" name="中国内地"/>
+				<SVMClassfier SVMID="3" dataPath="/SVMDevice/3" configPath="IDCDF/SVMClassfier_HMT.xml" name="港澳台"/>
+				<SVMClassfier SVMID="4" dataPath="/SVMDevice/4" configPath="IDCDF/SVMClassfier_SEA.xml" name="东南亚"/>
+				<SVMClassfier SVMID="5" dataPath="/SVMDevice/5" configPath="IDCDF/SVMClassfier_ARAB.xml" name="阿拉伯"/>
+				<SVMClassfier SVMID="6" dataPath="/SVMDevice/6" configPath="IDCDF/SVMClassfier_LATAM.xml" name="拉丁美洲"/>
+				<SVMClassfier SVMID="7" dataPath="/SVMDevice/7" configPath="IDCDF/SVMClassfier_OTHER.xml" name="海外其他"/>
+				<SVMClassfier SVMID="101" dataPath="/SVMDevice/101" configPath="IDCDF/SVMClassfier_SuctionModule.xml" name="吸入式模块"/>
+			</vecSVMClassfier>
+		</Filter>
+	</FilterList>
+	<TemplateList>
+		<!-- 提供SizeType设备端走大小分类器用，不可删除 -->
+		<Template  MainID="0" SubID="0" Name="" Enable="1" SizeType="0">
+			<FilterInfoList>
+				<FilterInfo Index="1" Type="3"/>
+			</FilterInfoList>
+		</Template>
+		<!-- 提供SizeType 2，用于二代证证件裁剪失败，大小匹配为MRZ证件，MRZ识别失败返回分类错误-6不参与识别率统计，与6814保持一致用。 -->
+		<Template MainID="0" SubID="0" Name="" Enable="1" SizeType="2">
+			<FilterInfoList>
+				<FilterInfo Index="1" Type="3"/>
+			</FilterInfoList>
+		</Template>
+		<!-- 提供SizeType 4，用于二代证证件裁剪失败，大小匹配为MRZ证件，MRZ识别失败返回分类错误-6不参与识别率统计，与6814保持一致用。 -->
+		<Template  MainID="0" SubID="0" Name="" Enable="1" SizeType="4">
+			<FilterInfoList>
+				<!-- 设置匹配不到的index 占位用 -->
+				<FilterInfo Index="2" Type="3"/>
+			</FilterInfoList>
+		</Template>	
+	</TemplateList>
+</Classifier>

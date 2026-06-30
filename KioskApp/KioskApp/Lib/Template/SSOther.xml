@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TemplateContainer SYSTEM "template.dtd">
+<TemplateContainer Version="2.0.0.0">
+	<vecMRTDTemplate>
+        <MRTDTemplate MainID="14" SubID="1" Name="港澳居民来往内地通行证1999版-照片页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/14/1/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/14/1/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/14/1/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="6" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="3" CheckType="29" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="PH">
+					<FeaturePos LeftTopX="24" LeftTopY="160" RightTopX="460" RightTopY="160" LeftBottomX="24" LeftBottomY="740" RightBottomX="460" RightBottomY="740" Width="1370" Height="902"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="VZ">
+					<FeaturePos LeftTopX="460" LeftTopY="0" RightTopX="1370" RightTopY="0" LeftBottomX="460" LeftBottomY="902" RightBottomX="1370" RightBottomY="902" Width="1370" Height="902"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS1">
+					<FeaturePos LeftTopX="6308" LeftTopY="4145" RightTopX="8960" RightTopY="4145" LeftBottomX="6308" LeftBottomY="8450" RightBottomX="8960" RightBottomY="8450" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="6308" LeftTopY="4145" RightTopX="8960" RightTopY="4145" LeftBottomX="6308" LeftBottomY="8450" RightBottomX="8960" RightBottomY="8450" Width="0" Height="0"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+        </MRTDTemplate>
+        <MRTDTemplate MainID="14" SubID="2" Name="港澳居民来往内地通行证2012版-照片页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/14/2/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/14/2/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/14/2/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="23" ImagePath=""/>
+                <DocCheckInfo Index="3" CheckType="29" ImagePath=""/>
+                <DocCheckInfo Index="4" CheckType="31" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="PH">
+					<FeaturePos LeftTopX="20" LeftTopY="200" RightTopX="360" RightTopY="200" LeftBottomX="20" LeftBottomY="730" RightBottomX="360" RightBottomY="730" Width="1370" Height="905"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="VZ">
+					<FeaturePos LeftTopX="370" LeftTopY="0" RightTopX="1370" RightTopY="0" LeftBottomX="370" LeftBottomY="905" RightBottomX="1370" RightBottomY="905" Width="1370" Height="905"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="6200" LeftTopY="950" RightTopX="9840" RightTopY="950" LeftBottomX="6200" LeftBottomY="5545" RightBottomX="9840" RightBottomY="5545" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS8">
+					<FeaturePos LeftTopX="220" LeftTopY="64" RightTopX="406" RightTopY="64" LeftBottomX="220" LeftBottomY="166" RightBottomX="406" RightBottomY="166" Width="1370" Height="905"/>
+					<FeaturePos LeftTopX="546" LeftTopY="64" RightTopX="712" RightTopY="64" LeftBottomX="546" LeftBottomY="166" RightBottomX="712" RightBottomY="166" Width="1370" Height="905"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="SP">
+					<FeaturePos LeftTopX="7580" LeftTopY="6232" RightTopX="9200" RightTopY="6232" LeftBottomX="7580" LeftBottomY="8640" RightBottomX="9200" RightBottomY="8640" Width="0" Height="0"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+        </MRTDTemplate>
+        <MRTDTemplate MainID="15" SubID="1" Name="港澳居民来往内地通行证1999版-机读码页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/15/1/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/15/1/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/15/1/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="5" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="3" CheckType="25" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="MR">
+					<FeaturePos LeftTopX="200" LeftTopY="6000" RightTopX="9700" RightTopY="6000" LeftBottomX="200" LeftBottomY="9800" RightBottomX="9700" RightBottomY="9800" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="390" LeftTopY="420" RightTopX="3560" RightTopY="420" LeftBottomX="390" LeftBottomY="5125" RightBottomX="3560" RightBottomY="5125" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS8">
+					<FeaturePos LeftTopX="330" LeftTopY="395" RightTopX="960" RightTopY="395" LeftBottomX="330" LeftBottomY="490" RightBottomX="960" RightBottomY="490" Width="1370" Height="890"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+        </MRTDTemplate>
+        <MRTDTemplate MainID="15" SubID="2" Name="港澳居民来往内地通行证2012版-机读码页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/15/2/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/15/2/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/15/2/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="5" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="17" ImagePath=""/>
+                <DocCheckInfo Index="3" CheckType="25" ImagePath=""/>
+                <DocCheckInfo Index="4" CheckType="56" ImagePath=""/>
+				
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="MR">
+					<FeaturePos LeftTopX="200" LeftTopY="6000" RightTopX="9700" RightTopY="6000" LeftBottomX="200" LeftBottomY="9800" RightBottomX="9700" RightBottomY="9800" Width="0" Height=""/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="AF1">
+					<FeaturePos LeftTopX="1280" LeftTopY="330" RightTopX="1377" RightTopY="330" LeftBottomX="1280" LeftBottomY="550" RightBottomX="1377" RightBottomY="550" Width="1402" Height="895"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="40" LeftTopY="2570" RightTopX="9870" RightTopY="2570" LeftBottomX="40" LeftBottomY="4785" RightBottomX="9870" RightBottomY="4785" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS8">
+					<FeaturePos LeftTopX="30" LeftTopY="480" RightTopX="1360" RightTopY="480" LeftBottomX="30" LeftBottomY="600" RightBottomX="1360" RightBottomY="600" Width="1402" Height="895"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+		</MRTDTemplate>
+		<MRTDTemplate MainID="22" SubID="-1" Name="往来港澳通行证2014版-照片页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/22/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/22/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/22/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="5" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="6" ImagePath=""/>
+				<DocCheckInfo Index="3" CheckType="7" ImagePath=""/>
+				<DocCheckInfo Index="4" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="5" CheckType="25" ImagePath=""/>
+                <DocCheckInfo Index="6" CheckType="31" ImagePath=""/>
+				<DocCheckInfo Index="7" CheckType="52" ImagePath=""/>
+				<DocCheckInfo Index="8" CheckType="57" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="MR">
+					<FeaturePos LeftTopX="300" LeftTopY="8000" RightTopX="9700" RightTopY="8000" LeftBottomX="300" LeftBottomY="9800" RightBottomX="9700" RightBottomY="9800" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="PH">
+					<FeaturePos LeftTopX="50" LeftTopY="200" RightTopX="440" RightTopY="200" LeftBottomX="50" LeftBottomY="660" RightBottomX="440" RightBottomY="660" Width="1390" Height="890"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="VZ">
+					<FeaturePos LeftTopX="440" LeftTopY="0" RightTopX="1390" RightTopY="0" LeftBottomX="440" LeftBottomY="710" RightBottomX="1390" RightBottomY="710" Width="1390" Height="890"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="ID2">
+					<FeaturePos LeftTopX="930" LeftTopY="70" RightTopX="1344" RightTopY="70" LeftBottomX="930" LeftBottomY="180" RightBottomX="1344" RightBottomY="180" Width="1390" Height="890"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="2860" LeftTopY="988" RightTopX="8388" RightTopY="988" LeftBottomX="2860" LeftBottomY="7100" RightBottomX="8388" RightBottomY="7100" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS8">
+					<FeaturePos LeftTopX="929" LeftTopY="61" RightTopX="1363" RightTopY="61" LeftBottomX="929" LeftBottomY="183" RightBottomX="1363" RightBottomY="183" Width="1390" Height="890"/>
+                    <FeaturePos LeftTopX="953" LeftTopY="303" RightTopX="1095" RightTopY="303" LeftBottomX="953" LeftBottomY="507" RightBottomX="1095" RightBottomY="507" Width="1390" Height="890"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="SP">
+					<FeaturePos LeftTopX="7855" LeftTopY="4360" RightTopX="9060" RightTopY="4360" LeftBottomX="7855" LeftBottomY="6585" RightBottomX="9060" RightBottomY="6585" Width="0" Height="0"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+		</MRTDTemplate>
+		<MRTDTemplate MainID="25" SubID="-1" Name="台湾居民来往大陆通行证2015版-照片页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/25/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/25/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/25/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="6" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="7" ImagePath=""/>
+				<DocCheckInfo Index="3" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="4" CheckType="23" ImagePath=""/>
+                <DocCheckInfo Index="5" CheckType="31" ImagePath=""/>
+                <DocCheckInfo Index="6" CheckType="57" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="PH">
+					<FeaturePos LeftTopX="50" LeftTopY="180" RightTopX="430" RightTopY="180" LeftBottomX="50" LeftBottomY="640" RightBottomX="430" RightBottomY="640" Width="1390" Height="883"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="VZ">
+					<FeaturePos LeftTopX="430" LeftTopY="0" RightTopX="1390" RightTopY="0" LeftBottomX="430" LeftBottomY="883" RightBottomX="1390" RightBottomY="883" Width="1390" Height="883"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="SP">
+					<FeaturePos LeftTopX="8130" LeftTopY="3880" RightTopX="9475" RightTopY="3880" LeftBottomX="8130" LeftBottomY="6355" RightBottomX="9475" RightBottomY="6355" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="2435" LeftTopY="845" RightTopX="7985" RightTopY="845" LeftBottomX="2435" LeftBottomY="8775" RightBottomX="7985" RightBottomY="8775" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS8">
+					<FeaturePos LeftTopX="230" LeftTopY="52" RightTopX="400" RightTopY="52" LeftBottomX="230" LeftBottomY="144" RightBottomX="400" RightBottomY="144" Width="1390" Height="883"/>
+                    <FeaturePos LeftTopX="543" LeftTopY="52" RightTopX="707" RightTopY="52" LeftBottomX="543" LeftBottomY="144" RightBottomX="707" RightBottomY="144" Width="1390" Height="883"/>
+                    <FeaturePos LeftTopX="852" LeftTopY="52" RightTopX="1110" RightTopY="52" LeftBottomX="852" LeftBottomY="144" RightBottomX="1110" RightBottomY="144" Width="1390" Height="883"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+		</MRTDTemplate>
+		<MRTDTemplate MainID="26" SubID="-1" Name="台湾居民来往大陆通行证2015版-机读码页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/26/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/26/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/26/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="25" ImagePath=""/>
+				<DocCheckInfo Index="3" CheckType="56" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="MR">
+					<FeaturePos LeftTopX="200" LeftTopY="6000" RightTopX="9700" RightTopY="6000" LeftBottomX="200" LeftBottomY="9800" RightBottomX="9700" RightBottomY="9800" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="1140" LeftTopY="1400" RightTopX="8515" RightTopY="1400" LeftBottomX="1140" LeftBottomY="7010" RightBottomX="8515" RightBottomY="7010" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="AF1">
+					<FeaturePos LeftTopX="8" LeftTopY="354" RightTopX="80" RightTopY="354" LeftBottomX="8" LeftBottomY="560" RightBottomX="80" RightBottomY="560" Width="1381" Height="896"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+		</MRTDTemplate>
+		<MRTDTemplate MainID="29" SubID="-1" Name="往来台湾通行证2017版-照片页">
+			<!--标准全副图像存放路径-->
+			<vecStandardImage>
+				<StandardImage Name="红外图" LightType="1" ImagePath="./res/29/IR.jpg"/>
+				<StandardImage Name="紫外图" LightType="2" ImagePath="./res/29/UV.jpg"/>
+				<StandardImage Name="白光图" LightType="3" ImagePath="./res/29/VI.jpg"/>
+			</vecStandardImage>
+			<vecDocCheckInfo>
+				<!--
+				CheckType见Sys.xml中vecCheckPointAll定义
+				FeatureType见Sys.xml中vecFeature定义
+				ImagePath：标准高清局部特征图存放位置-->
+				<DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+				<DocCheckInfo Index="1" CheckType="5" ImagePath=""/>
+				<DocCheckInfo Index="2" CheckType="6" ImagePath=""/>
+				<DocCheckInfo Index="3" CheckType="7" ImagePath=""/>
+				<DocCheckInfo Index="4" CheckType="17" ImagePath=""/>
+				<DocCheckInfo Index="5" CheckType="23" ImagePath=""/>
+				<DocCheckInfo Index="6" CheckType="25" ImagePath=""/>
+                <DocCheckInfo Index="7" CheckType="31" ImagePath=""/>
+                <DocCheckInfo Index="8" CheckType="57" ImagePath=""/>
+			</vecDocCheckInfo>
+			<vecFeaturePosGroup>
+				<!--LeftTopX等：在标准全副图像上的4点坐标-->
+				<FeaturePosGroup FeatureType="FU">
+					<FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="PH">
+					<FeaturePos LeftTopX="22" LeftTopY="218" RightTopX="374" RightTopY="218" LeftBottomX="22" LeftBottomY="670" RightBottomX="374" RightBottomY="670" Width="1381" Height="896"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="VZ">
+					<FeaturePos LeftTopX="430" LeftTopY="0" RightTopX="1381" RightTopY="0" LeftBottomX="430" LeftBottomY="720" RightBottomX="1381" RightBottomY="720" Width="1381" Height="896"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="MR">
+					<FeaturePos LeftTopX="300" LeftTopY="8000" RightTopX="9700" RightTopY="8000" LeftBottomX="300" LeftBottomY="9534" RightBottomX="9700" RightBottomY="9534" Width="0" Height="0"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS4">
+					<FeaturePos LeftTopX="750" LeftTopY="190" RightTopX="940" RightTopY="190" LeftBottomX="750" LeftBottomY="420" RightBottomX="940" RightBottomY="420" Width="1381" Height="896"/>
+					<FeaturePos LeftTopX="780" LeftTopY="500" RightTopX="1130" RightTopY="500" LeftBottomX="780" LeftBottomY="820" RightBottomX="1130" RightBottomY="820" Width="1381" Height="896"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="IS8">
+                    <FeaturePos LeftTopX="210" LeftTopY="62" RightTopX="854" RightTopY="62" LeftBottomX="210" LeftBottomY="160" RightBottomX="854" RightBottomY="160" Width="1381" Height="896"/>
+				</FeaturePosGroup>
+				<FeaturePosGroup FeatureType="SP">
+					<FeaturePos LeftTopX="8350" LeftTopY="4300" RightTopX="9445" RightTopY="4300" LeftBottomX="8350" LeftBottomY="6455" RightBottomX="9445" RightBottomY="6455" Width="0" Height="0"/>
+				</FeaturePosGroup>
+			</vecFeaturePosGroup>
+		</MRTDTemplate>
+	</vecMRTDTemplate>
+</TemplateContainer>

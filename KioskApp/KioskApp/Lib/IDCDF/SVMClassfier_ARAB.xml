@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vecSVMClassfier>
+	<!-- imageType: bit0 VI; bit1 IR; bit2 UV -->
+	<!-- <sizeType 0:二代证大小,1:二代证纵向,2:护照大小,3:军官证大小,4:长城吸入式模块图像大小,5:扫描仪军官证大小/> -->
+	<SVMClassfier SVMID="5" imageType="1" sizeType="0" name="二代证大小证件" dataPath="SVMDevice/5">
+		<ID subClassFierID="38" mainID="38" subID="1" name="阿联酋驾驶证"/>
+		<ID subClassFierID="20631" mainID="2063" subID="1" name="阿联酋居留身份证-照片页"/>		
+		<ID subClassFierID="20632" mainID="2063" subID="2" name="阿联酋公民身份证-照片页"/>		
+		<ID subClassFierID="2081" mainID="2081" subID="1" name="埃及身份证-照片页"/>
+		<ID subClassFierID="2082" mainID="2082" subID="1" name="埃及身份证-背面"/>
+		<ID subClassFierID="2083" mainID="2083" subID="1" name="埃及驾驶证"/>		
+		<ID subClassFierID="2084" mainID="2084" subID="1" name="埃及驾驶证-正面"/>		
+		<ID subClassFierID="2085" mainID="2085" subID="1" name="埃及行驶证-背面"/>		
+		<ID subClassFierID="20911" mainID="2091" subID="1" name="卡塔尔身份证照片页-旧版"/>
+		<ID subClassFierID="20912" mainID="2091" subID="2" name="卡塔尔身份证照片页-2023版"/>
+		<ID subClassFierID="2092" mainID="2092" subID="1" name="卡塔尔身份证-反面"/>
+		<ID subClassFierID="21101" mainID="2110" subID="1" name="沙特身份证-旧版"/>
+		<ID subClassFierID="21102" mainID="2110" subID="2" name="沙特身份证-长居"/>
+		<ID subClassFierID="21103" mainID="2110" subID="3" name="沙特身份证-租居"/>
+		<ID subClassFierID="38657" mainID="38" subID="65537" name="阿联酋驾驶证_180度"/>
+		<ID subClassFierID="2063657" mainID="2063" subID="65537" name="阿联酋居留身份证-照片页_180度"/>
+		<ID subClassFierID="2063658" mainID="2063" subID="65538" name="阿联酋公民身份证-照片页_180度"/>
+		<ID subClassFierID="2070" mainID="2070" subID="1" name="阿曼居住证"/>
+		<ID subClassFierID="2081657" mainID="2081" subID="65537" name="埃及身份证照片页_180度"/>
+		<ID subClassFierID="2082657" mainID="2082" subID="65537" name="埃及身份证背面_180度"/>				
+		<ID subClassFierID="2083657" mainID="2083" subID="65537" name="埃及驾驶证_180度"/>		
+		<ID subClassFierID="2084657" mainID="2084" subID="65537" name="埃及行驶证-正面_180度"/>				
+		<ID subClassFierID="2085657" mainID="2085" subID="65537" name="埃及行驶证-背面_180度"/>			
+		<ID subClassFierID="2091657" mainID="2091" subID="65537" name="卡塔尔身份证照片页-旧版_180度"/>
+		<ID subClassFierID="2092657" mainID="2092" subID="65537" name="卡塔尔身份证反面_180度"/>	
+		<ID subClassFierID="2110657" mainID="2110" subID="65537" name="沙特身份证-旧版_180度"/>		
+		<ID subClassFierID="2110658" mainID="2110" subID="65538" name="沙特身份证-长居_180度"/>
+		<ID subClassFierID="2110659" mainID="2110" subID="65539" name="沙特身份证-租居_180度"/>	
+	</SVMClassfier>
+</vecSVMClassfier>

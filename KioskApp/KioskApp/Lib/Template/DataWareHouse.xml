@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sysVerification>
+	<!--标准全副图像存放路径-->
+	<vecLightSource>
+		<LightSource LightType="1" Abbr="VI" Name="可见光"/>
+		<LightSource LightType="2" Abbr="IR" Name="红外光"/>
+		<LightSource LightType="4" Abbr="UV" Name="紫外光"/>
+	</vecLightSource>
+	<vecOpticalProperty>
+		<OpticalProperty OPType="1" Abbr="AB" Name="吸光性，油墨属性"/>
+		<OpticalProperty OPType="2" Abbr="BR" Name="亮度，基材属性"/>
+		<OpticalProperty OPType="3" Abbr="FR" Name="图案的空间频率属性"/>
+		<OpticalProperty OPType="4" Abbr="LU" Name="发光，图案属性"/>
+		<OpticalProperty OPType="5" Abbr="TL" Name="半透明，油墨投过基材的属性"/>
+		<OpticalProperty OPType="6" Abbr="TR" Name="透明，油墨的属性"/>
+	</vecOpticalProperty>
+	<vecFeature>
+		<!--FeatureType和Name是固定的不能修改-->
+		<Feature FeatureType="1"  Abbr="FI" Name="纤维"/>
+		<Feature FeatureType="2"  Abbr="FU" Name="数据页全页"/>
+		<Feature FeatureType="3"  Abbr="IS" Name="静态印刷特征"/>
+		<Feature FeatureType="4"  Abbr="MR" Name="机读区"/>
+		<Feature FeatureType="5"  Abbr="OM" Name="套印机读区"/>
+		<Feature FeatureType="6"  Abbr="CA" Name="卡访问号"/>
+		<Feature FeatureType="7"  Abbr="BC" Name="条形码"/>
+		<Feature FeatureType="8"  Abbr="PD" Name="个人化的穿孔(动态)"/>
+		<Feature FeatureType="9"  Abbr="PS" Name="基材上的穿孔(静态)"/>
+		<Feature FeatureType="10" Abbr="PH" Name="照片"/>
+		<Feature FeatureType="11" Abbr="SP" Name="次级照片"/>
+		<Feature FeatureType="12" Abbr="OP" Name="套印照片"/>
+		<Feature FeatureType="13" Abbr="TH" Name="安全线"/>
+		<Feature FeatureType="14" Abbr="VZ" Name="视读区"/>
+		<Feature FeatureType="15" Abbr="WM" Name="水印"/>
+		<Feature FeatureType="16" Abbr="ID" Name="个人化的动态特征"/>
+		<Feature FeatureType="17" Abbr="AF" Name="其他特征"/>
+	</vecFeature>
+	<vecCheckPointAll>
+		<!--按光源类型区分查验点
+		CheckType：检测类型
+		LightType：图像光源类型，见vecOpticalProperty
+		OPType：光学属性类别，见vecOpticalProperty
+		FeatureType:特征类别,见vecFeature
+		RiskAttribute：风险等级 0基础版 1增强版
+		VerifyAttribute：查验等级，预留-->
+		<!--材料属性检测点-->
+		<CheckPoint CheckType="0" RiskAttribute="1" VerifyAttribute="0" Name="保留" NameEng="">
+			<CheckItem LightType="NN" OPType="NN" FeatureType="NN"/>
+		</CheckPoint>
+		<CheckPoint CheckType="1" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，静态穿孔)：检查在红外光下静态穿孔是否可见" NameEng="(IR, absorbent, static perforation): Check whether the static perforation is visible under IR light.">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="PS"/>
+		</CheckPoint>
+		<CheckPoint CheckType="2" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，安全线)：检查在红外光下是否可见安全线" NameEng="(IR, absorbent, thread): Check whether the security thread is visible under IR light">
+            <CheckItem LightType="IR" OPType="AB" FeatureType="TH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="3" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，水印)：检查在红外光下水印是否可见" NameEng="(IR, absorbent, watermark): Check whether the watermark is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="WM"/>
+		</CheckPoint>
+		<CheckPoint CheckType="4" RiskAttribute="0" VerifyAttribute="0" Name="(紫外光，亮度，全页)：检查在紫外光下数据页全页亮度" NameEng="(UV, brightness, full): Check for the brightness of the full data page under UV light">
+			<CheckItem LightType="UV" OPType="BR" FeatureType="FU"/>
+		</CheckPoint>
+		<CheckPoint CheckType="5" RiskAttribute="0" VerifyAttribute="0" Name="(紫外光，亮度，机读区)：检查在紫外光下机读区亮度" NameEng="(UV, brightness, MRZ): Check for the brightness in the MRZ area under UV light">
+			<CheckItem LightType="UV" OPType="BR" FeatureType="MR"/>
+		</CheckPoint>
+		<CheckPoint CheckType="6" RiskAttribute="0" VerifyAttribute="0" Name="(紫外光，亮度，照片)：检查在紫外光下照片的亮度" NameEng="(UV, brightness, photo): Check for the brightness in the photo area under UV light">
+			<CheckItem LightType="UV" OPType="BR" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="7" RiskAttribute="0" VerifyAttribute="0" Name="(紫外光，亮度，视读区)：检查在紫外光下视读区(VIZ)的亮度" NameEng="(UV, brightness, VIZ): Check for the brightness in the Visual Inspection Zone (VIZ) under UV-light">
+			<CheckItem LightType="UV" OPType="BR" FeatureType="VZ"/>
+		</CheckPoint>
+		<CheckPoint CheckType="8" RiskAttribute="0" VerifyAttribute="0" Name="(紫外光，发光，纤维)：检查是否存在紫外光下发光的纤维" NameEng="(UV, luminescent, fibers): Check for the presence of fibers which are luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="FI"/>
+		</CheckPoint>
+		<CheckPoint CheckType="9" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，静态穿孔)：检查在紫外光下静态穿孔的痕迹是否发光" NameEng="(UV, luminescent, static perforation): Check whether traces of a static perforation are luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="PS"/>
+		</CheckPoint>
+		<CheckPoint CheckType="10" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，安全线)：检查是否存在紫外光下发光的安全线" NameEng="(UV, luminescent, thread): Check for the presence of a security thread which is luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="TH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="11" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，透明，安全线)：检查在可见光下安全线是否透明" NameEng="(VI, transparent, thread): Check whether the security thread is transparent under visible light">
+			<CheckItem LightType="VI" OPType="TR" FeatureType="TH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="12" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，静态穿孔)：检查在可见光下是否可见静态穿孔" NameEng="(VI, absorbent, static perforation): Check whether a static perforation is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="PS"/>
+		</CheckPoint>
+		<CheckPoint CheckType="13" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，安全线)结合(可见光，透明，安全线)：检查在红外光下可见的安全线在可见光下是否透明" NameEng="(IR, absorbent, thread) in combination with (VI, transparent, thread): Check whether a security thread, which is visible under IR light, is transparent under visible light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="TH"/>
+			<CheckItem LightType="VI" OPType="TR" FeatureType="TH"/>
+		</CheckPoint>
+		<!--印刷属性检测点-->
+		<CheckPoint CheckType="14" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，静态油墨)：检查在红外光下静态印刷的油墨是否有吸光性" NameEng="(IR, absorbent, static ink): Check whether the ink of the static print is absorbent under IR light.">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="IS1"/>
+		</CheckPoint>
+		<CheckPoint CheckType="15" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，半透明，静态油墨)：检查数据页(通常是标题页)背面的油墨在红外光下是否半透明，这可在数据页的红外图像上检测到" NameEng="(IR, translucent, static ink): Check whether the ink on the back of the data page (usually the title page) is translucent under IR light and can be detected on the IR image of the data page">
+			<CheckItem LightType="IR" OPType="TL" FeatureType="IS2"/>
+		</CheckPoint>
+		<CheckPoint CheckType="16" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，静态油墨)：检查在红外光下静态印刷的油墨是否透明" NameEng="(IR, transparent, static ink): Check whether the ink of the static print is transparent under IR light.">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="IS3"/>
+		</CheckPoint>
+		<CheckPoint CheckType="17" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，静态油墨)：检查在紫外光下静态印刷的油墨是否发光" NameEng="(UV, luminescent, static ink): Check whether the ink of the static print is luminescent under UV light.">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="IS4"/>
+		</CheckPoint>
+		<CheckPoint CheckType="18" RiskAttribute="0" VerifyAttribute="0" Name="(紫外光，发光，套印机读区)：检查在紫外光下机读区内静态印刷的油墨是否发光" NameEng="(UV, luminescent, overprinted MRZ): Check whether the ink of the static print is luminescent in the MRZ area under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="OM"/>
+		</CheckPoint>
+		<CheckPoint CheckType="19" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，套印照片)：检查在紫外光下照片区内静态印刷的油墨是否发光" NameEng="(UV, luminescent, overprinted photo): Check whether the ink of the static print is luminescent in the area of the photo under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="OP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="20" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，静态油墨)：检查在可见光下静态印刷的油墨是否有吸光性" NameEng="(VI, absorbent, static ink): Check whether the ink of the static print is absorbent under visible light.">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="IS5"/>
+		</CheckPoint>
+		<CheckPoint CheckType="21" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，透明，静态油墨)：检查在可见光下静态印刷的油墨是否透明" NameEng="(VI, transparent, static ink): Check whether the ink of the static print is transparent under visible light">
+			<CheckItem LightType="VI" OPType="TR" FeatureType="IS6"/>
+		</CheckPoint>
+		<CheckPoint CheckType="22" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，静态油墨)结合(红外光，吸光性，静态油墨)：检查在红外光下部分静态印刷是否有吸光性，而同一特征的其他部分在红外光下透明" NameEng="(IR, transparent, static ink) in combination with (IR, absorbent, static ink): Check whether parts of the static print are absorbent in IR light, whereas other parts of the same feature are transparent in IR light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="IS7"/>
+			<CheckItem LightType="IR" OPType="AB" FeatureType="IS7"/>
+		</CheckPoint>
+		<CheckPoint CheckType="23" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，静态油墨)结合(可见光，吸光性，静态油墨)：检查静态印刷的油墨在红外光下是否透明和在可见光下是否有吸光性" NameEng="(IR, transparent, static ink) in combination with (VI, absorbent, static ink): Check whether the ink of the static print is both transparent under IR light and absorbent under visible light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="IS8"/>
+			<CheckItem LightType="VI" OPType="AB" FeatureType="IS8"/>
+		</CheckPoint>
+		<!--个人化属性检测点-->
+		<CheckPoint CheckType="24" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，动态油墨)：检查在红外光下动态印刷的油墨是否有吸光性" NameEng="(IR, absorbent, dynamic ink): Check whether the ink of the dynamic print is absorbent under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="ID1"/>
+		</CheckPoint>
+		<CheckPoint CheckType="25" RiskAttribute="0" VerifyAttribute="0" Name="(红外光，吸光性，机读区B900检查)：检查在红外光下机读区是否可见" NameEng="(IR, absorbent, MRZ B900 check): Check whether the MRZ is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="MR"/>
+		</CheckPoint>
+		<CheckPoint CheckType="26" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，卡访问号)：检查在红外光下卡访问号是否可见" NameEng="(IR, absorbent, CAN): Check whether the CAN is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="CA"/>
+		</CheckPoint>
+		<CheckPoint CheckType="27" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，条形码)：检查在红外光下条形码是否可见" NameEng="(IR, absorbent, barcode): Check whether the barcode is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="BC"/>
+		</CheckPoint>
+		<CheckPoint CheckType="28" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，动态穿孔)：检查在红外光下动态穿孔穿孔是否可见" NameEng="(IR, absorbent, dynamic perforation): Check whether a dynamic perforation is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="PD"/>
+		</CheckPoint>
+		<CheckPoint CheckType="29" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，照片)：检查在红外光下照片是否可见" NameEng="(IR, absorbent, photo): Check whether the photo is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="30" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，频率，照片)：检查图案在空间频率变换后是否出现预期的特性" NameEng="(IR, frequency, photo): Check whether the pattern has the expected characteristics after spatial frequency transformation">
+			<CheckItem LightType="IR" OPType="FR" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="31" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，次级照片)：检查在红外光下次级照片是否可见" NameEng="(IR, absorbent, secondary photo): Check whether the secondary photo is visible under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="32" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，次级照片)：检查在红外光下次级照片是否透明" NameEng="(IR, transparent, secondary photo): Check whether the secondary photo is transparent under IR light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="33" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，动态油墨)：检查在红外光下动态印刷的油墨是否透明" NameEng="(IR, transparent, dynamic ink): Check whether the ink of the dynamic print is transparent under IR light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="ID2"/>
+		</CheckPoint>
+		<CheckPoint CheckType="34" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，照片)：检查在红外光下照片的透明性" NameEng="(IR, transparent, photo): Check for the transparency of the photo under IR light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="35" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，频率，照片)：检查图案在空间频率变换后是否出现预期的特性" NameEng="(UV, frequency, photo): Check whether the pattern has the expected characteristics after spatial frequency transformation">
+			<CheckItem LightType="UV" OPType="FR" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="36" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，次级照片)：检查在紫外光下次级照片是否发光" NameEng="(UV, luminescent, secondary photo): Check whether the secondary photo is luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="37" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，条形码)：检查在紫外光下条形码是否发光" NameEng="(UV, luminescent, barcode): Check whether the barcode is luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="BC"/>
+		</CheckPoint>
+		<CheckPoint CheckType="38" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，动态油墨)：检查在紫外光下动态印刷的油墨是否发光" NameEng="(UV, luminescent, dynamic ink): Check whether the ink of the dynamic print is luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="ID3"/>
+		</CheckPoint>
+		<CheckPoint CheckType="39" RiskAttribute="1" VerifyAttribute="0" Name="(紫外光，发光，动态穿孔)：检查在紫外光下动态穿孔的标记是否发光" NameEng="(UV, luminescent, dynamic perforation): Check whether marks of a dynamic perforation are luminescent under UV light">
+			<CheckItem LightType="UV" OPType="LU" FeatureType="PD"/>
+		</CheckPoint>
+		<CheckPoint CheckType="40" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，动态油墨)：检查在可见光下动态印刷的油墨是否可见" NameEng="(VI, absorbent, dynamic ink): Check whether the ink of the dynamic print is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="ID2"/>
+		</CheckPoint>
+		<CheckPoint CheckType="41" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，机读区)：检查在可见光下机读区是否可见" NameEng="(VI, absorbent, MRZ): Check whether the MRZ is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="MR"/>
+		</CheckPoint>
+		<CheckPoint CheckType="42" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，卡访问号)：检查在可见光下卡访问号是否可见" NameEng="(VI, absorbent, CAN): Check whether the CAN is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="CA"/>
+		</CheckPoint>
+		<CheckPoint CheckType="43" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，条形码)：检查在可见光下条形码是否可见" NameEng="(VI, absorbent, barcode): Check whether the barcode is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="BC"/>
+		</CheckPoint>
+		<CheckPoint CheckType="44" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，透明，条形码)：检查在可见光下条形码是否透明" NameEng="(VI, transparent, barcode): Check whether the barcode is transparent under visible light">
+			<CheckItem LightType="VI" OPType="TR" FeatureType="BC"/>
+		</CheckPoint>
+		<CheckPoint CheckType="45" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，动态穿孔)：检查在可见光下动态穿孔是否可见" NameEng="(VI, absorbent, dynamic perforation): Check whether a dynamic perforation is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="PD"/>
+		</CheckPoint>
+		<CheckPoint CheckType="46" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，照片)：检查在可见光下照片是否可见" NameEng="(VI, absorbent, photo): Check whether the photo is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="47" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，次级照片)：检查在可见光下次级照片是否可见" NameEng="(VI, absorbent, secondary photo): Check whether the secondary photo is visible under visible light.">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="48" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，透明，次级照片)：检查在可见光下次级照片是否透明" NameEng="(VI, transparent, secondary photo): Check whether the secondary photo is transparent under visible light">
+			<CheckItem LightType="VI" OPType="TR" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="49" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，频率，照片)：检查在图案在空间频率变换后是否出现预期的特性" NameEng="(VI, frequency, photo): Check whether the pattern has the expected characteristics after spatial frequency transformation">
+			<CheckItem LightType="VI" OPType="FR" FeatureType="PH"/>
+		</CheckPoint>
+		<CheckPoint CheckType="50" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，吸光性，次级照片)：检查在可见光下次级照片是否可见" NameEng="(VI, absorbent, secondary photo): Check whether the secondary photo is visible under visible light">
+			<CheckItem LightType="VI" OPType="AB" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="51" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，透明，动态油墨)：检查在可见光下动态印刷的油墨是否透明" NameEng="(VI, transparent, dynamic ink): Check whether the ink of the dynamic print is transparent under visible light">
+			<CheckItem LightType="VI" OPType="TR" FeatureType="ID5"/>
+		</CheckPoint>
+		<CheckPoint CheckType="52" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，动态油墨)结合(可见光，吸光性，动态油墨)：检查动态印刷的油墨在红外光下是否透明和在可见光下是否有吸光性" NameEng="(IR, transparent, dynamic ink) in combination with (VI, absorbent, dynamic ink): Check whether the ink of the dynamic print is transparent in IR light as well as absorbent under visible light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="ID2"/>
+			<CheckItem LightType="VI" OPType="AB" FeatureType="ID2"/>
+		</CheckPoint>
+		<CheckPoint CheckType="53" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，次级照片)结合(可见光，吸光性，次级照片)：检查次级照片在红外光下是否透明以及在可见光下是否有吸光性" NameEng="(IR, transparent, secondary photo) in combination with (VI, absorbent, secondary photo): Check whether the secondary photo is transparent in IR light as well as absorbent under visible light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="SP"/>
+			<CheckItem LightType="VI" OPType="AB" FeatureType="SP"/>
+		</CheckPoint>
+		<CheckPoint CheckType="54" RiskAttribute="1" VerifyAttribute="0" Name="(可见光，透明，条形码)结合(红外光，吸光性，条形码)：检查条形码在可见光下是否透明以及在红外光下是否有吸光性" NameEng="(VI, transparent, barcode): Check whether the barcode is transparent under visible light as well as absorbent under IR light.">
+			<CheckItem LightType="VI" OPType="TR" FeatureType="BC"/>
+			<CheckItem LightType="IR" OPType="AB" FeatureType="BC"/>
+		</CheckPoint>
+		<!--印刷+个人化属性检测点-->
+        <CheckPoint CheckType="55" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，静态油墨)结合(可见光，吸光性，静态油墨)结合(红外光，吸光性，动态油墨)：检查静态印刷的油墨在可见光下是否有吸光性和在红外光下是否透明，动态印刷特征的相同位置在红外光下可见" NameEng=" (IR, transparent, static ink) in combination with (VI, absorbent, static ink) in combination with (IR, absorbent, dynamic ink): Check whether the ink of the static print is both absorbent under visible light and transparent in IR light. In addition, a dynamically printed feature is visible under IR light at the same position.">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="IS9"/>
+			<CheckItem LightType="VI" OPType="AB" FeatureType="IS9"/>
+			<CheckItem LightType="IR" OPType="AB" FeatureType="ID8"/>
+		</CheckPoint>
+		<!--其他检查点-->
+		<CheckPoint CheckType="56" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，吸光性，膜编号)：检查在红外光下膜编号是否吸收" NameEng="(IR, absorbent, Membrane number):Check whether Membrane number is absorbent under IR light">
+			<CheckItem LightType="IR" OPType="AB" FeatureType="AF1"/>
+		</CheckPoint>
+		<CheckPoint CheckType="57" RiskAttribute="1" VerifyAttribute="0" Name="(红外光，透明，照片)结合(可见光，吸光性，照片)：检查照片在红外光下是否透明以及在可见光下是否有吸光性" NameEng="(IR, transparent, photo) in combination with (VI, absorbent, photo): Check whether the photo is transparent under IR light as well as absorbent under visible light">
+			<CheckItem LightType="IR" OPType="TR" FeatureType="PH"/>
+			<CheckItem LightType="VI" OPType="AB" FeatureType="PH"/>
+		</CheckPoint>
+	</vecCheckPointAll>
+</sysVerification>

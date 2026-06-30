@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <img id="preview" />
+
+    <script src="CameraHelperWS.js"></script>
+    <script>
+CameraHelperWS.initParam({ host: "ws://localhost:18832" });
+
+CameraHelperWS.connect(() => {
+  CameraHelperWS.openCam(null, null, data => {
+    document.getElementById("preview").src =
+      "data:image/jpg;base64," + data;
+  });
+});
+
+function capture() {
+  CameraHelperWS.snapFrame(0, data => {
+    const face = data.split("$&")[2];
+    window.chrome.webview.postMessage(face);
+  });
+}
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<IDCARD>
+	<!-- 图像裁切时，使用白光和红外的次序0：优先使用红外 1：优先使用白光 -->
+	<ImageCropLightType orderTypeCrop = "0"/>
+	<!-- 图像分类进行VIZ识别时，使用白光和红外的次序0：优先使用红外 1：优先使用白光 -->
+	<ImageRecogLightType orderTypeClassify = "0"/>
+	
+	<!-- 根据外部传入的证件类型，在裁切和识别时进行特殊处理 -->
+	<!-- CropType:根据给定的证件类型确认 -->
+	<!-- AllocateDirection:需要按特定方向放置的证件，即不再需要翻转的情况 -->
+	
+	<CardInfo chnName="军官证1998版-信息页" engName="China PLA Officer Card 1998 Edition Information Page" mainId="19" CropType="18" orderTypeCrop="0" AllocateDirection ="0" />
+	<CardInfo chnName="军官证2016版" engName="China PLA Officer Card 2016 Edition" mainId="7" CropType="4" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="士兵证1998版" engName="China PLA Soldier Card 1998 Edition " mainId="8" CropType="16" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="常住人口登记卡" engName="China Register Card for Permanent Resident" mainId="16" CropType="5" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="警官证2006版-照片页" engName="China Police Officer Certificate 2006 Edition Portrait Page " mainId="20" CropType="19" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="警官证2006版-信息页" engName="China Police Officer Certificate 2006 Edition Information Page " mainId="21" CropType="19" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="中国人民解放军车辆驾驶证2010版" engName="China PLA Vehicle Driving License 2010 Edition" mainId="24" CropType="2" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="中国人民解放军行车执照2012版 " engName="China Driving License of PLA 2012 Edition" mainId="27" CropType="1" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="军官证_HK" engName="Officer's id card _HK" mainId="37" CropType="4" orderTypeCrop="0" AllocateDirection ="1"/>
+	<CardInfo chnName="边境地区出入境通行证-照片页" engName="China Border Exit and Entry Permit 2005 Edition Portrait Page" mainId="1003" CropType="7" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="边境地区出入境通行证-照片页" engName="China Border Exit and Entry Permit 2005 Edition Portrait Page" mainId="1003" CropType="7" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="边境地区出入境通行证-信息页" engName="China Border Exit and Entry Permit 2005 Edition Information Page" mainId="1004" CropType="8" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="律师执业证-签发机关页 " engName="China Lawyer's License Authority Page" mainId="1007" CropType="7" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="中华人民共和国道路运输证IC卡 " engName="China Road Transport IC Card " mainId="1009" CropType="2" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="内蒙古自治区人民法院工作证" engName="Inner Mongolia Autonomous Region People 's Court  Work Permit" mainId="1018" CropType="1" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="内蒙古自治区检察机关工作证" engName="Inner Mongolia Autonomous Region  Procuratorial Work Permit" mainId="1019" CropType="1" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="浙江省临时居住证-照片页" engName="China ZheJiang Temporary Residence Permit Portrait Page" mainId="1029" CropType="15" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="墨西哥身份证背面ABC" engName="Mexico Identity Card MRZ Page" mainId="2015" CropType="2" orderTypeCrop="0" AllocateDirection ="0"/>
+	<CardInfo chnName="澳门逗留许可证" engName="Special Permit to stay in Macau" mainId="39" CropType="39" orderTypeCrop="1" AllocateDirection ="0"/>
+</IDCARD>

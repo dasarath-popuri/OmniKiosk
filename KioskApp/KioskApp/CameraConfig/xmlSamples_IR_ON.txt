@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<param>
+  <track>0</track>
+  <previewDetectInterval>1</previewDetectInterval>
+
+  <Infrared>1</Infrared>
+
+  <imgWidth>640</imgWidth>
+  <imgHeight>480</imgHeight>
+  <imgCompress>85</imgCompress>
+
+  <minFaceWide>80</minFaceWide>
+
+  <!-- Make it faster -->
+  <timeOut>30</timeOut>
+  <liveThreshold>0.25</liveThreshold>
+
+  <!-- IMPORTANT: change these if timeout persists -->
+  <deviceIdxCol>0</deviceIdxCol>
+  <deviceIdxNir>0</deviceIdxNir>
+
+  <!-- Less strict pose rules -->
+  <headLeft>35</headLeft>
+  <headRight>35</headRight>
+  <headRoll>15</headRoll>
+
+  <!-- Stability -->
+  <stableCount>0</stableCount>
+  <stableThreshold>0</stableThreshold>
+
+  <multiFace>0</multiFace>
+  <expectedFacesCount>1</expectedFacesCount>
+
+  <openByThread>1</openByThread>
+  <detectInterval>1</detectInterval>
+  <liveInterval>1</liveInterval>
+
+  <!-- Avoid blocking due to mask rules during testing -->
+  <mask>0</mask>
+
+  <flip>1</flip>
+  <fill>1</fill>
+  <language>1</language>
+  <useCameraThread>0</useCameraThread>
+
+    <motor111Type>0</motor111Type>
+</param>

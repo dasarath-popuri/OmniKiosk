@@ -1,0 +1,112 @@
+﻿<Window x:Class="OmniKiosk.Wpf.Views.Remittance.RemittanceMainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Send Money"
+        WindowState="Maximized"
+        WindowStyle="None"
+        Background="{DynamicResource BackgroundBrush}"
+        Loaded="Window_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Navigation Bar -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource HeaderBrush}"
+                Padding="30,20">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="💸" FontSize="40" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock x:Name="TxtSendMoney"
+                                 Text="Send Money"
+                                 FontSize="28"
+                                 FontWeight="Bold"
+                                 Foreground="White"/>
+                        <TextBlock x:Name="TxtStepIndicator"
+                                 Text="Step 1 of 4"
+                                 FontSize="16"
+                                 Foreground="White"
+                                 Opacity="0.9"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="ThemeToggleButton" 
+                            Content="🌓" 
+                            Width="50" Height="50"
+                            Margin="0,0,16,0"
+                            FontSize="24"
+                            Background="Gray"
+                            BorderThickness="0"
+                            Foreground="White"
+                            Cursor="Hand"
+                            Click="ThemeToggle_Click"
+                            ToolTip="Toggle Theme">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="8">
+                                    <ContentPresenter HorizontalAlignment="Center" 
+                                                    VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#FFFFFF40"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!--<ComboBox x:Name="LanguageComboBox"
+                            Width="180" Height="50"
+                            FontSize="16"
+                            Background="#FFFFFF20"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Margin="0,0,16,0"
+                            SelectionChanged="Language_SelectionChanged">
+                        <ComboBoxItem Content="English" Tag="en" Foreground="Black" IsSelected="True"/>
+                        <ComboBoxItem Content="Bahasa Melayu" Tag="ms" Foreground="Black"/>
+                    </ComboBox>-->
+
+                    <Button Content="✕"
+                            Width="50" Height="50"
+                            FontSize="28"
+                            FontWeight="Bold"
+                            Background="Red"
+                            BorderThickness="0"
+                            Foreground="White"
+                            Cursor="Hand"
+                            Click="Close_Click"
+                            ToolTip="Close">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="8">
+                                    <ContentPresenter HorizontalAlignment="Center" 
+                                                    VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#EF444480"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Frame -->
+        <Frame x:Name="MainFrame" 
+               Grid.Row="1"
+               NavigationUIVisibility="Hidden"
+               Background="Transparent"/>
+    </Grid>
+</Window>

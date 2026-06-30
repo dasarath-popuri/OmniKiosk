@@ -1,0 +1,6 @@
+@OmniKiosk.Api_HostAddress = http://localhost:5072
+
+GET {{OmniKiosk.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

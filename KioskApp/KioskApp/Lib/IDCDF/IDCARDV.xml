@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<IDCARD>
+<!--全局的图像预处理-->
+	<vecProcessImage>
+	<!--nEnable 0:关闭，1：导入做，在线不做，2：在线做，3：导入，在线都做-->
+	<CProcessImage processType="8" nEnable="1">
+	  <CTiltCorrection nMaxAngle="0.3" bSameSize="1" nMinAngle="0.017" nFilledType="0"/>
+	</CProcessImage>
+	</vecProcessImage>
+	<!--通用机读证件-->
+	<TemplatePath>IDCARDV/12.xml</TemplatePath><!--签证-->
+	<TemplatePath>IDCARDV/13.xml</TemplatePath><!--护照-->
+	<TemplatePath>IDCARDV/2009.xml</TemplatePath><!--TD-1型机读旅行证件-->
+	<TemplatePath>IDCARDV/2006.xml</TemplatePath><!--TD-2型机读旅行证件-->
+	<TemplatePath>IDCARDV/2019.xml</TemplatePath><!--TD-1(APEC)-->
+	<!--中国大陆-->
+	<TemplatePath>IDCARDV/2.xml</TemplatePath><!--居民身份证-照片页-->
+	<TemplatePath>IDCARDV/3.xml</TemplatePath><!--居民身份证-签发机关页-->
+	<TemplatePath>IDCARDV/4.xml</TemplatePath><!--临时居民身份证-->
+	<TemplatePath>IDCARDV/5.xml</TemplatePath><!--机动车驾驶证-->
+	<TemplatePath>IDCARDV/6.xml</TemplatePath><!--机动车行驶证-->
+	<TemplatePath>IDCARDV/7.xml</TemplatePath><!--军官证2016版-->
+	<TemplatePath>IDCARDV/8.xml</TemplatePath><!--士兵证1998版-->
+	<TemplatePath>IDCARDV/9.xml</TemplatePath><!--往来港澳通行证2005版-照片页-->
+	<TemplatePath>IDCARDV/10.xml</TemplatePath><!--台湾居民来往大陆通行证1992版-照片页-->
+	<TemplatePath>IDCARDV/11.xml</TemplatePath><!--往来台湾通行证1992版-照片页-->
+	<TemplatePath>IDCARDV/14.xml</TemplatePath><!--港澳居民来往内地通行证-照片页-->
+	<TemplatePath>IDCARDV/15.xml</TemplatePath><!--港澳居民来往内地通行证-机读码页-->
+	<TemplatePath>IDCARDV/16.xml</TemplatePath><!--常住人口登记卡-->
+	<TemplatePath>IDCARDV/17.xml</TemplatePath><!--海员证2009版-照片页-->
+	<TemplatePath>IDCARDV/19.xml</TemplatePath><!--军官证1998版-信息页-->
+	<TemplatePath>IDCARDV/20.xml</TemplatePath><!--警官证2006版-照片页-->
+	<TemplatePath>IDCARDV/21.xml</TemplatePath><!--警官证2006版-信息页-->
+	<TemplatePath>IDCARDV/22.xml</TemplatePath><!--往来港澳通行证2014版-照片页-->
+	<TemplatePath>IDCARDV/23.xml</TemplatePath><!--边境地区出入境通行证2014版-照片页-->
+	<TemplatePath>IDCARDV/24.xml</TemplatePath><!--中国人民解放军车辆驾驶证2010版-->
+	<TemplatePath>IDCARDV/25.xml</TemplatePath><!--台湾居民来往大陆通行证2015版-照片页-->
+	<TemplatePath>IDCARDV/26.xml</TemplatePath><!--台湾居民来往大陆通行证2015版-机读码页-->
+	<TemplatePath>IDCARDV/27.xml</TemplatePath><!--中国人民解放军行车执照2012版-->
+	<TemplatePath>IDCARDV/28.xml</TemplatePath><!--机动车驾驶证副页-->
+	<TemplatePath>IDCARDV/29.xml</TemplatePath><!--往来台湾通行证2017版-照片页-->
+	<TemplatePath>IDCARDV/30.xml</TemplatePath><!--机动车行驶证副页-->
+	<TemplatePath>IDCARDV/31.xml</TemplatePath><!--中华人民共和国港澳居民居住证——照片页-->
+	<TemplatePath>IDCARDV/32.xml</TemplatePath><!--中华人民共和国港澳居民居住证——签发机关页-->
+	<TemplatePath>IDCARDV/33.xml</TemplatePath><!--外国人永久居留身份证——照片页-->
+	<TemplatePath>IDCARDV/37.xml</TemplatePath><!--军官证_HK-->
+	<TemplatePath>IDCARDV/40.xml</TemplatePath><!--外国人入境卡正面-->
+	<TemplatePath>IDCARDV/41.xml</TemplatePath><!--外国人入境卡背面-->
+	<TemplatePath>IDCARDV/42.xml</TemplatePath><!--中国退役军人优待卡-->
+	<TemplatePath>IDCARDV/1000.xml</TemplatePath><!--居住证（广东、广西、东莞）-照片页-->
+	<TemplatePath>IDCARDV/1003.xml</TemplatePath><!--蒙古边境地区出入境通行证2005版-照片页-->
+	<TemplatePath>IDCARDV/1004.xml</TemplatePath><!--边境地区出入境通行证2005版-信息页-->
+	<TemplatePath>IDCARDV/1007.xml</TemplatePath><!--律师执业证-签发机关页-->
+	<TemplatePath>IDCARDV/1008.xml</TemplatePath><!--律师执业证-照片页-->
+	<TemplatePath>IDCARDV/1009.xml</TemplatePath><!--中华人民共和国道路运输证IC卡-->
+	<TemplatePath>IDCARDV/1010.xml</TemplatePath><!--名片-->
+	<TemplatePath>IDCARDV/1013.xml</TemplatePath><!--深圳经济特区居住证2015版-照片页-->
+	<TemplatePath>IDCARDV/1017.xml</TemplatePath><!--临时海员证-->
+	<TemplatePath>IDCARDV/1018.xml</TemplatePath><!--内蒙古自治区人民法院工作证-->
+	<TemplatePath>IDCARDV/1019.xml</TemplatePath><!--内蒙古自治区检察机关工作证-->
+	<TemplatePath>IDCARDV/1021.xml</TemplatePath><!--社会保障卡（北京、重庆）-照片页-->
+	<TemplatePath>IDCARDV/1037.xml</TemplatePath><!--神煤集团工作证-->
+	<TemplatePath>IDCARDV/1039.xml</TemplatePath><!--厦门市社会保障卡-照片页-->
+	<TemplatePath>IDCARDV/2018.xml</TemplatePath><!--APEC正面-->
+	<!--港奥台证件-->
+	<TemplatePath>IDCARDV/34.xml</TemplatePath><!--台湾地区（金马澎）入出境许可证2015版-照片页-->
+	<TemplatePath>IDCARDV/35.xml</TemplatePath><!--台湾居留证-->
+	<TemplatePath>IDCARDV/39.xml</TemplatePath><!--澳门逗留特别许可证-->
+	<TemplatePath>IDCARDV/1001.xml</TemplatePath><!--香港居民身份证2003版-照片页-->
+	<TemplatePath>IDCARDV/1005.xml</TemplatePath><!--澳门居民身份证-照片页-->
+	<TemplatePath>IDCARDV/1014.xml</TemplatePath><!--澳门雇员证（蓝卡）-照片页-->
+	<TemplatePath>IDCARDV/1030.xml</TemplatePath><!--台湾全民健康保险卡-->
+	<TemplatePath>IDCARDV/1031.xml</TemplatePath><!--台湾地区身份证-照片页-->
+	<TemplatePath>IDCARDV/1032.xml</TemplatePath><!--台湾地区身份证-条码页-->
+	<TemplatePath>IDCARDV/1040.xml</TemplatePath><!--台湾地区驾驶证-->
+	<!--印度尼西亚-->
+	<TemplatePath>IDCARDV/2010.xml</TemplatePath><!--印度尼西亚居民身份证-->
+	<TemplatePath>IDCARDV/2041.xml</TemplatePath>
+	<!--日本-->
+	<TemplatePath>IDCARDV/2051.xml</TemplatePath><!--日本驾驶证-->
+	<!--韩国-->
+	<TemplatePath>IDCARDV/2060.xml</TemplatePath><!--韩国身份证-->
+	<TemplatePath>IDCARDV/2061.xml</TemplatePath><!--韩国驾驶证-->
+	
+	<!--马来西亚-->
+	<TemplatePath>IDCARDV/2001.xml</TemplatePath><!--马来西亚身份证-照片页-->
+	<TemplatePath>IDCARDV/2021.xml</TemplatePath><!--马拉西亚驾驶证-->
+	<!-- 菲律宾 -->
+	<TemplatePath>IDCARDV/2022.xml</TemplatePath><!--菲律宾身份证-->
+	<TemplatePath>IDCARDV/2024.xml</TemplatePath><!--菲律宾驾驶证-->
+	<!--墨西哥-->
+	<TemplatePath>IDCARDV/2013.xml</TemplatePath><!--墨西哥选民证-照片页-->
+	<TemplatePath>IDCARDV/2014.xml</TemplatePath><!--墨西哥选民证-机读码页-->
+	<TemplatePath>IDCARDV/2015.xml</TemplatePath><!--墨西哥身份证-背面ABC-->
+
+	<!--新西兰-->
+	<TemplatePath>IDCARDV/2003.xml</TemplatePath><!--新西兰驾驶证-->
+	<!--新加坡-->
+	<TemplatePath>IDCARDV/2004.xml</TemplatePath><!--新加坡身份证-->
+	<TemplatePath>IDCARDV/2005.xml</TemplatePath><!--新加坡身份证背面-->
+	<TemplatePath>IDCARDV/2031.xml</TemplatePath><!--新加坡驾驶证-->
+	<TemplatePath>IDCARDV/2023.xml</TemplatePath><!--新加坡工作证2017版-照片页-->
+	<TemplatePath>IDCARDV/2025.xml</TemplatePath><!--新加坡工作证2017版-指纹页-->
+	<!--瑞典-->
+	<TemplatePath>IDCARDV/2020.xml</TemplatePath><!--瑞典驾驶证-->
+	<!--泰国-->
+	<TemplatePath>IDCARDV/2011.xml</TemplatePath><!--泰国国民身份证-->
+	<TemplatePath>IDCARDV/2012.xml</TemplatePath><!--泰国驾驶证-->
+    	<!--缅甸-->
+    <TemplatePath>IDCARDV/2151.xml</TemplatePath><!--缅甸CI-->
+	<!--美国-->
+	<TemplatePath>IDCARDV/2002.xml</TemplatePath><!--美国加利福利亚驾驶证-->
+	<!--越南-->
+	<TemplatePath>IDCARDV/36.xml</TemplatePath><!--越南出入境通行证-->
+	<!--法国-->
+	<TemplatePath>IDCARDV/2028.xml</TemplatePath><!--法国身份证-->
+	<!--阿曼-->
+	<!--阿曼身份证-->
+	<!-- <TemplatePath>IDCARDV/2068.xml</TemplatePath> -->
+	<TemplatePath>IDCARDV/2070.xml</TemplatePath><!--阿曼居住证-->
+	<!--阿联酋-->
+	<TemplatePath>IDCARDV/38.xml</TemplatePath><!--阿联酋驾驶证-->
+	<TemplatePath>IDCARDV/2063.xml</TemplatePath><!--阿联酋身份证-->
+    <TemplatePath>IDCARDV/2064.xml</TemplatePath><!--阿联酋身份证背面-->
+	<!--肯尼亚-->
+	<TemplatePath>IDCARDV/2071.xml</TemplatePath><!--肯尼亚身份证-->
+	<!--埃及-->
+	<TemplatePath>IDCARDV/2081.xml</TemplatePath><!--埃及身份证-照片页-->
+	<TemplatePath>IDCARDV/2082.xml</TemplatePath><!--埃及身份证-背面-->
+	<TemplatePath>IDCARDV/2083.xml</TemplatePath><!--埃及驾驶证-->
+	<TemplatePath>IDCARDV/2084.xml</TemplatePath><!--埃及行驶证正面-->
+	<TemplatePath>IDCARDV/2085.xml</TemplatePath><!--埃及行驶证背面-->
+	<!--卡塔尔-->
+	<TemplatePath>IDCARDV/2091.xml</TemplatePath><!--卡塔尔身份证-照片页-->
+	<TemplatePath>IDCARDV/2092.xml</TemplatePath><!--卡塔尔身份证-背面-->
+	<!-- 巴基斯坦-->
+	<TemplatePath>IDCARDV/2098.xml</TemplatePath><!--巴基斯坦身份证正面-->
+	<!-- 智利 -->
+	<TemplatePath>IDCARDV/2100.xml</TemplatePath><!--智利身份证正面-->
+	<!-- 沙特 -->
+	<TemplatePath>IDCARDV/2110.xml</TemplatePath><!--沙特身份证-->
+	<!-- 秘鲁 -->
+	<TemplatePath>IDCARDV/2120.xml</TemplatePath><!--秘鲁身份证-->
+    <TemplatePath>IDCARDV/2121.xml</TemplatePath><!--秘鲁身份证1代背面-->
+	<!-- 厄瓜多尔 -->
+	<TemplatePath>IDCARDV/2130.xml</TemplatePath><!--厄瓜多尔身份证-->
+	<TemplatePath>IDCARDV/2131.xml</TemplatePath><!--厄瓜多尔身份证背面-->
+	<!-- 玻利维亚 -->
+    <TemplatePath>IDCARDV/2140.xml</TemplatePath><!--玻利维亚身份证正面-->
+    <TemplatePath>IDCARDV/2141.xml</TemplatePath><!--玻利维亚身份证背面-->
+	<!-- <阿根廷> -->
+	<TemplatePath>IDCARDV/2150.xml</TemplatePath><!--阿根廷身份证正面-->
+	<!-- 土耳其-->
+	<TemplatePath>IDCARDV/2152.xml</TemplatePath><!--土耳其身份证正面-->
+	
+	
+	
+</IDCARD>

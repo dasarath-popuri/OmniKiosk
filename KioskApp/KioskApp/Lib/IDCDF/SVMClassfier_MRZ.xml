@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vecSVMClassfier>
+	<!-- imageType: bit0 VI; bit1 IR; bit2 UV -->
+	<SVMClassfier SVMID="130010000" imageType="1" sizeType="2" name="香港护照" dataPath="SVMDevice/130010000">
+		<!-- <ID subClassFierID="130010104" mainID="13" subID="0010104" name="香港护照1998版"/> -->
+		<ID subClassFierID="130010105" mainID="13" subID="0010105" name="香港护照2007版"/>
+		<ID subClassFierID="130010106" mainID="13" subID="0010106" name="香港护照2019版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130010200" imageType="1" sizeType="2" name="中国公务普通护照" dataPath="SVMDevice/130010200">
+		<!-- <ID subClassFierID="130010201" mainID="13" subID="0010201" name="中国公务普通护照97-2版"/> -->
+		<ID subClassFierID="130010202" mainID="13" subID="0010202" name="中国公务普通护照2023版"/>
+		<ID subClassFierID="130010203" mainID="13" subID="0010203" name="中国公务普通护照2011版"/>
+	</SVMClassfier>	
+	<SVMClassfier SVMID="130010400" imageType="1" sizeType="2" name="中国公务护照" dataPath="SVMDevice/130010400">
+		<ID subClassFierID="130010401" mainID="13" subID="0010401" name="中国公务护照2011版"/>
+		<ID subClassFierID="130010402" mainID="13" subID="0010402" name="中国公务护照2023版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130020000" imageType="1" sizeType="2" name="美国护照" dataPath="SVMDevice/130020000">
+		<ID subClassFierID="130020101" mainID="13" subID="0020101" name="美国护照2006版"/>
+		<ID subClassFierID="130020102" mainID="13" subID="0020102" name="美国护照2020版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130040000" imageType="1" sizeType="2" name="新加坡护照" dataPath="SVMDevice/130040000">
+		<ID subClassFierID="130040101" mainID="13" subID="0040101" name="新加坡护照2005版"/>
+		<ID subClassFierID="130040201" mainID="13" subID="0040201" name="新加坡护照2017版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130050000" imageType="1" sizeType="2" name="韩国护照" dataPath="SVMDevice/130050000">
+		<ID subClassFierID="130050101" mainID="13" subID="0050101" name="韩国护照2005版"/>
+		<ID subClassFierID="130050105" mainID="13" subID="0050105" name="韩国护照2021版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130060000" imageType="1" sizeType="2" name="土耳其护照" dataPath="SVMDevice/130060000">
+		<ID subClassFierID="130060101" mainID="13" subID="0060101" name="土耳其护照2010版"/>
+		<ID subClassFierID="130060102" mainID="13" subID="0060102" name="土耳其护照2018版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130090000" imageType="1" sizeType="2" name="英国护照" dataPath="SVMDevice/130090000">
+		<ID subClassFierID="130090101" mainID="13" subID="0090101" name="英国护照2010版"/>
+		<ID subClassFierID="130090102" mainID="13" subID="0090102" name="英国护照2015版"/>
+		<ID subClassFierID="130090103" mainID="13" subID="0090103" name="英国护照2020版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130110000" imageType="1" sizeType="2" name="德国护照" dataPath="SVMDevice/130110000">
+		<ID subClassFierID="130110101" mainID="13" subID="0110101" name="德国护照2007版"/>
+		<ID subClassFierID="130110102" mainID="13" subID="0110102" name="德国护照2017版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130130000" imageType="1" sizeType="2" name="俄罗斯护照" dataPath="SVMDevice/130130000">
+		<ID subClassFierID="130130102" mainID="13" subID="0130102" name="俄罗斯护照2010版"/>
+		<ID subClassFierID="130130103" mainID="13" subID="0130103" name="俄罗斯护照2003版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130180000" imageType="1" sizeType="2" name="乌兹别克护照" dataPath="SVMDevice/130180000">
+		<ID subClassFierID="130180101" mainID="13" subID="0180101" name="乌兹别克护照2011版"/>
+		<ID subClassFierID="130180102" mainID="13" subID="0180102" name="乌兹别克护照2019版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130190000" imageType="1" sizeType="2" name="印度护照" dataPath="SVMDevice/130190000">
+		<ID subClassFierID="130190101" mainID="13" subID="0190101" name="印度护照2012版"/>
+		<ID subClassFierID="130190102" mainID="13" subID="0190102" name="印度护照2019版"/>
+	</SVMClassfier>
+	
+	
+	<SVMClassfier SVMID="130200000" imageType="1" sizeType="2" name="越南护照" dataPath="SVMDevice/130200000">
+		<ID subClassFierID="130200102" mainID="13" subID="0200102" name="越南护照2023版"/>
+		<ID subClassFierID="130200103" mainID="13" subID="0200103" name="越南护照2022版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130250000" imageType="1" sizeType="2" name="尼日利亚护照" dataPath="SVMDevice/130250000">
+		<ID subClassFierID="130250101" mainID="13" subID="0250101" name="尼日利亚2007版"/>
+		<ID subClassFierID="130250102" mainID="13" subID="0250102" name="尼日利亚2019版"/>
+	</SVMClassfier>
+	
+	
+	<!-- <SVMClassfier SVMID="130220000" imageType="1" sizeType="2" name="加拿大护照" dataPath="SVMDevice/130220000"> -->
+		<!-- <ID subClassFierID="130220101" mainID="13" subID="0220101" name="加拿大护照1993版"/> -->
+		<!-- <ID subClassFierID="130220103" mainID="13" subID="0220103" name="加拿大护照2013版"/> -->
+	<!-- </SVMClassfier> -->
+	<SVMClassfier SVMID="130280000" imageType="1" sizeType="2" name="澳大利亚护照" dataPath="SVMDevice/130280000">
+		<!-- <ID subClassFierID="130280101" mainID="13" subID="0280101" name="澳大利亚护照1998版"/> -->
+		<ID subClassFierID="130280102" mainID="13" subID="0280102" name="澳大利亚护照2014版"/>
+		<ID subClassFierID="130280103" mainID="13" subID="0280103" name="澳大利亚护照2022版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130290000" imageType="1" sizeType="2" name="印度尼西亚护照" dataPath="SVMDevice/130290000">
+		<ID subClassFierID="130290101" mainID="13" subID="0290101" name="印度尼西亚护照2007版"/>
+		<ID subClassFierID="130290103" mainID="13" subID="0290102" name="印度尼西亚护照2022版"/>
+		<ID subClassFierID="130290102" mainID="13" subID="0290102" name="印度尼西亚护照2015版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130300000" imageType="1" sizeType="2" name="菲律宾护照" dataPath="SVMDevice/130300000">
+		<ID subClassFierID="130300102" mainID="13" subID="0300102" name="菲律宾护照2010版"/>
+		<ID subClassFierID="130300103" mainID="13" subID="0300103" name="菲律宾护照2016版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130350000" imageType="1" sizeType="2" name="比利时护照" dataPath="SVMDevice/130350000">
+		<ID subClassFierID="130350102" mainID="13" subID="0350102" name="比利时护照2014版"/>
+		<ID subClassFierID="130350103" mainID="13" subID="0350103" name="比利时护照2022版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130360000" imageType="1" sizeType="2" name="波黑护照" dataPath="SVMDevice/130360000">
+		<ID subClassFierID="130360101" mainID="13" subID="0360101" name="波黑护照2009版"/>
+		<ID subClassFierID="130360102" mainID="13" subID="0360102" name="波黑护照2014版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130400000" imageType="1" sizeType="2" name="白俄罗斯护照" dataPath="SVMDevice/130400000">
+		<ID subClassFierID="130400101" mainID="13" subID="0400101" name="白俄罗斯护照2006版"/>
+		<ID subClassFierID="130400102" mainID="13" subID="0400102" name="白俄罗斯护照2021版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130410000" imageType="1" sizeType="2" name="柬埔寨护照" dataPath="SVMDevice/130410000">
+		<ID subClassFierID="130410101" mainID="13" subID="0410101" name="柬埔寨护照2007版"/>
+		<ID subClassFierID="130410102" mainID="13" subID="0410102" name="柬埔寨护照2014版"/>
+		<ID subClassFierID="130410103" mainID="13" subID="0410103" name="柬埔寨护照2018版"/>
+		<ID subClassFierID="130410104" mainID="13" subID="0410104" name="柬埔寨护照2022版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130430000" imageType="1" sizeType="2" name="刚果金护照" dataPath="SVMDevice/130430000">
+		<ID subClassFierID="130430101" mainID="13" subID="0430101" name="刚果金护照2009版"/>
+		<ID subClassFierID="130430102" mainID="13" subID="0430102" name="刚果金护照2016版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130470000" imageType="1" sizeType="2" name="芬兰护照" dataPath="SVMDevice/130470000">
+		<ID subClassFierID="130470102" mainID="13" subID="0470102" name="芬兰护照2017版"/>
+		<ID subClassFierID="130470104" mainID="13" subID="0470104" name="芬兰护照2012版"/>
+		
+	</SVMClassfier>
+	<SVMClassfier SVMID="130590000" imageType="1" sizeType="2" name="拉脱维亚护照" dataPath="SVMDevice/130590000">
+		<ID subClassFierID="130590101" mainID="13" subID="0590101" name="拉脱维亚护照2007版"/>
+		<ID subClassFierID="130590102" mainID="13" subID="0590102" name="拉脱维亚护照2015版"/>
+		
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130640000" imageType="1" sizeType="2" name="墨西哥护照" dataPath="SVMDevice/130640000">
+		<ID subClassFierID="130640102" mainID="13" subID="0640102" name="墨西哥护照2002版"/>
+		<ID subClassFierID="130640103" mainID="13" subID="0640103" name="墨西哥护照2002版"/>
+		<ID subClassFierID="130640104" mainID="13" subID="0640104" name="墨西哥护照2021版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130650000" imageType="1" sizeType="2" name="挪威护照" dataPath="SVMDevice/130650000">
+		<ID subClassFierID="130650102" mainID="13" subID="0650102" name="挪威护照2011版"/>
+		<ID subClassFierID="130650103" mainID="13" subID="0650103" name="挪威护照2020版"/>
+		
+	</SVMClassfier>
+	
+	
+	<SVMClassfier SVMID="130660000" imageType="1" sizeType="2" name="泰国护照" dataPath="SVMDevice/130660000">
+		<ID subClassFierID="130660102" mainID="13" subID="0660102" name="泰国护照2012版"/>
+		<ID subClassFierID="130660103" mainID="13" subID="0660103" name="泰国哥护照2020版"/>
+	
+	</SVMClassfier>
+	<SVMClassfier SVMID="130680000" imageType="1" sizeType="2" name="乌拉圭护照" dataPath="SVMDevice/130680000">
+		<ID subClassFierID="130680101" mainID="13" subID="0680101" name="乌拉圭护照2014版"/>
+		<ID subClassFierID="130680102" mainID="13" subID="0680102" name="乌拉圭护照2025版"/>
+	
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130710000" imageType="1" sizeType="2" name="葡萄牙护照" dataPath="SVMDevice/130710000">
+		<ID subClassFierID="130710102" mainID="13" subID="0710102" name="葡萄牙护照2006版"/>
+		<ID subClassFierID="130710103" mainID="13" subID="0710103" name="葡萄牙护照2017版"/>
+	
+	</SVMClassfier>
+	<SVMClassfier SVMID="130720000" imageType="1" sizeType="2" name="厄瓜多尔护照" dataPath="SVMDevice/130720000">
+		<ID subClassFierID="130720101" mainID="13" subID="0720101" name="厄瓜多尔护照2017版"/>
+		<ID subClassFierID="130720102" mainID="13" subID="0720102" name="厄瓜多尔护照2020版"/>
+	
+	</SVMClassfier>
+	<SVMClassfier SVMID="130750000" imageType="1" sizeType="2" name="荷兰护照" dataPath="SVMDevice/130750000">
+		<ID subClassFierID="130750101" mainID="13" subID="0750101" name="荷兰护照2011版"/>
+		<ID subClassFierID="130750102" mainID="13" subID="0750102" name="荷兰护照2014版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130790000" imageType="1" sizeType="2" name="沙特阿拉伯护照" dataPath="SVMDevice/130790000">
+		<ID subClassFierID="130790101" mainID="13" subID="0790101" name="沙特阿拉伯护照2000版"/>
+		<ID subClassFierID="130790102" mainID="13" subID="0790102" name="沙特阿拉伯护照2021版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130820000" imageType="1" sizeType="2" name="西班牙护照" dataPath="SVMDevice/130820000">
+		<ID subClassFierID="130820101" mainID="13" subID="0820101" name="西班牙护照2006版"/>
+		<ID subClassFierID="130820102" mainID="13" subID="0820102" name="西班牙护照2015版"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="130850000" imageType="1" sizeType="2" name="欧盟瑞典护照" dataPath="SVMDevice/130850000">
+		<ID subClassFierID="130850102" mainID="13" subID="0850102" name="欧盟瑞典护照2022版"/>
+		<ID subClassFierID="130850103" mainID="13" subID="0850103" name="欧盟瑞典护照2010版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130860000" imageType="1" sizeType="2" name="瑞士护照" dataPath="SVMDevice/130860000">
+		<ID subClassFierID="130860101" mainID="13" subID="0860101" name="瑞士护照2003版"/>
+		<ID subClassFierID="130860102" mainID="13" subID="0860102" name="瑞士护照2022版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="130970000" imageType="1" sizeType="2" name="哥伦比亚护照" dataPath="SVMDevice/130970000">
+		<ID subClassFierID="130970101" mainID="13" subID="0970101" name="哥伦比亚护照2021版"/>
+		<ID subClassFierID="130970102" mainID="13" subID="0970102" name="哥伦比亚护照2011版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="131120000" imageType="1" sizeType="2" name="罗马尼亚护照" dataPath="SVMDevice/131120000">
+		<ID subClassFierID="131120101" mainID="13" subID="1120101" name="罗马尼亚护照2010版"/>
+		<ID subClassFierID="131120102" mainID="13" subID="1120102" name="罗马尼亚护照2019版"/>
+	</SVMClassfier>
+	
+	<SVMClassfier SVMID="131180000" imageType="1" sizeType="2" name="波兰护照" dataPath="SVMDevice/131180000">
+		<ID subClassFierID="131180101" mainID="13" subID="1180101" name="波兰护照2006版"/>
+		<ID subClassFierID="131180102" mainID="13" subID="1180102" name="波兰护照2018版"/>
+	</SVMClassfier>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<SVMClassfier SVMID="2120" imageType="1" sizeType="0" name="秘鲁身份证MRZ页" dataPath="SVMDevice/2120">
+		<ID subClassFierID="21201" mainID="2120" subID="1" name="秘鲁身份证照片页1代"/>
+		<ID subClassFierID="20092" mainID="2009" subID="2" name="TD-1秘鲁身份证"/>
+	</SVMClassfier>
+	<SVMClassfier SVMID="120010100" imageType="1" sizeType="2" name="中国签证MRZ44" dataPath="SVMDevice/120010100">
+		<ID subClassFierID="120010101" mainID="12" subID="0010101" name="中国签证2004版"/>
+		<ID subClassFierID="120010103" mainID="12" subID="0010103" name="中国签证2010版"/>
+		<ID subClassFierID="120010104" mainID="12" subID="0010104" name="中国签证2019版"/>
+	</SVMClassfier>
+	
+</vecSVMClassfier>

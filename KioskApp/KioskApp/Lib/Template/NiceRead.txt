@@ -1,0 +1,25 @@
+. 
+--- below this we check the registry license features, there should be none --- 
+DISTR_TST - Capture SDK utility to test ENGine configuration on a non-developer
+            computer with a Technology Pack license or an OEM License File.
+Program version 4.0.3, RECapi version 15.2, Copyright 2000-2007, Nuance Communications, Inc.
+Displaying licenses ...
+  Capture SDK version 15 license was not found or expired.
+--- if any license features are listed above this, registry license should be deleted --- 
+. 
+--- below this we check the registry license features, there should be none --- 
+DISTR_TST - Capture SDK utility to test ENGine configuration on a non-developer
+            computer with a Technology Pack license or an OEM License File.
+Program version 4.0.3, RECapi version 15.2, Copyright 2000-2007, Nuance Communications, Inc.
+Displaying licenses ...
+  Capture SDK version 15 license was not found or expired.
+--- if any license features are listed above this, registry license should be deleted --- 
+. 
+--- below this we check the registry license features, there should be none --- 
+DISTR_TST - Capture SDK utility to test ENGine configuration on a non-developer
+            computer with a Technology Pack license or an OEM License File.
+Program version 4.0.3, RECapi version 15.2, Copyright 2000-2007, Nuance Communications, Inc.
+Displaying licenses ...
+  Capture SDK version 15 license was not found or expired.
+--- if any license features are listed above this, registry license should be deleted --- 
+

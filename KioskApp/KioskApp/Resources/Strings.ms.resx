@@ -1,0 +1,424 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <xs:schema id="root">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="metadata">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" />
+              </xs:sequence>
+              <xs:attribute name="name" use="required" type="xsd:string" />
+              <xs:attribute name="type" type="xsd:string" />
+              <xs:attribute name="mimetype" type="xsd:string" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="assembly">
+            <xs:complexType>
+              <xs:attribute name="alias" type="xsd:string" />
+              <xs:attribute name="name" type="xsd:string" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" ns1:Ordinal="1" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AccountNumber" xml:space="preserve">
+    <value>Nombor Akaun</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Alamat</value>
+  </data>
+  <data name="AddressInformation" xml:space="preserve">
+    <value>Butiran Alamat</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Kembali</value>
+  </data>
+  <data name="BankDetails" xml:space="preserve">
+    <value>Butiran Bank</value>
+  </data>
+  <data name="BankInformation" xml:space="preserve">
+    <value>Butiran Bank</value>
+  </data>
+  <data name="BankLevel" xml:space="preserve">
+    <value>Penyulitan peringkat bank</value>
+  </data>
+  <data name="BankName" xml:space="preserve">
+    <value>Nama Bank</value>
+  </data>
+  <data name="BeneficiaryCreatedSuccess" xml:space="preserve">
+    <value>Penerima Berjaya Dicipta!</value>
+  </data>
+  <data name="BeneficiaryDetails" xml:space="preserve">
+    <value>Butiran Penerima</value>
+  </data>
+  <data name="BeneficiaryInformation" xml:space="preserve">
+    <value>Butiran Penerima</value>
+  </data>
+  <data name="BeneficiaryReceives" xml:space="preserve">
+    <value>Penerima Terima</value>
+  </data>
+  <data name="BeneProfileSaved" xml:space="preserve">
+    <value>Profil penerima anda telah disimpan</value>
+  </data>
+  <data name="BestRates" xml:space="preserve">
+    <value>Kadar Terbaik</value>
+  </data>
+  <data name="BrowseTxt" xml:space="preserve">
+    <value>Lihat Produk dan Perkhidmatan Kami</value>
+  </data>
+  <data name="BTxt" xml:space="preserve">
+    <value>Lihat</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Batal</value>
+  </data>
+  <data name="CapturePhoto" xml:space="preserve">
+    <value>Ambil Foto</value>
+  </data>
+  <data name="CapturePhotoDesc" xml:space="preserve">
+    <value>Ambil foto untuk tujuan pengesahan</value>
+  </data>
+  <data name="ChooseCountry" xml:space="preserve">
+    <value>Pilih negara penerima wang</value>
+  </data>
+  <data name="ChoosePayment" xml:space="preserve">
+    <value>Pilih cara anda ingin menyelesaikan transaksi ini</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>Bandar</value>
+  </data>
+  <data name="Competitive" xml:space="preserve">
+    <value>Harga kompetitif</value>
+  </data>
+  <data name="CompleteRequiredFields" xml:space="preserve">
+    <value>Isi semua maklumat wajib untuk mencipta profil penghantar baharu</value>
+  </data>
+  <data name="CompleteRequiredFieldsBene" xml:space="preserve">
+    <value>Isi semua maklumat wajib untuk mencipta profil penghantar</value>
+  </data>
+  <data name="ConfirmExit" xml:space="preserve">
+    <value>Sahkan Keluar</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>Negara</value>
+  </data>
+  <data name="CreateNewBeneficiary" xml:space="preserve">
+    <value>Cipta Penerima Baru</value>
+  </data>
+  <data name="CreateToContinue" xml:space="preserve">
+    <value>Daftar penerima baharu untuk meneruskan</value>
+  </data>
+  <data name="CustomerInformation" xml:space="preserve">
+    <value>Butiran Pelanggan</value>
+  </data>
+  <data name="DateOfBirth" xml:space="preserve">
+    <value>Tarikh Lahir</value>
+  </data>
+  <data name="Delivery" xml:space="preserve">
+    <value>Penghantaran</value>
+  </data>
+  <data name="DeliveryMethod" xml:space="preserve">
+    <value>Kaedah Penghantaran</value>
+  </data>
+  <data name="DidntReceiveOTP" xml:space="preserve">
+    <value>Tidak menerima OTP?</value>
+  </data>
+  <data name="EnterBeneficiaryDetails" xml:space="preserve">
+    <value>Masukkan Butiran Penerima</value>
+  </data>
+  <data name="EnterDetailsVerify" xml:space="preserve">
+    <value>Isi butiran untuk pengesahan identiti</value>
+  </data>
+  <data name="EnterOTP" xml:space="preserve">
+    <value>Masukkan 6-Digit OTP</value>
+  </data>
+  <data name="EnterOTPToProceed" xml:space="preserve">
+    <value>
+Masukkan OTP untuk meneruskan transaksi</value>
+  </data>
+  <data name="EnterSenderDetails" xml:space="preserve">
+    <value>Masukkan Butiran Penghantar</value>
+  </data>
+  <data name="ExchangeRate" xml:space="preserve">
+    <value>Kadar Pertukaran</value>
+  </data>
+  <data name="ExitConfirmMessage" xml:space="preserve">
+    <value>Adakah anda pasti mahu keluar?
+Transaksi semasa anda akan dibatalkan.</value>
+  </data>
+  <data name="FastProcessing" xml:space="preserve">
+    <value>Pemprosesan Pantas</value>
+  </data>
+  <data name="FastSecureTransfers" xml:space="preserve">
+    <value>Pemindahan wang antarabangsa yang pantas, selamat dan telus</value>
+  </data>
+  <data name="FillAllRequiredFields" xml:space="preserve">
+    <value>Sila isi semua medan yang diperlukan bertanda * sebelum menyimpan.</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>Nama Pertama</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Nama Penuh</value>
+  </data>
+  <data name="HowMuch" xml:space="preserve">
+    <value>Masukkan jumlah yang ingin dihantar?</value>
+  </data>
+  <data name="ICPassport" xml:space="preserve">
+    <value>IC/Pasport</value>
+  </data>
+  <data name="ICPassportNumber" xml:space="preserve">
+    <value>Nombor IC/Pasport</value>
+  </data>
+  <data name="ICPassportType" xml:space="preserve">
+    <value>Jenis IC/Pasport</value>
+  </data>
+  <data name="IdentityDetails" xml:space="preserve">
+    <value>Butiran Identiti</value>
+  </data>
+  <data name="InvalidOTP" xml:space="preserve">
+    <value>OTP yang anda masukkan tidak sah. Sila cuba lagi.</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Nama Akhir</value>
+  </data>
+  <data name="LiveRate" xml:space="preserve">
+    <value>Kadar Terkini/ Kadar Semasa</value>
+  </data>
+  <data name="MainMenu" xml:space="preserve">
+    <value>Menu Utama</value>
+  </data>
+  <data name="MCLblTxt" xml:space="preserve">
+    <value>Tempah Sekarang untuk Langkau Giliran </value>
+  </data>
+  <data name="Mobile" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+  <data name="MobileNumber" xml:space="preserve">
+    <value>Nombor Telefon</value>
+  </data>
+  <data name="Nationality" xml:space="preserve">
+    <value>Kewarganegaraan</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Seterusnya</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Tidak</value>
+  </data>
+  <data name="NoBeneficiariesFound" xml:space="preserve">
+    <value>Penerima tidak ditemui</value>
+  </data>
+  <data name="Occupation" xml:space="preserve">
+    <value>Pekerjaan</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>daripada</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="OKIllSelect" xml:space="preserve">
+    <value>OK, Saya Akan Pilih</value>
+  </data>
+  <data name="OTPExpired" xml:space="preserve">
+    <value>OTP anda telah tamat tempoh. Sila minta yang baharu.</value>
+  </data>
+  <data name="OTPSentInfo" xml:space="preserve">
+    <value>OTP 6 digit telah dihantar ke nombor telefon berdaftar</value>
+  </data>
+  <data name="OTPVerification" xml:space="preserve">
+    <value>Pengesahan OTP</value>
+  </data>
+  <data name="PayAtCounter" xml:space="preserve">
+    <value>Bayar di Kaunter</value>
+  </data>
+  <data name="PayWithCard" xml:space="preserve">
+    <value>Bayar dengan Kad</value>
+  </data>
+  <data name="PersonalInformation" xml:space="preserve">
+    <value>Butiran Peribadi</value>
+  </data>
+  <data name="Postcode" xml:space="preserve">
+    <value>Poskod</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>Teruskan</value>
+  </data>
+  <data name="ProfileInformation" xml:space="preserve">
+    <value>Maklumat Profil / Butiran Profil</value>
+  </data>
+  <data name="ProvideIDContact" xml:space="preserve">
+    <value>Sila isi butiran pengenalan dan hubungan</value>
+  </data>
+  <data name="Purpose" xml:space="preserve">
+    <value>Tujuan</value>
+  </data>
+  <data name="PurposeOfRemittance" xml:space="preserve">
+    <value>Tujuan menghantar wang</value>
+  </data>
+  <data name="QueueXchange" xml:space="preserve">
+    <value>Pertukaran Mata Wang</value>
+  </data>
+  <data name="Rate" xml:space="preserve">
+    <value>Kadar</value>
+  </data>
+  <data name="RatesToday" xml:space="preserve">
+    <value>Kadar Hari Ini </value>
+  </data>
+  <data name="RatesTxt" xml:space="preserve">
+    <value>Lihat Kadar Penghantaran Wang &amp; Pertukaran Mata Wang</value>
+  </data>
+  <data name="RecentBeneficiaries" xml:space="preserve">
+    <value>Penerima Terkini</value>
+  </data>
+  <data name="Relationship" xml:space="preserve">
+    <value>Hubungan</value>
+  </data>
+  <data name="RemittanceDetails" xml:space="preserve">
+    <value>Butiran Penhangtaran Wang</value>
+  </data>
+  <data name="ResendOTP" xml:space="preserve">
+    <value>Hantar Semula OTP</value>
+  </data>
+  <data name="ReviewCarefully" xml:space="preserve">
+    <value>Sila semak semua butiran dengan teliti sebelum meneruskan pembayaran</value>
+  </data>
+  <data name="ReviewDetails" xml:space="preserve">
+    <value>Semak butiran penghantaran anda</value>
+  </data>
+  <data name="ReviewTransaction" xml:space="preserve">
+    <value>Semak Transaksi</value>
+  </data>
+  <data name="ReviewTransfer" xml:space="preserve">
+    <value>Semak dan lengkapkan butiran pemindahan anda</value>
+  </data>
+  <data name="SaveSenderDetails" xml:space="preserve">
+    <value>Simpan Butiran Penghantar</value>
+  </data>
+  <data name="SearchByNameOrAccount" xml:space="preserve">
+    <value>Cari mengikut nama atau nombor akaun...</value>
+  </data>
+  <data name="SecureTransfer" xml:space="preserve">
+    <value>Pemindahan Selamat</value>
+  </data>
+  <data name="SelectCountryFirst" xml:space="preserve">
+    <value>Sila pilih negara terlebih dahulu</value>
+  </data>
+  <data name="SelectDestination" xml:space="preserve">
+    <value>Pilih Destinasi</value>
+  </data>
+  <data name="SelectExistingBeneficiary" xml:space="preserve">
+    <value>Pilih Penerima Sedia Ada</value>
+  </data>
+  <data name="SelectFromPrevious" xml:space="preserve">
+    <value>Pilih dari penerima yang telah disimpan</value>
+  </data>
+  <data name="SelectMenu" xml:space="preserve">
+    <value>Pilih perkhidmatan untuk meneruskan</value>
+  </data>
+  <data name="SelectOrCreateBeneficiary" xml:space="preserve">
+    <value>Pilih penerima sedia ada atau cipta profil baru</value>
+  </data>
+  <data name="SelectPaymentMethod" xml:space="preserve">
+    <value>Pilih Kaedah Bayaran</value>
+  </data>
+  <data name="SendAmount" xml:space="preserve">
+    <value>Jumlah Wang Dihantar</value>
+  </data>
+  <data name="SenderDetails" xml:space="preserve">
+    <value>Butiran Penghantar</value>
+  </data>
+  <data name="SenderPhoto" xml:space="preserve">
+    <value>Foto Penghantar (Pilihan)</value>
+  </data>
+  <data name="SendingMoneyTo" xml:space="preserve">
+    <value>Menghantar Wang Ke</value>
+  </data>
+  <data name="SendMoney" xml:space="preserve">
+    <value>Kirim Wang</value>
+  </data>
+  <data name="ServiceFee" xml:space="preserve">
+    <value>Caj Perkhidmatan</value>
+  </data>
+  <data name="SMLblTxt" xml:space="preserve">
+    <value>Hantar wang ke luar negara dengan pantas dan selamat</value>
+  </data>
+  <data name="SourceOfFunds" xml:space="preserve">
+    <value>Sumber Dana</value>
+  </data>
+  <data name="StartNewTransaction" xml:space="preserve">
+    <value>Mulakan Transaksi Baharu</value>
+  </data>
+  <data name="StartTxt" xml:space="preserve">
+    <value>Mula</value>
+  </data>
+  <data name="StateProvince" xml:space="preserve">
+    <value>Negeri/Wilayah</value>
+  </data>
+  <data name="Step" xml:space="preserve">
+    <value>Langkah</value>
+  </data>
+  <data name="TotalAmount" xml:space="preserve">
+    <value>JUMLAH KESELURUHAN</value>
+  </data>
+  <data name="VerifyOTP" xml:space="preserve">
+    <value>Sahkan OTP</value>
+  </data>
+  <data name="ViewRateTxt" xml:space="preserve">
+    <value>LIHAT KADAR</value>
+  </data>
+  <data name="VisitOmni" xml:space="preserve">
+    <value>Lawati Kami</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Medan Diperlukan Tiada</value>
+  </data>
+  <data name="WithinMinutes" xml:space="preserve">
+    <value>Dalam beberapa minit</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Ya</value>
+  </data>
+  <data name="YouSend" xml:space="preserve">
+    <value>Anda menghantar ke</value>
+  </data>
+<data name="MoneyExchange" xml:space="preserve"><value>Tukar Wang</value></data><data name="MoneyExchangeDesc" xml:space="preserve"><value>Tukar tunai kepada MYR</value></data><data name="Mx_Title" xml:space="preserve"><value>Tukar Wang</value></data><data name="Mx_SelectCurrency" xml:space="preserve"><value>Pilih mata wang</value></data><data name="Mx_YouGive" xml:space="preserve"><value>Anda bayar</value></data><data name="Mx_YouReceive" xml:space="preserve"><value>Anda terima (MYR)</value></data><data name="Mx_Rate" xml:space="preserve"><value>Kadar</value></data><data name="Mx_Next" xml:space="preserve"><value>Seterusnya</value></data><data name="Mx_Back" xml:space="preserve"><value>Kembali</value></data><data name="Mx_CustomerDetails" xml:space="preserve"><value>Butiran pelanggan</value></data><data name="Mx_ScanPassport" xml:space="preserve"><value>Imbas pasport</value></data><data name="Mx_ScanIC" xml:space="preserve"><value>Imbas IC</value></data><data name="Mx_ManualEntry" xml:space="preserve"><value>Masukkan manual</value></data><data name="Mx_PassportNo" xml:space="preserve"><value>No. pasport</value></data><data name="Mx_FullName" xml:space="preserve"><value>Nama penuh</value></data><data name="Mx_Nationality" xml:space="preserve"><value>Warganegara</value></data><data name="Mx_Dob" xml:space="preserve"><value>Tarikh lahir</value></data><data name="Mx_Sex" xml:space="preserve"><value>Jantina</value></data><data name="Mx_Continue" xml:space="preserve"><value>Teruskan</value></data><data name="Mx_FaceVerify" xml:space="preserve"><value>Pengesahan muka</value></data><data name="Mx_Welcome" xml:space="preserve"><value>Selamat datang</value></data><data name="Mx_ConfirmIdentity" xml:space="preserve"><value>Adakah ini anda?</value></data><data name="Mx_NotYou" xml:space="preserve"><value>Bukan anda</value></data><data name="Mx_RegisterNew" xml:space="preserve"><value>Daftar baharu</value></data><data name="Mx_CashIn" xml:space="preserve"><value>Masukkan tunai</value></data><data name="Mx_Target" xml:space="preserve"><value>Sasaran</value></data><data name="Mx_Inserted" xml:space="preserve"><value>Dimasukkan</value></data><data name="Mx_InsertNotes" xml:space="preserve"><value>Masukkan wang kertas satu demi satu</value></data><data name="Mx_Processing" xml:space="preserve"><value>Memproses…</value></data><data name="Mx_Complete" xml:space="preserve"><value>Selesai</value></data><data name="Mx_Receipt" xml:space="preserve"><value>Resit</value></data><data name="Mx_Done" xml:space="preserve"><value>Siap</value></data><data name="Mx_RemovePassport" xml:space="preserve"><value>Sila keluarkan pasport</value></data><data name="Mx_Reading" xml:space="preserve"><value>Membaca…</value></data><data name="Mx_DeviceNotReady" xml:space="preserve"><value>Peranti tidak sedia</value></data></root>

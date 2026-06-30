@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vecSVMClassfier>
+	<!-- imageType: bit0 VI; bit1 IR; bit2 UV -->
+	<!-- <sizeType 0:二代证大小,1:二代证纵向,2:护照大小,3:军官证大小,4:长城吸入式模块图像大小,5:扫描仪军官证大小/> -->
+	<SVMClassfier SVMID="2" imageType="1" sizeType="0" name="二代证大小证件" dataPath="SVMDevice/2">
+		<ID subClassFierID="2" mainID="2" subID="1" name="二代证正面"/>
+		<ID subClassFierID="3" mainID="3" subID="1" name="二代证背面"/>
+		<ID subClassFierID="4" mainID="4" subID="1" name="临时身份证"/>		
+		<ID subClassFierID="5" mainID="5" subID="1" name="中国驾驶证"/>
+		<ID subClassFierID="61" mainID="6" subID="1" name="行驶证2001"/>
+		<ID subClassFierID="62" mainID="6" subID="2" name="行驶证2005"/>
+		<ID subClassFierID="63" mainID="6" subID="3" name="行驶证2009"/>		
+		<ID subClassFierID="141" mainID="14" subID="1" name="港澳居民来往内地通行证1999版-照片页"/>
+		<ID subClassFierID="142" mainID="14" subID="2" name="港澳居民来往内地通行证2012版-照片页"/>
+		<ID subClassFierID="143" mainID="14" subID="3" name="港澳居民来往内地通行证2024版（非中国籍）-照片页"/>
+		<ID subClassFierID="151" mainID="15" subID="1" name="港澳居民来往内地通行证1999版-机读码页"/>
+		<ID subClassFierID="152" mainID="15" subID="2" name="港澳居民来往内地通行证2012版-机读码页"/>		
+		<ID subClassFierID="22" mainID="22" subID="1" name="往来港澳通行证2014版-照片页"/>
+		<ID subClassFierID="25" mainID="25" subID="1" name="台湾居民来往大陆通行证2015版-照片页"/>
+		<ID subClassFierID="26" mainID="26" subID="1" name="台湾居民来往大陆通行证2015版-机读码页"/>
+		<ID subClassFierID="28" mainID="28" subID="1" name="机动车驾驶证副页"/>
+		<ID subClassFierID="29" mainID="29" subID="1" name="往来台湾通行证2017版-照片页"/>
+		<ID subClassFierID="30" mainID="30" subID="1" name="机动车行驶证副页"/>
+		<ID subClassFierID="32" mainID="32" subID="1" name="港澳台居民居住证-签发机关页"/>
+		<ID subClassFierID="331" mainID="33" subID="1" name="外国人永久居留身份证2017版-照片页"/>
+		<ID subClassFierID="332" mainID="33" subID="2" name="外国人永久居留身份证2023版-照片页"/>
+		<ID subClassFierID="34" mainID="34" subID="1" name="台湾地区（金马澎）入出境许可证2015版-照片页"/>
+		<ID subClassFierID="40" mainID="40" subID="1" name="外国人入境卡正面"/>
+		<ID subClassFierID="40657" mainID="40" subID="65537" name="外国人入境卡正面_180度"/>
+		<ID subClassFierID="41" mainID="41" subID="1" name="外国人入境卡背面"/>
+		<ID subClassFierID="41657" mainID="41" subID="65537" name="外国人入境卡背面_180度"/>
+		<ID subClassFierID="42" mainID="42" subID="1" name="中国退役军人优待卡"/>
+		<ID subClassFierID="10001" mainID="1000" subID="1" name="深圳居住证"/>
+		<ID subClassFierID="10002" mainID="1000" subID="2" name="东莞居住证"/>
+		<ID subClassFierID="10003" mainID="1000" subID="3" name="广东居住证"/>
+		<ID subClassFierID="10004" mainID="1000" subID="4" name="广西居住证"/>		
+		<ID subClassFierID="1013" mainID="1013" subID="1" name="深圳居住证"/>
+		<ID subClassFierID="10211" mainID="1021" subID="1" name="北京社保卡"/>
+		<ID subClassFierID="10212" mainID="1021" subID="2" name="重庆社保卡"/>
+		<ID subClassFierID="1039" mainID="1039" subID="1" name="厦门社保卡"/>
+		<ID subClassFierID="2018" mainID="2018" subID="1" name="APEC正面"/>
+	</SVMClassfier>
+</vecSVMClassfier>

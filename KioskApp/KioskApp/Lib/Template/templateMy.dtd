@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!ELEMENT TemplateContainer (vecMRTDTemplate)>
+<!ELEMENT TemplateContainer (#PCDATA)>
+<!ATTLIST TemplateContainer Version CDATA #REQUIRED>
+
+<!ELEMENT vecMRTDTemplate (MRTDTemplate*)>
+<!ELEMENT MRTDTemplate (#PCDATA)>
+<!ATTLIST MRTDTemplate MainID CDATA #REQUIRED
+  SubID CDATA #REQUIRED
+  Name CDATA #REQUIRED
+>
+
+<!ELEMENT MRTDTemplate (vecStandardImage, vecDocCheckInfo, vecFeaturePosGroup)>
+<!ELEMENT vecStandardImage (StandardImage*)>
+<!ELEMENT StandardImage EMPTY>
+<!ATTLIST StandardImage Name CDATA #REQUIRED
+	LightType (1|2|3) #REQUIRED
+	ImagePath CDATA #REQUIRED
+>
+
+<!ELEMENT vecDocCheckInfo (DocCheckInfo+)>
+<!ELEMENT DocCheckInfo EMPTY>
+<!ATTLIST DocCheckInfo Index CDATA #REQUIRED
+	CheckType CDATA #REQUIRED
+	ImagePath CDATA #REQUIRED
+>
+
+<!ELEMENT vecFeaturePosGroup (FeaturePosGroup+)>
+<!ELEMENT FeaturePosGroup (#PCDATA)>
+<!ATTLIST FeaturePosGroup FeatureType CDATA #REQUIRED>
+
+<!ELEMENT FeaturePosGroup (FeaturePos+)>
+<!ELEMENT FeaturePos EMPTY>
+<!ATTLIST FeaturePos LeftTopX CDATA #REQUIRED
+	LeftTopY CDATA #REQUIRED
+	RightTopX CDATA #REQUIRED
+	RightTopY CDATA #REQUIRED
+	LeftBottomX CDATA #REQUIRED
+	LeftBottomY CDATA #REQUIRED
+	RightBottomX CDATA #REQUIRED
+	RightBottomY CDATA #REQUIRED
+	Width CDATA #REQUIRED
+	Height CDATA #REQUIRED
+>
+

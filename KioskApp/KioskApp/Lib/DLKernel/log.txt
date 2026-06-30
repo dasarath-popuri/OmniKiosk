@@ -1,0 +1,94 @@
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+deep_reg_start
+cols = 1760, rows = 70, lenth = 256
+w = 1760, h = 70, add = 0
+predict_start
+input_geometry_height = 32, input_geometry_width = 804
+runSession_end
+predict_end
+result_num = 200
+rec_end
+33,-1,-1,-1,-1,8,-1,-1,-1,7,-1,-1,-1,-1,3,-1,-1,-1,-1,8,-1,-1,-1,7,-1,-1,-1,-1,5,-1,-1,-1,8,-1,-1,-1,-1,10,-1,-1,-1,6,-1,-1,-1,-1,19,-1,-1,-1,24,-1,-1,-1,-1,14,-1,-1,-1,-1,0,-1,-1,-1,-1,2,-1,-1,-1,0,-1,-1,-1,-1,5,-1,-1,-1,1,-1,-1,-1,-1,6,-1,-1,-1,0,-1,-1,-1,-1,23,-1,-1,-1,-1,3,-1,-1,-1,2,-1,-1,-1,-1,1,-1,-1,-1,-1,2,-1,-1,-1,2,-1,-1,-1,0,-1,-1,-1,-1,8,-1,-1,-1,-1,11,-1,-1,-1,0,-1,-1,-1,-1,6,-1,-1,-1,-1,4,-1,-1,-1,8,-1,-1,-1,-1,7,-1,-1,-1,5,-1,-1,-1,-1,3,-1,-1,-1,7,7,-1,-1,-1,0,-1,-1,-1,-1,7,-1,-1,-1,2,-1,-1,-1,-1,2,-1,-1,-1,10,-1,-1,-1,-1,3,-1,-1,-1,8,-1,-1,
+37
+result_num = 88
+num = 44
+
+label_end
+blank_end
+lenth = 44
+
+end
+buffer = 
+deep_reg_start
+cols = 1756, rows = 66, lenth = 256
+w = 1756, h = 66, add = 0
+predict_start
+input_geometry_height = 32, input_geometry_width = 851
+runSession_end
+predict_end
+result_num = 212
+rec_end
+26,-1,-1,-1,-1,10,-1,-1,-1,-1,19,-1,-1,-1,24,-1,-1,-1,-1,14,-1,-1,-1,-1,26,-1,-1,-1,-1,25,-1,-1,-1,-1,26,-1,-1,-1,-1,31,-1,-1,-1,-1,28,-1,-1,-1,-1,19,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,14,-1,-1,-1,-1,-1,11,-1,-1,-1,29,-1,-1,-1,-1,11,-1,-1,-1,-1,28,-1,-1,-1,-1,11,-1,-1,-1,-1,30,-1,-1,-1,18,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,10,10,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,-1,-1,10,-1,-1,
+37
+result_num = 88
+num = 44
+
+label_end
+blank_end
+lenth = 44
+
+end
+buffer = 
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+uninit_model_start
+uninit_model_end
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model
+init_params
+init_model

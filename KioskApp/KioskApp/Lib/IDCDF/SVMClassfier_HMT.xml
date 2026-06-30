@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vecSVMClassfier>
+	<!-- imageType: bit0 VI; bit1 IR; bit2 UV -->
+	<!-- <sizeType 0:二代证大小,1:二代证纵向,2:护照大小,3:军官证大小,4:长城吸入式模块图像大小,5:扫描仪军官证大小/> -->
+	<SVMClassfier SVMID="3" imageType="1" sizeType="0" name="二代证大小证件" dataPath="SVMDevice/3">
+		<ID subClassFierID="2" mainID="2" subID="1" name="二代证正面"/>
+		<ID subClassFierID="3" mainID="3" subID="1" name="二代证背面"/>
+		<ID subClassFierID="4" mainID="4" subID="1" name="临时身份证"/>
+		<ID subClassFierID="141" mainID="14" subID="1" name="港澳居民来往内地通行证1999版-照片页"/>
+		<ID subClassFierID="142" mainID="14" subID="2" name="港澳居民来往内地通行证2012版-照片页"/>
+		<ID subClassFierID="143" mainID="14" subID="3" name="港澳居民来往内地通行证2024版（非中国籍）-照片页"/>
+		<ID subClassFierID="151" mainID="15" subID="1" name="港澳居民来往内地通行证1999版-机读码页"/>
+		<ID subClassFierID="152" mainID="15" subID="2" name="港澳居民来往内地通行证2012版-机读码页"/>
+		<ID subClassFierID="22" mainID="22" subID="1" name="往来港澳通行证2014版"/>	
+		<ID subClassFierID="25" mainID="25" subID="1" name="台湾居民来往大陆通行证2015版-照片页"/>
+		<ID subClassFierID="26" mainID="26" subID="1" name="台湾居民来往大陆通行证2015版-机读码页"/>	
+		<ID subClassFierID="29" mainID="29" subID="1" name="往来台湾通行证2017版-照片页"/>
+		<ID subClassFierID="34" mainID="34" subID="1" name="台湾地区（金马澎）入出境许可证2015版-照片页"/>
+		<ID subClassFierID="35" mainID="35" subID="1" name="台湾地区居留证-照片页"/>
+		<ID subClassFierID="39" mainID="39" subID="1" name="澳门逗留特别许可证"/>
+		<ID subClassFierID="10011" mainID="1001" subID="1" name="香港身份证2003版"/>
+		<ID subClassFierID="10012" mainID="1001" subID="2" name="香港身份证2018版"/>
+		<ID subClassFierID="10051" mainID="1005" subID="1" name="澳门居民身份证2004版-照片页"/>
+		<ID subClassFierID="10052" mainID="1005" subID="2" name="澳门居民身份证2013版-照片页"/>
+		<ID subClassFierID="10053" mainID="1005" subID="3" name="澳门居民身份证2023版-照片页"/>				
+		<ID subClassFierID="10141" mainID="1014" subID="1" name="澳门蓝卡-照片页"/>
+		<ID subClassFierID="10142" mainID="1014" subID="2" name="澳门蓝卡2021版-照片页"/>
+		<ID subClassFierID="1030" mainID="1030" subID="1" name="台湾全民健康保险卡"/>
+		<ID subClassFierID="1031" mainID="1031" subID="1" name="台湾身份证正面"/>
+		<ID subClassFierID="1032" mainID="1032" subID="1" name="台湾身份证背面"/>
+		<ID subClassFierID="10401" mainID="1040" subID="1" name="台湾驾照"/>
+		<ID subClassFierID="10402" mainID="1040" subID="2" name="台湾驾照"/>	
+		<ID subClassFierID="1014657" mainID="1014" subID="65537" name="澳门蓝卡-照片页_180度"/>
+		<ID subClassFierID="1014658" mainID="1014" subID="65538" name="澳门蓝卡2021版-照片页_180度"/>
+	</SVMClassfier>
+</vecSVMClassfier>

@@ -1,0 +1,6 @@
+@OmniKiosk.MoneyExchange.Api_HostAddress = http://localhost:5234
+
+GET {{OmniKiosk.MoneyExchange.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

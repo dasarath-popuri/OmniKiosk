@@ -1,0 +1,213 @@
+<UserControl x:Class="OmniKiosk.Wpf.Views.MoneyExchange.Steps.ExchangeQuoteStep"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <Storyboard x:Key="EnterAnim">
+            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.35"/>
+            <DoubleAnimation Storyboard.TargetName="RootTrans" Storyboard.TargetProperty="Y" From="20" To="0" Duration="0:0:0.35">
+                <DoubleAnimation.EasingFunction>
+                    <QuadraticEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <Style x:Key="CurrencyItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="6"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#F0F9FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="Transparent"/>
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="CenterCellStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+    </UserControl.Resources>
+
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource EnterAnim}"/>
+        </EventTrigger>
+    </UserControl.Triggers>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid x:Name="Root" Opacity="0" Margin="16" MaxWidth="1100" HorizontalAlignment="Center">
+            <Grid.RenderTransform>
+                <TranslateTransform x:Name="RootTrans" Y="14"/>
+            </Grid.RenderTransform>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock Text="Currency Exchange" Style="{DynamicResource HeaderText}"/>
+                <TextBlock Text="Please select a currency and proceed with the transaction" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{DynamicResource FontSizeNormal}" Margin="0,8,0,0"/>
+            </StackPanel>
+
+            <Grid Grid.Row="1" Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border x:Name="BtnBuyType" Grid.Column="0" BorderBrush="{DynamicResource PrimaryBrush}" BorderThickness="2" CornerRadius="12" Background="#F0F9FF" Padding="20" Cursor="Hand" MouseDown="BtnBuyType_MouseDown">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="⬇️" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="Buy" Foreground="{DynamicResource PrimaryBrush}" FontSize="{DynamicResource FontSizeMedium}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Exchange Foreign Currency to Malaysian Ringgit" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="BtnSellType" Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Background="{DynamicResource CardBrush}" Padding="20" Cursor="Hand" MouseDown="BtnSellType_MouseDown" Visibility="Collapsed">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="⬆️" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="Sell" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{DynamicResource FontSizeMedium}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Exchange MYR to Foreign Currency" Foreground="{DynamicResource TextDisabledBrush}" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="2" Style="{DynamicResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                    <TextBlock Text="Currency *" Style="{DynamicResource FieldLabel}"/>
+                    <ListBox x:Name="LstCurrencies" Background="Transparent" BorderThickness="0" Margin="-6,8,-6,0" ItemContainerStyle="{StaticResource CurrencyItemStyle}" SelectionChanged="LstCurrencies_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Width="80" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Flag}" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding Code}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="{DynamicResource FontSizeNormal}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Row="3" Margin="0,0,0,32">
+                <Border BorderBrush="{DynamicResource PrimaryBrush}" BorderThickness="1" CornerRadius="8" Background="#F8FAFC" Padding="16" Margin="0,0,0,24">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="6" Padding="12,6" Margin="0,0,16,0">
+                            <TextBlock Text="Live Rate" Foreground="White" FontWeight="Bold" FontSize="12"/>
+                        </Border>
+                        <TextBlock x:Name="TxtLiveRate" Text="Select a currency" Foreground="{DynamicResource PrimaryBrush}" FontSize="{DynamicResource FontSizeNormal}" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <WrapPanel Orientation="Horizontal" Margin="0,0,-16,0">
+                    <StackPanel Width="300" Margin="0,0,16,24">
+                        <TextBlock x:Name="LblForeignAmount" Text="Amount You Give (Foreign) *" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <Grid>
+                            <TextBlock Text="💵" IsHitTestVisible="False" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="18" VerticalAlignment="Center" Margin="16,0,0,0" Panel.ZIndex="1"/>
+                            <TextBox x:Name="TxtForeignAmount" Padding="44,16,16,16" Style="{DynamicResource ModernTextBox}" PreviewTextInput="TxtAmount_PreviewTextInput" TextChanged="TxtAmount_TextChanged"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Width="300" Margin="0,0,16,24">
+                        <TextBlock Text="Amount You Receive (MYR)" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <Grid>
+                            <TextBlock Text="RM" IsHitTestVisible="False" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="16,0,0,0" Panel.ZIndex="1"/>
+                            <TextBox x:Name="TxtLocalAmount" Padding="54,16,16,16" IsReadOnly="True" Background="{DynamicResource SurfaceBrush}" Style="{DynamicResource ModernTextBox}"/>
+                        </Grid>
+                    </StackPanel>
+                </WrapPanel>
+
+                <Button x:Name="BtnAddTransaction" Content="+ Add Transaction" HorizontalAlignment="Left" Width="220" Click="BtnAddTransaction_Click" Style="{DynamicResource PrimaryButton}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="4" Margin="0,0,0,24">
+                <Grid Margin="0,0,0,16">
+                    <TextBlock Text="Your Transactions" Style="{DynamicResource HeaderText}" FontSize="{DynamicResource FontSizeMedium}"/>
+                    <TextBlock x:Name="TxtItemsCount" Text="0 items" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="Bold"/>
+                </Grid>
+
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" ClipToBounds="True">
+                    <DataGrid x:Name="DgTransactions" MinHeight="100">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TYPE" Binding="{Binding Type}" Width="*" ElementStyle="{StaticResource CenterCellStyle}"/>
+                            <DataGridTextColumn Header="CURRENCY" Binding="{Binding CurrencyCode}" Width="*" ElementStyle="{StaticResource CenterCellStyle}"/>
+                            <DataGridTextColumn Header="AMOUNT" Binding="{Binding ForeignAmount, StringFormat={}{0:N2}}" Width="*" ElementStyle="{StaticResource CenterCellStyle}"/>
+                            <DataGridTextColumn Header="RATE" Binding="{Binding Rate, StringFormat={}{0:N4}}" Width="*" ElementStyle="{StaticResource CenterCellStyle}"/>
+                            <DataGridTextColumn Header="MYR AMOUNT" Binding="{Binding MyrAmount, StringFormat={}{0:N2}}" Width="*" ElementStyle="{StaticResource CenterCellStyle}"/>
+                            <DataGridTemplateColumn Header="ACTIONS" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="🗑️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="DeleteTransaction_Click"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <Grid Margin="0,24,0,32">
+                    <TextBlock Text="Total Payable (MYR):" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{DynamicResource FontSizeMedium}" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="TxtTotalMyr" Text="RM 0.00" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="32" FontWeight="Black" HorizontalAlignment="Right"/>
+                </Grid>
+
+                <Button x:Name="BtnNext" Content="Continue ➔" Width="280" Height="64" HorizontalAlignment="Right" IsEnabled="False" Click="Next_Click" Style="{DynamicResource PrimaryButton}"/>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

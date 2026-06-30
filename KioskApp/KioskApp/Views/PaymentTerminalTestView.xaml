@@ -1,0 +1,49 @@
+﻿<Window x:Class="OmniKiosk.Wpf.Views.PaymentTerminalTestView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Payment Terminal Test" Height="600" Width="950"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Connection -->
+        <GroupBox Header="Connection" Padding="8">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Label Content="COM Port:" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cmbPorts" Width="140" Margin="6,0"/>
+                <Label Content="Baud Rate:" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <ComboBox x:Name="cmbBaud" Width="100" Margin="6,0">
+                    <ComboBoxItem Content="9600" IsSelected="True"/>
+                    <ComboBoxItem Content="19200"/>
+                    <ComboBoxItem Content="115200"/>
+                </ComboBox>
+                <Button Content="Refresh" Width="80" Margin="8,0" Click="RefreshPorts_Click"/>
+                <Button Content="Open" Width="80" Margin="6,0" Click="OpenPort_Click" x:Name="btnOpen"/>
+                <Button Content="Close" Width="80" Margin="6,0" Click="ClosePort_Click" x:Name="btnClose" IsEnabled="False"/>
+                <TextBlock x:Name="txtStatus" Margin="12,4,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Actions -->
+        <GroupBox Header="ECR Commands" Grid.Row="1" Padding="8" Margin="0,8,0,0">
+            <WrapPanel>
+                <Button Content="Ping" Width="140" Height="38" Margin="6" Click="BtnSendPing_Click"/>
+                <Button Content="Balance Inquiry" Width="140" Height="38" Margin="6" Click="BtnBalanceInquiry_Click"/>
+                <Button Content="Sale (RM10)" Width="140" Height="38" Margin="6" Click="BtnSale_Click"/>
+                <Button Content="Settlement" Width="140" Height="38" Margin="6" Click="BtnSettlement_Click"/>
+                <Button Content="Print Receipt" Width="140" Height="38" Margin="6" Click="BtnPrintReceipt_Click"/>
+                <Button Content="Display Screen" Width="140" Height="38" Margin="6" Click="BtnDisplayScreen_Click"/>
+                <Button Content="Clear Log" Width="140" Height="38" Margin="6" Click="BtnClearLog_Click"/>
+            </WrapPanel>
+        </GroupBox>
+
+        <!-- Log -->
+        <GroupBox Header="Log" Grid.Row="2" Padding="6" Margin="0,8,0,0">
+            <TextBox x:Name="txtLog" FontFamily="Consolas" FontSize="13" IsReadOnly="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="Black" Foreground="Lime"/>
+        </GroupBox>
+    </Grid>
+</Window>

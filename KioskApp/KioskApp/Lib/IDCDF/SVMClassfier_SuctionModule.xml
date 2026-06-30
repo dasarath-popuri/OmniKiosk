@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vecSVMClassfier>
+	<!-- imageType: bit0 VI; bit1 IR; bit2 UV -->
+	<!-- <sizeType 0:二代证大小,1:二代证纵向,2:护照大小,3:军官证大小,4:长城吸入式模块合并图像大小,5:扫描仪军官证大小/> -->
+	<SVMClassfier SVMID="101" imageType="1" sizeType="4" name="合并图像证件" dataPath="SVMDevice/101">
+		<ID subClassFierID="11111" mainID="123" subID="111" name="二代身份证"/>
+		<ID subClassFierID="11112" mainID="123" subID="65647" name="二代身份证"/>
+		<ID subClassFierID="11113" mainID="132" subID="111" name="二代身份证"/>
+		<ID subClassFierID="11114" mainID="132" subID="65647" name="二代身份证"/>
+		<ID subClassFierID="11115" mainID="20022" subID="101" name="往来港澳通行证2014版"/>
+		<ID subClassFierID="11115" mainID="20022" subID="65637" name="往来港澳通行证2014版"/>
+		<ID subClassFierID="11117" mainID="20029" subID="101" name="往来台湾通行证2017版"/>
+		<ID subClassFierID="11118" mainID="20029" subID="65637" name="往来台湾通行证2017版"/>
+		<ID subClassFierID="11119" mainID="21415" subID="111" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111110" mainID="21415" subID="122" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111111" mainID="21415" subID="65647" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111112" mainID="21415" subID="65658" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111113" mainID="21514" subID="111" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111114" mainID="21514" subID="122" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111115" mainID="21514" subID="65647" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111116" mainID="21514" subID="65648" name="港澳居民来往内地通行证"/>
+		<ID subClassFierID="111117" mainID="22200" subID="110" name="往来港澳通行证2014版"/>
+		<ID subClassFierID="111118" mainID="22200" subID="65646" name="往来港澳通行证2014版"/>
+		<ID subClassFierID="111119" mainID="22526" subID="111" name="台湾居民来往大陆通行证2015版"/>
+		<ID subClassFierID="111120" mainID="22526" subID="65647" name="台湾居民来往大陆通行证2015版"/>
+		<ID subClassFierID="111121" mainID="22625" subID="111" name="台湾居民来往大陆通行证2015版"/>
+		<ID subClassFierID="111122" mainID="22625" subID="65647" name="台湾居民来往大陆通行证2015版"/>
+		<ID subClassFierID="111123" mainID="22900" subID="110" name="往来台湾通行证2017版"/>
+		<ID subClassFierID="111124" mainID="22900" subID="65646" name="往来台湾通行证2017版"/>
+		<ID subClassFierID="111125" mainID="410010000" subID="110" name="香港居民身份证"/>
+		<ID subClassFierID="111126" mainID="410010000" subID="65646" name="香港居民身份证"/>
+		<ID subClassFierID="111127" mainID="400001001" subID="101" name="香港居民身份证"/>
+		<ID subClassFierID="111128" mainID="400001001" subID="65637" name="香港居民身份证"/>
+		<ID subClassFierID="111129" mainID="410052009" subID="111" name="澳门居民身份证"/>
+		<ID subClassFierID="111130" mainID="410052009" subID="65647" name="澳门居民身份证"/>
+		<ID subClassFierID="111131" mainID="420091005" subID="111" name="澳门居民身份证"/>
+		<ID subClassFierID="111132" mainID="420091005" subID="65647" name="澳门居民身份证"/>
+		<ID subClassFierID="111133" mainID="410052009" subID="121" name="澳门居民身份证"/>
+		<ID subClassFierID="111134" mainID="410052009" subID="65657" name="澳门居民身份证"/>
+		<ID subClassFierID="111135" mainID="420091005" subID="112" name="澳门居民身份证"/>
+		<ID subClassFierID="111136" mainID="420091005" subID="65648" name="澳门居民身份证"/>
+		<ID subClassFierID="111137" mainID="410010000" subID="120" name="香港居民身份证"/>
+		<ID subClassFierID="111138" mainID="410010000" subID="65656" name="香港居民身份证"/>
+		<ID subClassFierID="111139" mainID="400001001" subID="102" name="香港居民身份证"/>
+		<ID subClassFierID="111140" mainID="400001001" subID="65638" name="香港居民身份证"/>
+	</SVMClassfier>
+</vecSVMClassfier>

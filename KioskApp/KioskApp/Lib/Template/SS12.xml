@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TemplateContainer SYSTEM "template.dtd">
+<TemplateContainer Version="2.0.0.0">
+    <vecMRTDTemplate>
+        <MRTDTemplate MainID="12" SubID="1" Name="签证">
+            <!--标准全副图像存放路径-->
+            <vecStandardImage>
+                <StandardImage Name="红外图" LightType="1" ImagePath="./res/12/1/IR.jpg"/>
+                <StandardImage Name="紫外图" LightType="2" ImagePath="./res/12/1/UV.jpg"/>
+                <StandardImage Name="白光图" LightType="3" ImagePath="./res/12/1/VI.jpg"/>
+            </vecStandardImage>
+            <vecDocCheckInfo>
+                <!--
+                CheckType见Sys.xml中vecCheckPointAll定义
+                FeatureType见Sys.xml中vecFeature定义
+                ImagePath：标准高清局部特征图存放位置-->
+                <DocCheckInfo Index="0" CheckType="4" ImagePath=""/>
+                <DocCheckInfo Index="1" CheckType="5" ImagePath=""/>
+                <DocCheckInfo Index="2" CheckType="7" ImagePath=""/>
+                <DocCheckInfo Index="3" CheckType="17" ImagePath=""/>
+                <DocCheckInfo Index="4" CheckType="25" ImagePath=""/>
+            </vecDocCheckInfo>
+            <vecFeaturePosGroup>
+                <!--LeftTopX等：在标准全副图像上的4点坐标-->
+                <FeaturePosGroup FeatureType="FU">
+                    <FeaturePos LeftTopX="0" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="0" LeftBottomY="10000" RightBottomX="10000" RightBottomY="10000" Width="0" Height="0"/>
+                </FeaturePosGroup>
+                <FeaturePosGroup FeatureType="MR">
+                    <FeaturePos LeftTopX="300" LeftTopY="7000" RightTopX="9700" RightTopY="7000" LeftBottomX="300" LeftBottomY="9800" RightBottomX="9700" RightBottomY="9800" Width="" Height=""/>
+                </FeaturePosGroup>
+                <FeaturePosGroup FeatureType="VZ">
+                    <FeaturePos LeftTopX="3000" LeftTopY="0" RightTopX="10000" RightTopY="0" LeftBottomX="3000" LeftBottomY="7000" RightBottomX="10000" RightBottomY="7000" Width="0" Height="0"/>
+                </FeaturePosGroup>
+                <FeaturePosGroup FeatureType="IS4">
+                    <FeaturePos LeftTopX="220" LeftTopY="280" RightTopX="1790" RightTopY="280" LeftBottomX="220" LeftBottomY="1030" RightBottomX="1790" RightBottomY="1030" Width="2029" Height="1441"/>
+                </FeaturePosGroup>
+            </vecFeaturePosGroup>
+        </MRTDTemplate>
+    </vecMRTDTemplate>
+</TemplateContainer>

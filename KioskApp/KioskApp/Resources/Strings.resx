@@ -1,0 +1,424 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <xs:schema id="root">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="metadata">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" />
+              </xs:sequence>
+              <xs:attribute name="name" use="required" type="xsd:string" />
+              <xs:attribute name="type" type="xsd:string" />
+              <xs:attribute name="mimetype" type="xsd:string" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="assembly">
+            <xs:complexType>
+              <xs:attribute name="alias" type="xsd:string" />
+              <xs:attribute name="name" type="xsd:string" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" ns1:Ordinal="1" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AccountNumber" xml:space="preserve">
+    <value>Account Number</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="AddressInformation" xml:space="preserve">
+    <value>Address Information</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="BankDetails" xml:space="preserve">
+    <value>Bank Details</value>
+  </data>
+  <data name="BankInformation" xml:space="preserve">
+    <value>Bank Information</value>
+  </data>
+  <data name="BankLevel" xml:space="preserve">
+    <value>Bank-level encryption</value>
+  </data>
+  <data name="BankName" xml:space="preserve">
+    <value>Bank Name</value>
+  </data>
+  <data name="BeneficiaryCreatedSuccess" xml:space="preserve">
+    <value>Beneficiary Created Successfully!</value>
+  </data>
+  <data name="BeneficiaryDetails" xml:space="preserve">
+    <value>Beneficiary Details</value>
+  </data>
+  <data name="BeneficiaryInformation" xml:space="preserve">
+    <value>Beneficiary Information</value>
+  </data>
+  <data name="BeneficiaryReceives" xml:space="preserve">
+    <value>Beneficiary Receives</value>
+  </data>
+  <data name="BeneProfileSaved" xml:space="preserve">
+    <value>Your beneficiary profile has been saved</value>
+  </data>
+  <data name="BestRates" xml:space="preserve">
+    <value>Best Rates</value>
+  </data>
+  <data name="BrowseTxt" xml:space="preserve">
+    <value>Browse our products and services</value>
+  </data>
+  <data name="BTxt" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="CapturePhoto" xml:space="preserve">
+    <value>Capture Photo</value>
+  </data>
+  <data name="CapturePhotoDesc" xml:space="preserve">
+    <value>Capture a photo for verification purposes</value>
+  </data>
+  <data name="ChooseCountry" xml:space="preserve">
+    <value>Choose the country where your recipient will receive money</value>
+  </data>
+  <data name="ChoosePayment" xml:space="preserve">
+    <value>Choose how you'd like to complete this transaction</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="Competitive" xml:space="preserve">
+    <value>Competitive pricing</value>
+  </data>
+  <data name="CompleteRequiredFields" xml:space="preserve">
+    <value>Complete all required fields to create a new sender profile</value>
+  </data>
+  <data name="CompleteRequiredFieldsBene" xml:space="preserve">
+    <value>Complete all required fields to create a new beneficiary profile</value>
+  </data>
+  <data name="ConfirmExit" xml:space="preserve">
+    <value>Confirm Exit</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="CreateNewBeneficiary" xml:space="preserve">
+    <value>Create New Beneficiary</value>
+  </data>
+  <data name="CreateToContinue" xml:space="preserve">
+    <value>Create a new beneficiary to continue</value>
+  </data>
+  <data name="CustomerInformation" xml:space="preserve">
+    <value>Customer Information</value>
+  </data>
+  <data name="DateOfBirth" xml:space="preserve">
+    <value>Date of Birth</value>
+  </data>
+  <data name="Delivery" xml:space="preserve">
+    <value>Delivery</value>
+  </data>
+  <data name="DeliveryMethod" xml:space="preserve">
+    <value>Delivery Method</value>
+  </data>
+  <data name="DidntReceiveOTP" xml:space="preserve">
+    <value>Didn't receive the OTP?</value>
+  </data>
+  <data name="EnterBeneficiaryDetails" xml:space="preserve">
+    <value>Enter Beneficiary Details</value>
+  </data>
+  <data name="EnterDetailsVerify" xml:space="preserve">
+    <value>Enter your details to verify your identity</value>
+  </data>
+  <data name="EnterOTP" xml:space="preserve">
+    <value>Enter 6-Digit OTP</value>
+  </data>
+  <data name="EnterOTPToProceed" xml:space="preserve">
+    <value>Please enter the OTP to proceed with your transaction.</value>
+  </data>
+  <data name="EnterSenderDetails" xml:space="preserve">
+    <value>Enter Sender Details</value>
+  </data>
+  <data name="ExchangeRate" xml:space="preserve">
+    <value>Exchange Rate</value>
+  </data>
+  <data name="ExitConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to exit?
+
+Your current transaction will be cancelled.</value>
+  </data>
+  <data name="FastProcessing" xml:space="preserve">
+    <value>Fast Processing</value>
+  </data>
+  <data name="FastSecureTransfers" xml:space="preserve">
+    <value>Fast, secure, and transparent international money transfers</value>
+  </data>
+  <data name="FillAllRequiredFields" xml:space="preserve">
+    <value>Please fill in all required fields marked with * before saving</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>First Name</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="HowMuch" xml:space="preserve">
+    <value>How much would you like to send?</value>
+  </data>
+  <data name="ICPassport" xml:space="preserve">
+    <value>IC/Passport</value>
+  </data>
+  <data name="ICPassportNumber" xml:space="preserve">
+    <value>IC/Passport Number</value>
+  </data>
+  <data name="ICPassportType" xml:space="preserve">
+    <value>IC/Passport Type</value>
+  </data>
+  <data name="IdentityDetails" xml:space="preserve">
+    <value>Identity Details</value>
+  </data>
+  <data name="InvalidOTP" xml:space="preserve">
+    <value>The OTP you entered is invalid. Please try again.</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Last Name</value>
+  </data>
+  <data name="LiveRate" xml:space="preserve">
+    <value>Live Rate</value>
+  </data>
+  <data name="MainMenu" xml:space="preserve">
+    <value>Main Menu</value>
+  </data>
+  <data name="MCLblTxt" xml:space="preserve">
+    <value>Start the Pre Booking to skip the Queue</value>
+  </data>
+  <data name="Mobile" xml:space="preserve">
+    <value>Mobile</value>
+  </data>
+  <data name="MobileNumber" xml:space="preserve">
+    <value>Mobile Number</value>
+  </data>
+  <data name="Nationality" xml:space="preserve">
+    <value>Nationality</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="NoBeneficiariesFound" xml:space="preserve">
+    <value>No beneficiaries found</value>
+  </data>
+  <data name="Occupation" xml:space="preserve">
+    <value>Occupation</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="OKIllSelect" xml:space="preserve">
+    <value>OK, I'll Select</value>
+  </data>
+  <data name="OTPExpired" xml:space="preserve">
+    <value>Your OTP has expired. Please request a new one.</value>
+  </data>
+  <data name="OTPSentInfo" xml:space="preserve">
+    <value>A 6-digit One-Time Password has been sent to your registered mobile number.</value>
+  </data>
+  <data name="OTPVerification" xml:space="preserve">
+    <value>OTP Verification</value>
+  </data>
+  <data name="PayAtCounter" xml:space="preserve">
+    <value>Pay at Counter</value>
+  </data>
+  <data name="PayWithCard" xml:space="preserve">
+    <value>Pay with Card</value>
+  </data>
+  <data name="PersonalInformation" xml:space="preserve">
+    <value>Personal Information</value>
+  </data>
+  <data name="Postcode" xml:space="preserve">
+    <value>Postcode</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>Proceed</value>
+  </data>
+  <data name="ProfileInformation" xml:space="preserve">
+    <value>Profile Information</value>
+  </data>
+  <data name="ProvideIDContact" xml:space="preserve">
+    <value>Please provide your identification and contact details</value>
+  </data>
+  <data name="Purpose" xml:space="preserve">
+    <value>Purpose</value>
+  </data>
+  <data name="PurposeOfRemittance" xml:space="preserve">
+    <value>Purpose of Remittance</value>
+  </data>
+  <data name="QueueXchange" xml:space="preserve">
+    <value>Money Exchange</value>
+  </data>
+  <data name="Rate" xml:space="preserve">
+    <value>Rate</value>
+  </data>
+  <data name="RatesToday" xml:space="preserve">
+    <value>Today's Rates</value>
+  </data>
+  <data name="RatesTxt" xml:space="preserve">
+    <value>View Remittance &amp; Money Exchange Rates</value>
+  </data>
+  <data name="RecentBeneficiaries" xml:space="preserve">
+    <value>Recent Beneficiaries</value>
+  </data>
+  <data name="Relationship" xml:space="preserve">
+    <value>Relationship</value>
+  </data>
+  <data name="RemittanceDetails" xml:space="preserve">
+    <value>Remittance Details</value>
+  </data>
+  <data name="ResendOTP" xml:space="preserve">
+    <value>Resend OTP</value>
+  </data>
+  <data name="ReviewCarefully" xml:space="preserve">
+    <value>Please review all details carefully before proceeding to payment</value>
+  </data>
+  <data name="ReviewDetails" xml:space="preserve">
+    <value>Review the details of your transfer</value>
+  </data>
+  <data name="ReviewTransaction" xml:space="preserve">
+    <value>Review Transaction</value>
+  </data>
+  <data name="ReviewTransfer" xml:space="preserve">
+    <value>Review and complete your transfer information</value>
+  </data>
+  <data name="SaveSenderDetails" xml:space="preserve">
+    <value>Save Sender Details</value>
+  </data>
+  <data name="SearchByNameOrAccount" xml:space="preserve">
+    <value>Search by name or account number...</value>
+  </data>
+  <data name="SecureTransfer" xml:space="preserve">
+    <value>Secure Transfer</value>
+  </data>
+  <data name="SelectCountryFirst" xml:space="preserve">
+    <value>Select a country first</value>
+  </data>
+  <data name="SelectDestination" xml:space="preserve">
+    <value>Select Destination</value>
+  </data>
+  <data name="SelectExistingBeneficiary" xml:space="preserve">
+    <value>Select Existing Beneficiary</value>
+  </data>
+  <data name="SelectFromPrevious" xml:space="preserve">
+    <value>Select from your previously saved beneficiary profiles</value>
+  </data>
+  <data name="SelectMenu" xml:space="preserve">
+    <value>Select a service to continue</value>
+  </data>
+  <data name="SelectOrCreateBeneficiary" xml:space="preserve">
+    <value>Select an existing beneficiary or create a new profile</value>
+  </data>
+  <data name="SelectPaymentMethod" xml:space="preserve">
+    <value>Select Payment Method</value>
+  </data>
+  <data name="SendAmount" xml:space="preserve">
+    <value>Send Amount</value>
+  </data>
+  <data name="SenderDetails" xml:space="preserve">
+    <value>Sender Details</value>
+  </data>
+  <data name="SenderPhoto" xml:space="preserve">
+    <value>Sender Photo (Optional)</value>
+  </data>
+  <data name="SendingMoneyTo" xml:space="preserve">
+    <value>Sending Money To</value>
+  </data>
+  <data name="SendMoney" xml:space="preserve">
+    <value>Send Money</value>
+  </data>
+  <data name="ServiceFee" xml:space="preserve">
+    <value>Service Fee</value>
+  </data>
+  <data name="SMLblTxt" xml:space="preserve">
+    <value>Send money abroad quickly and securely</value>
+  </data>
+  <data name="SourceOfFunds" xml:space="preserve">
+    <value>Source of Funds</value>
+  </data>
+  <data name="StartNewTransaction" xml:space="preserve">
+    <value>Start New Transaction</value>
+  </data>
+  <data name="StartTxt" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="StateProvince" xml:space="preserve">
+    <value>State/Province</value>
+  </data>
+  <data name="Step" xml:space="preserve">
+    <value>Step</value>
+  </data>
+  <data name="TotalAmount" xml:space="preserve">
+    <value>TOTAL AMOUNT</value>
+  </data>
+  <data name="VerifyOTP" xml:space="preserve">
+    <value>Verify OTP</value>
+  </data>
+  <data name="ViewRateTxt" xml:space="preserve">
+    <value>VIEW RATES</value>
+  </data>
+  <data name="VisitOmni" xml:space="preserve">
+    <value>Visit Us</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Required Fields Missing</value>
+  </data>
+  <data name="WithinMinutes" xml:space="preserve">
+    <value>Within minutes</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="YouSend" xml:space="preserve">
+    <value>You Send</value>
+  </data>
+<data name="MoneyExchange" xml:space="preserve"><value>Money Exchange</value></data><data name="MoneyExchangeDesc" xml:space="preserve"><value>Exchange cash to MYR</value></data><data name="Mx_Title" xml:space="preserve"><value>Money Exchange</value></data><data name="Mx_SelectCurrency" xml:space="preserve"><value>Select currency</value></data><data name="Mx_YouGive" xml:space="preserve"><value>You give</value></data><data name="Mx_YouReceive" xml:space="preserve"><value>You receive (MYR)</value></data><data name="Mx_Rate" xml:space="preserve"><value>Rate</value></data><data name="Mx_Next" xml:space="preserve"><value>Next</value></data><data name="Mx_Back" xml:space="preserve"><value>Back</value></data><data name="Mx_CustomerDetails" xml:space="preserve"><value>Customer details</value></data><data name="Mx_ScanPassport" xml:space="preserve"><value>Scan passport</value></data><data name="Mx_ScanIC" xml:space="preserve"><value>Scan IC</value></data><data name="Mx_ManualEntry" xml:space="preserve"><value>Manual entry</value></data><data name="Mx_PassportNo" xml:space="preserve"><value>Passport No</value></data><data name="Mx_FullName" xml:space="preserve"><value>Full name</value></data><data name="Mx_Nationality" xml:space="preserve"><value>Nationality</value></data><data name="Mx_Dob" xml:space="preserve"><value>Date of birth</value></data><data name="Mx_Sex" xml:space="preserve"><value>Sex</value></data><data name="Mx_Continue" xml:space="preserve"><value>Continue</value></data><data name="Mx_FaceVerify" xml:space="preserve"><value>Face verification</value></data><data name="Mx_Welcome" xml:space="preserve"><value>Welcome</value></data><data name="Mx_ConfirmIdentity" xml:space="preserve"><value>Is this you?</value></data><data name="Mx_NotYou" xml:space="preserve"><value>Not you</value></data><data name="Mx_RegisterNew" xml:space="preserve"><value>Register new</value></data><data name="Mx_CashIn" xml:space="preserve"><value>Insert cash</value></data><data name="Mx_Target" xml:space="preserve"><value>Target</value></data><data name="Mx_Inserted" xml:space="preserve"><value>Inserted</value></data><data name="Mx_InsertNotes" xml:space="preserve"><value>Insert notes one by one</value></data><data name="Mx_Processing" xml:space="preserve"><value>Processing…</value></data><data name="Mx_Complete" xml:space="preserve"><value>Complete</value></data><data name="Mx_Receipt" xml:space="preserve"><value>Receipt</value></data><data name="Mx_Done" xml:space="preserve"><value>Done</value></data><data name="Mx_RemovePassport" xml:space="preserve"><value>Remove passport</value></data><data name="Mx_Reading" xml:space="preserve"><value>Reading…</value></data><data name="Mx_DeviceNotReady" xml:space="preserve"><value>Device not ready</value></data></root>
