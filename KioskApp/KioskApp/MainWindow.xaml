@@ -3,495 +3,243 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="OmniRemit Kiosk" 
+        xmlns:loc="clr-namespace:OmniKiosk.Wpf.Helpers"
+        Title="Vivo Money Kiosk"
         WindowState="Maximized"
         WindowStyle="None"
-        Background="Black"
+        Background="{StaticResource BackgroundBrush}"
         Loaded="Window_Loaded">
 
     <DockPanel>
-
-        <Border Background="{DynamicResource PrimaryBrush}" DockPanel.Dock="Top" Height="80">
-            <Grid Margin="20,0">
+        <Border Background="{StaticResource PrimaryBrush}" DockPanel.Dock="Top" Height="76">
+            <Grid Margin="28,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
-                    <Image Source="https://raw.githubusercontent.com/dasarath-popuri/rma-partners-logos/main/Logos/rma_logo_main.png"
-                           Height="60" Width="200" Stretch="Uniform"/>
-                </StackPanel>
+                <TextBlock Grid.Column="0" Text="Vivo Money" FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
 
-                <TextBlock x:Name="TxtWelcome" Grid.Column="1"
-                           Text="Welcome to RMA"
-                           VerticalAlignment="Center"
-                           FontSize="30" FontWeight="Bold"
-                           Foreground="{DynamicResource TextOnPrimaryBrush}" TextAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Margin="18,0,0,0"/>
+                <TextBlock x:Name="TxtWelcome" Grid.Column="1" Text="{loc:Loc WelcomeText}" VerticalAlignment="Center"
+                           FontFamily="{StaticResource PrimaryFont}" FontSize="18" FontWeight="SemiBold"
+                           Foreground="White" Opacity="0.85" TextAlignment="Center" HorizontalAlignment="Center"/>
 
-                <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
-                    <Button Content="Standard Theme" Click="BtnStandard_Click" Padding="10,5" Margin="0,0,10,0" FontWeight="Bold"/>
-                    <Button Content="Raya Theme" Click="BtnRaya_Click" Padding="10,5" Margin="0,0,10,0" FontWeight="Bold"/>
-                </StackPanel>
-
-                <Button x:Name="BtnCloseApp"
-                        Content="Close"
-                        Width="100" Height="30"
-                        Background="{DynamicResource DangerBrush}"
-                        Foreground="{DynamicResource TextOnPrimaryBrush}"
-                        FontSize="16"
-                        FontWeight="Bold"
-                        Grid.Column="2"
-                        HorizontalAlignment="Right"
-                        Margin="8,0"
-                        Click="BtnCloseApp_Click"/>
+                <Button x:Name="BtnCloseApp" Content="Close" Grid.Column="2" Width="90" Height="40"
+                        Background="Transparent" Foreground="White" FontSize="15" FontWeight="SemiBold"
+                        BorderBrush="White" BorderThickness="1.5" Cursor="Hand"
+                        Click="BtnCloseApp_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
             </Grid>
         </Border>
 
         <Grid>
-            <MediaElement x:Name="BackgroundVideo"
-                          LoadedBehavior="Manual"
-                          UnloadedBehavior="Stop"
-                          Stretch="UniformToFill"
-                          IsMuted="True"
-                          MediaEnded="BackgroundVideo_MediaEnded"/>
+            <MediaElement x:Name="BackgroundVideo" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                          Stretch="UniformToFill" IsMuted="True" MediaEnded="BackgroundVideo_MediaEnded"/>
 
+            <!--<Border Background="#88121816"/>-->
 
+            <!-- HOME / ATTRACT SCREEN -->
             <Grid x:Name="HomeScreen" Visibility="Visible">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                </StackPanel>
+                <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,90"
+                        Background="#CCFFFFFF" CornerRadius="18" Padding="48,22">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="14" Height="14" Fill="{StaticResource AccentGoldBrush}" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Ellipse.Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.25" Duration="0:0:1"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <TextBlock Text="{loc:Loc Home_TapToStart}" FontFamily="{StaticResource DisplayFont}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Bottom"/>
+                    </StackPanel>
+                </Border>
             </Grid>
 
-            <Border x:Name="TapCatcher"
-                    Background="Transparent"
-                    MouseDown="TapCatcher_MouseDown"
-                    Visibility="Visible"/>
+            <Border x:Name="TapCatcher" Background="Transparent" MouseDown="TapCatcher_MouseDown" Visibility="Visible"/>
 
-            <Grid x:Name="LanguageSelectionScreen" Visibility="Collapsed" Background="{DynamicResource BackgroundBrush}">
+            <!-- LANGUAGE SELECTION SCREEN -->
+            <Grid x:Name="LanguageSelectionScreen" Background="{StaticResource BackgroundBrush}" Visibility="Collapsed">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="40">
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" 
-                              HorizontalScrollBarVisibility="Disabled"
-                              PanningMode="VerticalOnly">
-                    <Border MaxWidth="1200" 
-                            VerticalAlignment="Center" 
-                            HorizontalAlignment="Center"
-                            Margin="40">
-                        <StackPanel>
+                    <TextBlock Text="{loc:Loc LanguageSelection_Title}" Style="{StaticResource HeaderText}" TextAlignment="Center" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{loc:Loc LanguageSelection_Subtitle}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="{StaticResource FontSizeNormal}" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,8,0,48"/>
 
-                            <Border Background="{DynamicResource CardBackgroundBrush}"
-                                    CornerRadius="24"
-                                    Padding="60,50"
-                                    Margin="0,0,0,40">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="40" ShadowDepth="0" Opacity="0.3" Color="#000000"/>
-                                </Border.Effect>
+                    <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
 
-                                <StackPanel>
-                                    <Border Background="{DynamicResource BackgroundBrush}"
-                                            Width="140"
-                                            Height="140"
-                                            CornerRadius="70"
-                                            HorizontalAlignment="Center"
-                                            Margin="0,0,0,30">
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.1" Color="#2563EB"/>
-                                        </Border.Effect>
-                                        <TextBlock Text="🌐"
-                                                   FontSize="80"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-
-                                    <TextBlock Text="Welcome • Selamat Datang"
-                                               FontSize="28"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,0,0,20"/>
-
-                                    <TextBlock Text="Choose Your Language"
-                                               FontSize="48"
-                                               FontWeight="Bold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,0,0,8"/>
-
-                                    <TextBlock Text="Pilih Bahasa Anda"
-                                               FontSize="48"
-                                               FontWeight="Bold"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-
-                            <Grid Margin="0,0,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Button x:Name="BtnEnglish"
-                                        Grid.Column="0"
-                                        Click="BtnEnglish_Click"
-                                        Height="280"
-                                        BorderThickness="0"
-                                        Cursor="Hand"
-                                        Background="Transparent">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="MainBorder"
-                                                    Background="{DynamicResource CardBackgroundBrush}"
-                                                    CornerRadius="24"
-                                                    Padding="40">
-                                                <Border.Effect>
-                                                    <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.2" Color="#000000"/>
-                                                </Border.Effect>
-
-                                                <Grid>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="English" 
-                                                                   FontSize="42" 
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   HorizontalAlignment="Center"
-                                                                   Margin="0,0,0,12"/>
-
-                                                        <TextBlock Text="International" 
-                                                                   FontSize="18"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   HorizontalAlignment="Center"/>
-                                                    </StackPanel>
-
-                                                    <Border x:Name="CheckBadge"
-                                                            Background="{DynamicResource PrimaryBrush}"
-                                                            Width="50"
-                                                            Height="50"
-                                                            CornerRadius="25"
-                                                            VerticalAlignment="Top"
-                                                            HorizontalAlignment="Right"
-                                                            Margin="0,-10,-10,0"
-                                                            Opacity="0">
-                                                        <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3" Color="#2563EB"/>
-                                                        </Border.Effect>
-                                                        <TextBlock Text="✓"
-                                                                   FontSize="28"
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{DynamicResource TextOnPrimaryBrush}"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="MainBorder" Property="Background">
-                                                        <Setter.Value>
-                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                                <GradientStop Color="#EFF6FF" Offset="0"/>
-                                                                <GradientStop Color="#DBEAFE" Offset="1"/>
-                                                            </LinearGradientBrush>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Setter TargetName="CheckBadge" Property="Opacity" Value="1"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-
-                                <Border Grid.Column="1"
-                                        Width="2"
-                                        Background="White"
-                                        Opacity="0.3"
-                                        CornerRadius="1"
-                                        VerticalAlignment="Center"
-                                        Height="180"
-                                        Margin="0,40"/>
-
-                                <Button x:Name="BtnMalay"
-                                        Grid.Column="2"
-                                        Click="BtnMalay_Click"
-                                        Height="280"
-                                        BorderThickness="0"
-                                        Cursor="Hand"
-                                        Background="Transparent">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="MainBorder"
-                                                    Background="{DynamicResource CardBackgroundBrush}"
-                                                    CornerRadius="24"
-                                                    Padding="40">
-                                                <Border.Effect>
-                                                    <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.2" Color="#000000"/>
-                                                </Border.Effect>
-
-                                                <Grid>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Bahasa Melayu" 
-                                                                   FontSize="42" 
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   HorizontalAlignment="Center"
-                                                                   Margin="0,0,0,12"/>
-
-                                                        <TextBlock Text="Malaysia" 
-                                                                   FontSize="18"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   HorizontalAlignment="Center"/>
-                                                    </StackPanel>
-
-                                                    <Border x:Name="CheckBadge"
-                                                            Background="{DynamicResource PrimaryBrush}"
-                                                            Width="50"
-                                                            Height="50"
-                                                            CornerRadius="25"
-                                                            VerticalAlignment="Top"
-                                                            HorizontalAlignment="Right"
-                                                            Margin="0,-10,-10,0"
-                                                            Opacity="0">
-                                                        <Border.Effect>
-                                                            <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3" Color="#10B981"/>
-                                                        </Border.Effect>
-                                                        <TextBlock Text="✓"
-                                                                   FontSize="28"
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{DynamicResource TextOnPrimaryBrush}"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="MainBorder" Property="Background">
-                                                        <Setter.Value>
-                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                                <GradientStop Color="#ECFDF5" Offset="0"/>
-                                                                <GradientStop Color="#D1FAE5" Offset="1"/>
-                                                            </LinearGradientBrush>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Setter TargetName="CheckBadge" Property="Opacity" Value="1"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </Grid>
-
-                            <Border Background="{DynamicResource CardBackgroundBrush}"
-                                    CornerRadius="16"
-                                    Padding="30,20"
-                                    Margin="0,40,0,0"
-                                    Opacity="0.95">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.15" Color="#000000"/>
-                                </Border.Effect>
-
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Border Background="{DynamicResource BackgroundBrush}"
-                                            CornerRadius="8"
-                                            Padding="12,8"
-                                            Margin="0,0,16,0">
-                                        <TextBlock Text="ℹ️" FontSize="24"/>
-                                    </Border>
-
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}">
-                                            <Run Text="Select your preferred language to continue" FontWeight="SemiBold"/>
-                                            <Run Text=" • "/>
-                                            <Run Text="Pilih bahasa pilihan anda untuk meneruskan" FontWeight="SemiBold"/>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-                </ScrollViewer>
-            </Grid>
-
-            <Grid x:Name="MenuScreen" 
-                  Visibility="Collapsed"
-                  Background="{DynamicResource BackgroundBrush}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel MaxWidth="3000" Margin="40" HorizontalAlignment="Center">
-
-                        <Grid Margin="0,0,0,60">
-                            <StackPanel>
-                                <TextBlock Text="🏦" FontSize="80" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                                <TextBlock x:Name="TxtMainMenu" Text="Main Menu" FontSize="56" FontWeight="Bold" Foreground="{DynamicResource TextOnBackgroundBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                <TextBlock x:Name="SelectMenu" Text="Select a service to continue" FontSize="24" Foreground="{DynamicResource TextOnBackgroundBrush}" Opacity="0.8" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <WrapPanel HorizontalAlignment="Center" MaxWidth="1000">
-
-                            <Border Width="420" MinHeight="380" Margin="20"
-                                    Background="{DynamicResource CardBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PrimaryBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="20"
-                                    Padding="40"
-                                    Cursor="Hand"
-                                    MouseDown="OpenRemittance_Click">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="💸" Foreground="{DynamicResource PrimaryBrush}" FontSize="100" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-                                    <TextBlock x:Name="BtnSM" Text="Send Money" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                    <TextBlock x:Name="SMLblTxt" Text="Send money abroad quickly and securely" FontSize="20" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="20,12" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="StartTxt" Text="START" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Width="420" MinHeight="380" Margin="20"
-                                    Background="{DynamicResource CardBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PrimaryBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="20"
-                                    Padding="40"
-                                    Cursor="Hand"
-                                    MouseDown="BtnQueueX_Click">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="🎫" Foreground="{DynamicResource PrimaryBrush}" FontSize="100" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-                                    <TextBlock x:Name="BtnQueueX" Text="Pre Booking" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                    <TextBlock x:Name="MCLblTxt" Text="Start the Pre Booking to skip the Queue" FontSize="20" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="20,12" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="StartTxt1" Text="START" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Width="420" MinHeight="380" Margin="20"
-                                    Background="{DynamicResource CardBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PrimaryBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="20"
-                                    Padding="40"
-                                    Cursor="Hand"
-                                    MouseDown="BtnOmni_Click">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="🌐" Foreground="{DynamicResource PrimaryBrush}" FontSize="100" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-                                    <TextBlock x:Name="BtnOmni" Text="Visit US" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                    <TextBlock x:Name="BrowseTxt" Text="Browse our products and services" FontSize="20" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="20,12" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="BTxt" Text="BROWSE" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Width="420" MinHeight="380" Margin="20"
-                                    Background="{DynamicResource CardBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PrimaryBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="20"
-                                    Padding="40"
-                                    Cursor="Hand"
-                                    MouseDown="BtnRateBoard_Click">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="💱" FontSize="100" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-                                    <TextBlock x:Name="BtnRates" Text="Today's Rates" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                    <TextBlock x:Name="RatesTxt" Text="View Remittance &amp; Money Exchange Rates" FontSize="20" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="20,12" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="ViewRateTxt" Text="VIEW RATES" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Width="420" MinHeight="380" Margin="20"
-                                    Background="{DynamicResource CardBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PrimaryBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="20"
-                                    Padding="40"
-                                    Cursor="Hand"
-                                    MouseDown="OpenTest_Click">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="🛠️" Foreground="{DynamicResource PrimaryBrush}" FontSize="100" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-                                    <TextBlock x:Name="BtnTest" Text="Test SDKS" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                    <TextBlock x:Name="SMLblTxts" Text="Hardware testing environment" FontSize="20" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="20,12" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="Test" Text="TEST" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Width="420" MinHeight="380" Margin="20"
-                                    Background="{DynamicResource CardBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PrimaryBrush}"
-                                    BorderThickness="3"
-                                    CornerRadius="20" 
-                                    Padding="40" 
-                                    Cursor="Hand"
-                                    MouseDown="OpenMoneyExchange_Click">
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="💵" Foreground="{DynamicResource PrimaryBrush}" FontSize="100" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-                                    <TextBlock x:Name="BtnMoneyExchange" Text="Money Exchange" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                    <TextBlock Text="Exchange cash to MYR" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="20" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-
-                        </WrapPanel>
-
-                        <Button x:Name="BtnNavClose"
-                                Content="Back to Home"
-                                Margin="0,60,0,20"
-                                Height="80"
-                                Width="300"
-                                FontSize="24"
-                                FontWeight="SemiBold"
-                                Background="{DynamicResource DangerBrush}"
-                                Foreground="{DynamicResource TextOnPrimaryBrush}"
-                                BorderThickness="0"
-                                Cursor="Hand"
-                                HorizontalAlignment="Center"
-                                Click="BtnNavClose_Click">
+                        <Button x:Name="BtnEnglish" Click="BtnEnglish_Click" Width="420" Height="280" Margin="20,0" Cursor="Hand" Background="Transparent" BorderThickness="0">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}"
-                                            CornerRadius="12">
-                                        <ContentPresenter HorizontalAlignment="Center" 
-                                                          VerticalAlignment="Center"/>
+                                    <Border x:Name="Bd" Style="{StaticResource Card}" Padding="0">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="English" FontFamily="{StaticResource DisplayFont}" FontSize="40" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Malaysia &amp; International" FontSize="15" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                        </StackPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Opacity" Value="0.9"/>
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySurfaceBrush}"/>
+                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                            <Setter TargetName="Bd" Property="BorderThickness" Value="2.5"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
+
+                        <Button x:Name="BtnMalay" Click="BtnMalay_Click" Width="420" Height="280" Margin="20,0" Cursor="Hand" Background="Transparent" BorderThickness="0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Style="{StaticResource Card}" Padding="0">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Bahasa Melayu" FontFamily="{StaticResource DisplayFont}" FontSize="36" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                            <TextBlock Text="Malaysia" FontSize="15" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySurfaceBrush}"/>
+                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                            <Setter TargetName="Bd" Property="BorderThickness" Value="2.5"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                    </WrapPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- MAIN MENU SCREEN -->
+            <Grid x:Name="MenuScreen" Visibility="Collapsed" Background="{StaticResource BackgroundBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1400" Margin="40" HorizontalAlignment="Center">
+
+                        <StackPanel Margin="0,20,0,48" HorizontalAlignment="Center">
+                            <TextBlock x:Name="TxtMainMenu" Text="{loc:Loc MainMenu}" Style="{StaticResource HeaderText}" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="SelectMenu" Text="{loc:Loc SelectMenu}" FontSize="{StaticResource FontSizeNormal}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        </StackPanel>
+
+                        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+
+                            <!-- 1. Send Money - Gold Border, Green Accents -->
+                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="OpenRemittance_Click">
+                                <StackPanel VerticalAlignment="Center">
+                                    <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource PrimarySurfaceBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                        <TextBlock Text="💸" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock x:Name="BtnSM" Text="{loc:Loc SendMoney}" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock x:Name="SMLblTxt" Text="{loc:Loc SMLblTxt}" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                                    <Border Background="{StaticResource PrimaryBrush}" CornerRadius="10" Padding="24,10" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="StartTxt" Text="{loc:Loc StartTxt}" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2. Money Exchange - Gold Border, Gold Accents -->
+                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="OpenMoneyExchange_Click">
+                                <StackPanel VerticalAlignment="Center">
+                                    <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource AccentGoldLightBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                        <TextBlock Text="💵" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock x:Name="BtnMoneyExchange" Text="{loc:Loc MoneyExchange}" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock Text="{loc:Loc MoneyExchangeDesc}" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                                    <Border Background="{StaticResource AccentGoldBrush}" CornerRadius="10" Padding="24,10" HorizontalAlignment="Center">
+                                        <TextBlock Text="{loc:Loc StartTxt}" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 3. Queue pre-booking - Gold Border, Green Accents -->
+                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnQueueX_Click">
+                                <StackPanel VerticalAlignment="Center">
+                                    <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource PrimarySurfaceBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                        <TextBlock Text="🎫" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock x:Name="BtnQueueX" Text="{loc:Loc QueueXchange}" FontFamily="{StaticResource DisplayFont}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock x:Name="MCLblTxt" Text="{loc:Loc MCLblTxt}" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                                    <Border Background="{StaticResource PrimaryBrush}" CornerRadius="10" Padding="24,10" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="StartTxt1" Text="{loc:Loc StartTxt}" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 4. Browse products - Gold Border, Gold Accents -->
+                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnOmni_Click">
+                                <StackPanel VerticalAlignment="Center">
+                                    <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource AccentGoldLightBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                        <TextBlock Text="🌐" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock x:Name="BtnOmni" Text="{loc:Loc VisitOmni}" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock x:Name="BrowseTxt" Text="{loc:Loc BrowseTxt}" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                                    <Border Background="{StaticResource AccentGoldBrush}" CornerRadius="10" Padding="24,10" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="BTxt" Text="{loc:Loc BTxt}" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 5. Today's rates - Gold Border, Green Accents -->
+                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnRateBoard_Click">
+                                <StackPanel VerticalAlignment="Center">
+                                    <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource PrimarySurfaceBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                        <TextBlock Text="💱" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock x:Name="BtnRates" Text="{loc:Loc RatesToday}" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                    <TextBlock x:Name="RatesTxt" Text="{loc:Loc RatesTxt}" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+                                    <Border Background="{StaticResource PrimaryBrush}" CornerRadius="10" Padding="24,10" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="ViewRateTxt" Text="{loc:Loc ViewRateTxt}" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 6. Test SDKs - Gold Border, De-emphasized -->
+                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Opacity="0.7" Cursor="Hand" MouseDown="OpenTest_Click">
+                                <StackPanel VerticalAlignment="Center">
+                                    <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                        <TextBlock Text="🛠️" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock x:Name="BtnTest" FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10" Text="Test SDKs"/>
+                                    <TextBlock x:Name="SMLblTxts" Text="Hardware testing environment" FontSize="15" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,14"/>
+                                    <TextBlock x:Name="Test" Text="TEST" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </Border>
+
+                        </WrapPanel>
+
+                        <Button x:Name="BtnNavClose" Content="{loc:Loc Back}" Style="{StaticResource OutlineButton}" Width="280" Margin="0,44,0,20" HorizontalAlignment="Center" Click="BtnNavClose_Click"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
-
+            
             <Grid x:Name="SdkHostScreen" Visibility="Collapsed">
                 <ContentControl x:Name="SdkHostContent" />
             </Grid>
 
+            <!-- Money Exchange Flow Host -->
             <Grid x:Name="MoneyExchangeHostScreen" Visibility="Collapsed" Background="Black">
                 <ContentControl x:Name="MoneyExchangeHostContent"/>
             </Grid>
 
-
+            <!-- WEBVIEW SCREEN -->
             <Grid x:Name="WebViewScreen" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <wv2:WebView2 x:Name="WebView"
-                              Grid.Row="1"
-                              Source="about:blank"/>
+                <wv2:WebView2 x:Name="WebView" Grid.Row="1" Source="about:blank"/>
             </Grid>
 
         </Grid>

@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace KioskApp.Services.Ekyc
+namespace OmniKiosk.Wpf.Services.Ekyc
 {
     // Mirrors NotificationEngine.Security.CryptoEngine.Encrypt exactly:
     // TripleDES/ECB, key = MD5(UTF8(sharedSecret)).

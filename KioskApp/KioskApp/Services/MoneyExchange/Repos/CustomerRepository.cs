@@ -13,7 +13,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange.Repos
         {
             using var con = _db.Open();
             using var cmd = con.CreateCommand();
-            cmd.CommandText = @"SELECT Id,IdType,IdNo,FullName,Nationality,Sex,DateOfBirth,FaceFeatureBase64,FaceImageBase64,CreatedAtUtc,UpdatedAtUtc,LastSeenUtc
+            cmd.CommandText = @"SELECT Id,IdType,IdNo,FullName,Nationality,Sex,DateOfBirth,MobileNo,FaceFeatureBase64,FaceImageBase64,CreatedAtUtc,UpdatedAtUtc,LastSeenUtc
                                 FROM Customers WHERE IdType=$t AND IdNo=$n LIMIT 1";
             cmd.Parameters.AddWithValue("$t", idType);
             cmd.Parameters.AddWithValue("$n", idNo);
@@ -30,11 +30,12 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange.Repos
                 Nationality = r.IsDBNull(4) ? "" : r.GetString(4),
                 Sex = r.IsDBNull(5) ? "" : r.GetString(5),
                 DateOfBirth = r.IsDBNull(6) ? "" : r.GetString(6),
-                FaceFeatureBase64 = r.IsDBNull(7) ? null : r.GetString(7),
-                FaceImageBase64 = r.IsDBNull(8) ? null : r.GetString(8),
-                CreatedAtUtc = DateTime.Parse(r.GetString(9)),
-                UpdatedAtUtc = DateTime.Parse(r.GetString(10)),
-                LastSeenUtc = r.IsDBNull(11) ? null : DateTime.Parse(r.GetString(11)),
+                MobileNo = r.IsDBNull(7) ? "" : r.GetString(7),
+                FaceFeatureBase64 = r.IsDBNull(8) ? null : r.GetString(8),
+                FaceImageBase64 = r.IsDBNull(9) ? null : r.GetString(9),
+                CreatedAtUtc = DateTime.Parse(r.GetString(10)),
+                UpdatedAtUtc = DateTime.Parse(r.GetString(11)),
+                LastSeenUtc = r.IsDBNull(12) ? null : DateTime.Parse(r.GetString(12)),
             };
         }
 
@@ -64,7 +65,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange.Repos
                 upd.Transaction = tx;
                 upd.CommandText = @"
 UPDATE Customers SET
-  FullName=$fn, Nationality=$nat, Sex=$sex, DateOfBirth=$dob,
+  FullName=$fn, Nationality=$nat, Sex=$sex, DateOfBirth=$dob, MobileNo=$mob,
   FaceFeatureBase64=$ff, FaceImageBase64=$fi,
   UpdatedAtUtc=$uu, LastSeenUtc=$ls
 WHERE Id=$id";
@@ -72,6 +73,7 @@ WHERE Id=$id";
                 upd.Parameters.AddWithValue("$nat", c.Nationality ?? "");
                 upd.Parameters.AddWithValue("$sex", c.Sex ?? "");
                 upd.Parameters.AddWithValue("$dob", c.DateOfBirth ?? "");
+                upd.Parameters.AddWithValue("$mob", c.MobileNo ?? "");
                 upd.Parameters.AddWithValue("$ff", (object?)c.FaceFeatureBase64 ?? DBNull.Value);
                 upd.Parameters.AddWithValue("$fi", (object?)c.FaceImageBase64 ?? DBNull.Value);
                 upd.Parameters.AddWithValue("$uu", c.UpdatedAtUtc.ToString("o"));
@@ -85,8 +87,8 @@ WHERE Id=$id";
                 using var ins = con.CreateCommand();
                 ins.Transaction = tx;
                 ins.CommandText = @"
-INSERT INTO Customers(IdType,IdNo,FullName,Nationality,Sex,DateOfBirth,FaceFeatureBase64,FaceImageBase64,CreatedAtUtc,UpdatedAtUtc,LastSeenUtc)
-VALUES($t,$n,$fn,$nat,$sex,$dob,$ff,$fi,$cu,$uu,$ls);
+INSERT INTO Customers(IdType,IdNo,FullName,Nationality,Sex,DateOfBirth,MobileNo,FaceFeatureBase64,FaceImageBase64,CreatedAtUtc,UpdatedAtUtc,LastSeenUtc)
+VALUES($t,$n,$fn,$nat,$sex,$dob,$mob,$ff,$fi,$cu,$uu,$ls);
 SELECT last_insert_rowid();";
                 ins.Parameters.AddWithValue("$t", c.IdType);
                 ins.Parameters.AddWithValue("$n", c.IdNo);
@@ -94,6 +96,7 @@ SELECT last_insert_rowid();";
                 ins.Parameters.AddWithValue("$nat", c.Nationality ?? "");
                 ins.Parameters.AddWithValue("$sex", c.Sex ?? "");
                 ins.Parameters.AddWithValue("$dob", c.DateOfBirth ?? "");
+                ins.Parameters.AddWithValue("$mob", c.MobileNo ?? "");
                 ins.Parameters.AddWithValue("$ff", (object?)c.FaceFeatureBase64 ?? DBNull.Value);
                 ins.Parameters.AddWithValue("$fi", (object?)c.FaceImageBase64 ?? DBNull.Value);
                 ins.Parameters.AddWithValue("$cu", c.CreatedAtUtc.ToString("o"));

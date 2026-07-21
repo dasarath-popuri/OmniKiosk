@@ -296,7 +296,7 @@ Transaksi semasa anda akan dibatalkan.</value>
     <value>Tujuan menghantar wang</value>
   </data>
   <data name="QueueXchange" xml:space="preserve">
-    <value>Pertukaran Mata Wang</value>
+    <value>Lepasi Giliran</value>
   </data>
   <data name="Rate" xml:space="preserve">
     <value>Kadar</value>
@@ -421,4 +421,163 @@ Transaksi semasa anda akan dibatalkan.</value>
   <data name="YouSend" xml:space="preserve">
     <value>Anda menghantar ke</value>
   </data>
-<data name="MoneyExchange" xml:space="preserve"><value>Tukar Wang</value></data><data name="MoneyExchangeDesc" xml:space="preserve"><value>Tukar tunai kepada MYR</value></data><data name="Mx_Title" xml:space="preserve"><value>Tukar Wang</value></data><data name="Mx_SelectCurrency" xml:space="preserve"><value>Pilih mata wang</value></data><data name="Mx_YouGive" xml:space="preserve"><value>Anda bayar</value></data><data name="Mx_YouReceive" xml:space="preserve"><value>Anda terima (MYR)</value></data><data name="Mx_Rate" xml:space="preserve"><value>Kadar</value></data><data name="Mx_Next" xml:space="preserve"><value>Seterusnya</value></data><data name="Mx_Back" xml:space="preserve"><value>Kembali</value></data><data name="Mx_CustomerDetails" xml:space="preserve"><value>Butiran pelanggan</value></data><data name="Mx_ScanPassport" xml:space="preserve"><value>Imbas pasport</value></data><data name="Mx_ScanIC" xml:space="preserve"><value>Imbas IC</value></data><data name="Mx_ManualEntry" xml:space="preserve"><value>Masukkan manual</value></data><data name="Mx_PassportNo" xml:space="preserve"><value>No. pasport</value></data><data name="Mx_FullName" xml:space="preserve"><value>Nama penuh</value></data><data name="Mx_Nationality" xml:space="preserve"><value>Warganegara</value></data><data name="Mx_Dob" xml:space="preserve"><value>Tarikh lahir</value></data><data name="Mx_Sex" xml:space="preserve"><value>Jantina</value></data><data name="Mx_Continue" xml:space="preserve"><value>Teruskan</value></data><data name="Mx_FaceVerify" xml:space="preserve"><value>Pengesahan muka</value></data><data name="Mx_Welcome" xml:space="preserve"><value>Selamat datang</value></data><data name="Mx_ConfirmIdentity" xml:space="preserve"><value>Adakah ini anda?</value></data><data name="Mx_NotYou" xml:space="preserve"><value>Bukan anda</value></data><data name="Mx_RegisterNew" xml:space="preserve"><value>Daftar baharu</value></data><data name="Mx_CashIn" xml:space="preserve"><value>Masukkan tunai</value></data><data name="Mx_Target" xml:space="preserve"><value>Sasaran</value></data><data name="Mx_Inserted" xml:space="preserve"><value>Dimasukkan</value></data><data name="Mx_InsertNotes" xml:space="preserve"><value>Masukkan wang kertas satu demi satu</value></data><data name="Mx_Processing" xml:space="preserve"><value>Memproses…</value></data><data name="Mx_Complete" xml:space="preserve"><value>Selesai</value></data><data name="Mx_Receipt" xml:space="preserve"><value>Resit</value></data><data name="Mx_Done" xml:space="preserve"><value>Siap</value></data><data name="Mx_RemovePassport" xml:space="preserve"><value>Sila keluarkan pasport</value></data><data name="Mx_Reading" xml:space="preserve"><value>Membaca…</value></data><data name="Mx_DeviceNotReady" xml:space="preserve"><value>Peranti tidak sedia</value></data></root>
+<data name="MoneyExchange" xml:space="preserve"><value>Tukar Wang</value></data><data name="MoneyExchangeDesc" xml:space="preserve"><value>Tukar tunai kepada MYR</value></data><data name="Mx_Title" xml:space="preserve"><value>Tukar Wang</value></data><data name="Mx_SelectCurrency" xml:space="preserve"><value>Pilih mata wang</value></data><data name="Mx_YouGive" xml:space="preserve"><value>Anda bayar</value></data><data name="Mx_YouReceive" xml:space="preserve"><value>Anda terima (MYR)</value></data><data name="Mx_Rate" xml:space="preserve"><value>Kadar</value></data><data name="Mx_Next" xml:space="preserve"><value>Seterusnya</value></data><data name="Mx_Back" xml:space="preserve"><value>Kembali</value></data><data name="Mx_CustomerDetails" xml:space="preserve"><value>Butiran pelanggan</value></data><data name="Mx_ScanPassport" xml:space="preserve"><value>Imbas pasport</value></data><data name="Mx_ScanIC" xml:space="preserve"><value>Imbas IC</value></data><data name="Mx_ManualEntry" xml:space="preserve"><value>Masukkan manual</value></data><data name="Mx_PassportNo" xml:space="preserve"><value>No. pasport</value></data><data name="Mx_FullName" xml:space="preserve"><value>Nama penuh</value></data><data name="Mx_Nationality" xml:space="preserve"><value>Warganegara</value></data><data name="Mx_Dob" xml:space="preserve"><value>Tarikh lahir</value></data><data name="Mx_Sex" xml:space="preserve"><value>Jantina</value></data><data name="Mx_Continue" xml:space="preserve"><value>Teruskan</value></data><data name="Mx_FaceVerify" xml:space="preserve"><value>Pengesahan muka</value></data><data name="Mx_Welcome" xml:space="preserve"><value>Selamat datang</value></data><data name="Mx_ConfirmIdentity" xml:space="preserve"><value>Adakah ini anda?</value></data><data name="Mx_NotYou" xml:space="preserve"><value>Bukan anda</value></data><data name="Mx_RegisterNew" xml:space="preserve"><value>Daftar baharu</value></data><data name="Mx_CashIn" xml:space="preserve"><value>Masukkan tunai</value></data><data name="Mx_Target" xml:space="preserve"><value>Sasaran</value></data><data name="Mx_Inserted" xml:space="preserve"><value>Dimasukkan</value></data><data name="Mx_InsertNotes" xml:space="preserve"><value>Masukkan wang kertas satu demi satu</value></data><data name="Mx_Processing" xml:space="preserve"><value>Memproses…</value></data><data name="Mx_Complete" xml:space="preserve"><value>Selesai</value></data><data name="Mx_Receipt" xml:space="preserve"><value>Resit</value></data><data name="Mx_Done" xml:space="preserve"><value>Siap</value></data><data name="Mx_RemovePassport" xml:space="preserve"><value>Sila keluarkan pasport</value></data><data name="Mx_Reading" xml:space="preserve"><value>Membaca…</value></data><data name="Mx_DeviceNotReady" xml:space="preserve"><value>Peranti tidak sedia</value></data>
+  <data name="WelcomeText" xml:space="preserve">
+    <value>Selamat Datang ke Vivo Money</value>
+  </data>
+  <data name="Mx_SelectCurrencySubtitle" xml:space="preserve">
+    <value>Pilih mata wang asing yang ingin anda tukar kepada Ringgit Malaysia</value>
+  </data>
+  <data name="Mx_Terms_Title" xml:space="preserve">
+    <value>Terma dan Syarat</value>
+  </data>
+  <data name="Mx_Terms_Subtitle" xml:space="preserve">
+    <value>Sila baca dengan teliti sebelum meneruskan</value>
+  </data>
+  <data name="Mx_Terms_ConfirmHeader" xml:space="preserve">
+    <value>Dengan meneruskan, anda mengesahkan bahawa:</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogTitle" xml:space="preserve">
+    <value>Adakah anda bersetuju dengan Terma dan Syarat?</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogBody" xml:space="preserve">
+    <value>Sila sahkan bahawa anda telah membaca dan bersetuju dengan terma dan syarat yang ditunjukkan.</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogYes" xml:space="preserve">
+    <value>Ya, Saya Setuju</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogNo" xml:space="preserve">
+    <value>Tidak</value>
+  </data>
+  <data name="Mx_Terms_AgreeCheckbox" xml:space="preserve">
+    <value>Saya telah membaca dan bersetuju dengan terma dan syarat di atas</value>
+  </data>
+  <data name="Mx_Terms_Bnm" xml:space="preserve">
+    <value>Transaksi ini dijalankan di bawah perkhidmatan penukaran wang berlesen yang dikawal selia oleh Bank Negara Malaysia (BNM).</value>
+  </data>
+  <data name="Mx_Terms_Reporting" xml:space="preserve">
+    <value>Kami dikehendaki oleh undang-undang untuk melaporkan transaksi yang mencurigakan kepada pihak berkuasa berkaitan.</value>
+  </data>
+  <data name="Mx_Terms_Rate" xml:space="preserve">
+    <value>Kadar pertukaran yang dipaparkan disahkan pada ketika anda menerimanya, dan mungkin berubah jika transaksi tidak diselesaikan.</value>
+  </data>
+  <data name="Mx_Terms_Id" xml:space="preserve">
+    <value>Pasport atau kad pengenalan yang sah diperlukan, dan pengesahan identiti mungkin termasuk semakan biometrik atau eKYC elektronik.</value>
+  </data>
+  <data name="Mx_Terms_Notes" xml:space="preserve">
+    <value>Semua wang kertas yang dimasukkan disemak oleh pengesah automatik. Wang kertas yang tidak dapat disahkan akan dipulangkan, bukan diterima.</value>
+  </data>
+  <data name="Mx_Terms_NoReversal" xml:space="preserve">
+    <value>Setelah Ringgit dikeluarkan, transaksi tidak boleh dibatalkan.</value>
+  </data>
+  <data name="Mx_Terms_Retention" xml:space="preserve">
+    <value>Rekod transaksi dan pengenalan disimpan selaras dengan keperluan penyimpanan rekod BNM dan anti-pengubahan wang haram.</value>
+  </data>
+  <data name="Mx_Terms_Receipt" xml:space="preserve">
+    <value>Sila simpan resit anda untuk rekod anda.</value>
+  </data>
+  <data name="Mx_Terms_ConfirmAccurate" xml:space="preserve">
+    <value>Maklumat yang anda berikan semasa transaksi ini adalah benar dan tepat</value>
+  </data>
+  <data name="Mx_Terms_ConfirmUnderstood" xml:space="preserve">
+    <value>Anda telah membaca dan memahami terma ini</value>
+  </data>
+  <data name="Mx_Terms_ConfirmComply" xml:space="preserve">
+    <value>Anda bersetuju untuk mematuhi semua peraturan yang berkenaan</value>
+  </data>
+  <data name="Mx_IdSubtitle" xml:space="preserve"><value>Sila pilih kerakyatan anda untuk teruskan.</value></data>
+  <data name="Mx_MalaysianCitizen" xml:space="preserve"><value>Warganegara Malaysia</value></data>
+  <data name="Mx_ForeignNational" xml:space="preserve"><value>Warganegara Asing</value></data>
+  <data name="Mx_IdentityConfirmed" xml:space="preserve"><value>Identiti Disahkan</value></data>
+  <data name="Mx_DocumentNo" xml:space="preserve"><value>NO. DOKUMEN</value></data>
+  <data name="Mx_NationalityLabel" xml:space="preserve"><value>KERAKYATAN</value></data>
+  <data name="Mx_MobileNo" xml:space="preserve"><value>NOMBOR TELEFON BIMBIT</value></data>
+  <data name="Mx_MobileHint" xml:space="preserve"><value>Ini akan mempercepatkan lawatan anda seterusnya</value></data>
+  <data name="Mx_VerifyFace" xml:space="preserve"><value>Sahkan Wajah ➔</value></data>
+  <data name="Mx_InsertMyKad" xml:space="preserve"><value>Sila masukkan MyKad anda ke dalam pembaca</value></data>
+  <data name="Mx_PlacePassport" xml:space="preserve"><value>Sila letakkan pasport anda menghadap ke bawah pada pengimbas</value></data>
+  <data name="Mx_SelectDocSubtitle" xml:space="preserve"><value>Sila pilih dokumen yang anda ada.</value></data>
+  <data name="Mx_IcDocTitle" xml:space="preserve"><value>MyKad / IC</value></data>
+  <data name="Mx_ReadIC" xml:space="preserve"><value>Baca IC</value></data>
+  <data name="Mx_PassportDocTitle" xml:space="preserve"><value>Pasport</value></data>
+  <data name="Mx_GenderLabel" xml:space="preserve"><value>JANTINA</value></data>
+  <data name="Mx_DobLabel" xml:space="preserve"><value>TARIKH LAHIR</value></data>
+  <data name="Mx_ExpiryLabel" xml:space="preserve"><value>TARIKH TAMAT TEMPOH</value></data>
+  <data name="Mx_ReadingGuidance" xml:space="preserve"><value>Sila ikut arahan di bawah untuk melengkapkan pembacaan.</value></data>
+  <data name="Mx_PassportExpiredTitle" xml:space="preserve"><value>Pasport Tamat Tempoh</value></data>
+  <data name="Mx_PassportExpiredBody" xml:space="preserve"><value>Pasport ini telah tamat tempoh pada {0} dan tidak boleh digunakan untuk transaksi ini. Sila gunakan dokumen yang sah dan belum tamat tempoh.</value></data>
+  <data name="Mx_FaceVerifySubtitle" xml:space="preserve"><value>Sila lihat kamera untuk mengesahkan identiti anda.</value></data>
+  <data name="Mx_IdentityVerified" xml:space="preserve"><value>Identiti Disahkan</value></data>
+  <data name="Mx_WelcomeBackTitle" xml:space="preserve"><value>Selamat kembali!</value></data>
+  <data name="Mx_WelcomeBackBody" xml:space="preserve"><value>Kami telah mempunyai maklumat anda. Lihat sahaja kamera untuk mengesahkan ia adalah anda - ini hanya mengambil masa sebentar.</value></data>
+  <data name="Mx_FirstTimeTitle" xml:space="preserve"><value>Kali pertama di sini?</value></data>
+  <data name="Mx_FirstTimeBody" xml:space="preserve"><value>Oleh kerana ini lawatan pertama anda, kami akan mengesahkan identiti anda bersama rakan kongsi pengesahan kami. Sila lihat terus ke kamera dan kekal tidak bergerak - ini mengambil masa lebih lama.</value></data>
+  <data name="Mx_InitCamera" xml:space="preserve"><value>Memulakan Kamera…</value></data>
+  <data name="Mx_AlignFace" xml:space="preserve"><value>Selaraskan wajah anda dalam bingkai</value></data>
+  <data name="Mx_Detecting" xml:space="preserve"><value>Mengesan…</value></data>
+  <data name="Mx_LookStraight" xml:space="preserve"><value>Sila lihat lurus</value></data>
+  <data name="Mx_CaptureSuccess" xml:space="preserve"><value>Tangkapan berjaya ✅</value></data>
+  <data name="Mx_VerifyingEkyc" xml:space="preserve"><value>Mengesahkan dengan perkhidmatan eKYC…</value></data>
+  <data name="Mx_TakesFewSeconds" xml:space="preserve"><value>Ini mungkin mengambil masa beberapa saat</value></data>
+  <data name="Mx_VerificationFailed" xml:space="preserve"><value>Pengesahan Gagal</value></data>
+  <data name="Mx_VerificationFailedBody" xml:space="preserve"><value>Kami tidak dapat mengesahkan identiti anda. Sila ke kaunter untuk bantuan.</value></data>
+  <data name="Mx_ExitTransaction" xml:space="preserve"><value>Keluar Transaksi</value></data>
+  <data name="Mx_SkipContinue" xml:space="preserve"><value>Langkau &amp; Teruskan ➔</value></data>
+  <data name="Mx_Matched" xml:space="preserve"><value>Sepadan ✅</value></data>
+  <data name="Mx_Mismatch" xml:space="preserve"><value>Tidak Sepadan ❌</value></data>
+  <data name="Mx_RetryOrSkip" xml:space="preserve"><value>Sila cuba lagi, atau langkau untuk teruskan.</value></data>
+  <data name="Mx_ComparingLocal" xml:space="preserve"><value>Membandingkan dengan profil tersimpan anda…</value></data>
+  <data name="Mx_CashInSubtitle" xml:space="preserve"><value>Sila masukkan wang kertas anda ke dalam penerima di bawah.</value></data>
+  <data name="Mx_RateLabel" xml:space="preserve"><value>Kadar:</value></data>
+  <data name="Mx_TotalInserted" xml:space="preserve"><value>JUMLAH DIMASUKKAN (ASING)</value></data>
+  <data name="Mx_EquivalentAmount" xml:space="preserve"><value>JUMLAH SETARA (MYR)</value></data>
+  <data name="Mx_PayableAmount" xml:space="preserve"><value>JUMLAH DIBAYAR (DIBULATKAN)</value></data>
+  <data name="Mx_MachineReady" xml:space="preserve"><value>Mesin sedia dan menerima wang kertas…</value></data>
+  <data name="Mx_SlotHint" xml:space="preserve"><value>Masukkan satu wang kertas pada satu masa. Tunggu pengesahan sebelum memasukkan yang seterusnya.</value></data>
+  <data name="Mx_NoteDetected" xml:space="preserve"><value>Wang Kertas Dikesan</value></data>
+  <data name="Mx_ReturnNote" xml:space="preserve"><value>Pulangkan Wang Kertas</value></data>
+  <data name="Mx_AcceptNote" xml:space="preserve"><value>Terima Wang Kertas</value></data>
+  <data name="Mx_AcceptanceStopped" xml:space="preserve"><value>Penerimaan Dihentikan</value></data>
+  <data name="Mx_ProceedingToDispense" xml:space="preserve"><value>Meneruskan untuk mengeluarkan wang tunai anda…</value></data>
+  <data name="Mx_CancelTransaction" xml:space="preserve"><value>Batalkan Transaksi</value></data>
+  <data name="Mx_FinishGetCash" xml:space="preserve"><value>Selesai &amp; Dapatkan Wang Tunai ➔</value></data>
+  <data name="Mx_CancelConfirmTitle" xml:space="preserve"><value>Batalkan transaksi ini?</value></data>
+  <data name="Mx_CancelConfirmBody" xml:space="preserve"><value>Anda telah memasukkan {0:0.00} {1} ({2}). Jika anda batalkan sekarang, kami akan mencetak slip supaya anda boleh mengumpul jumlah ini di kaunter.</value></data>
+  <data name="Mx_CancelConfirmYes" xml:space="preserve"><value>Ya, Batalkan</value></data>
+  <data name="Mx_CancelConfirmNo" xml:space="preserve"><value>Tidak, Teruskan</value></data>
+  <data name="Mx_OutOfCashTitle" xml:space="preserve"><value>Kehabisan Wang Tunai</value></data>
+  <data name="Mx_OutOfCashBody" xml:space="preserve"><value>Maaf, kiosk ini kehabisan wang tunai MYR buat masa ini. Sila ke kaunter.</value></data>
+  <data name="Mx_NoteRejectedTitle" xml:space="preserve"><value>Wang Kertas Ditolak</value></data>
+  <data name="Mx_NoteRejectedBody" xml:space="preserve"><value>Mesin tidak dapat menerima wang kertas itu. Sila leraikan wang kertas dan cuba lagi, atau cuba wang kertas lain.</value></data>
+  <data name="Mx_InvalidDocTitle" xml:space="preserve"><value>Dokumen Tidak Sah</value></data>
+  <data name="Mx_InvalidDocBody" xml:space="preserve"><value>Mesin ini hanya menerima wang kertas yang sah. Kod bar, kupon, atau item yang tidak dikenali tidak diterima.</value></data>
+  <data name="Mx_InvalidCurrencyTitle" xml:space="preserve"><value>Mata Wang Tidak Sah</value></data>
+  <data name="Mx_InvalidCurrencyBody" xml:space="preserve"><value>Sila masukkan wang kertas {0} sahaja. Anda memasukkan wang kertas {1} {2}.</value></data>
+  <data name="Mx_LimitReachedTitle" xml:space="preserve"><value>Had Dicapai</value></data>
+  <data name="Mx_LimitReachedBody" xml:space="preserve"><value>Mesin hanya mempunyai RM {0} tersedia. Anda tidak boleh memasukkan lebih banyak wang kertas. Sila selesaikan.</value></data>
+  <data name="Mx_CollectCashSubtitle" xml:space="preserve"><value>Sila kumpul wang tunai anda dari mesin pengeluar di bawah.</value></data>
+  <data name="Mx_TotalDispensed" xml:space="preserve"><value>JUMLAH DIKELUARKAN</value></data>
+  <data name="Mx_VerifiedCustomer" xml:space="preserve"><value>PELANGGAN DISAHKAN</value></data>
+  <data name="Mx_ForeignInserted" xml:space="preserve"><value>ASING DIMASUKKAN</value></data>
+  <data name="Mx_ExchangeRateLabel" xml:space="preserve"><value>KADAR PERTUKARAN</value></data>
+  <data name="Mx_NotesBreakdown" xml:space="preserve"><value>Pecahan Wang Kertas Dikeluarkan</value></data>
+  <data name="Mx_PrintReceipt" xml:space="preserve"><value>Cetak Resit</value></data>
+  <data name="Mx_CompleteTransaction" xml:space="preserve"><value>Lengkapkan Transaksi</value></data>
+  <data name="Mx_DispenserNoticeTitle" xml:space="preserve"><value>Notis Mesin Pengeluar</value></data>
+  <data name="Mx_DispenserNoticeBody" xml:space="preserve"><value>Mesin tidak dapat mengeluarkan wang tunai.
+Sebab: {0}
+
+Sila cetak Slip Kaunter anda dan ke kaunter.</value></data>
+  <data name="Mx_HardwareOffline" xml:space="preserve"><value>Perkakasan Luar Talian (Semak Kabel USB/Kuasa)</value></data>
+  <data name="Mx_PrintErrorTitle" xml:space="preserve"><value>Ralat Cetakan</value></data>
+  <data name="Mx_PrintErrorBody" xml:space="preserve"><value>Gagal mencetak. Semak sama ada pencetak mempunyai kertas dan disambungkan.</value></data>
+  <data name="Home_TapToStart" xml:space="preserve">
+    <value>Ketik di mana-mana untuk mula</value>
+  </data>
+  <data name="LanguageSelection_Title" xml:space="preserve">
+    <value>Pilih bahasa anda</value>
+  </data>
+  <data name="LanguageSelection_Subtitle" xml:space="preserve">
+    <value>Pilih cara anda ingin meneruskan</value>
+  </data>
+</root>

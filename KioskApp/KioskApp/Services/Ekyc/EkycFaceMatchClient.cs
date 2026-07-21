@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OmniKiosk.Wpf.Config;
 
-namespace KioskApp.Services.Ekyc
+namespace OmniKiosk.Wpf.Services.Ekyc
 {
     public class GenericEkycRequest
     {

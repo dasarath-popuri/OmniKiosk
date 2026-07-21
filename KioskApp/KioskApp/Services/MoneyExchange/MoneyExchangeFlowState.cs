@@ -13,6 +13,12 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         // Customer
         public CustomerProfile? Customer { get; set; }
 
+        // Set by MoneyExchangeFlowController.UpsertCustomer - true if this
+        // IdType+IdNo was already in the local database before this visit.
+        // Drives FaceVerificationStep: existing customers get the fast local
+        // TaiSDK match, new customers go through Innov8tif eKYC.
+        public bool IsExistingCustomer { get; set; }
+
         // Face
         public bool FaceVerified { get; set; }
 

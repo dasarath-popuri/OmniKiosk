@@ -13,6 +13,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange
         public event EventHandler? BackRequested;
         private readonly MoneyExchangeFlowController _ctl = new MoneyExchangeFlowController();
         private int _stepIndex = 0;
+        private MoneyExchangeTimeoutManager? _timeout;
 
         public MoneyExchangeFlowView(string currentLanguage)
         {
@@ -24,21 +25,57 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             TitleText.Text = L10n.T("Mx_Title", "Money Exchange");
+
+            var hostWindow = Window.GetWindow(this);
+            if (hostWindow != null)
+            {
+                _timeout = new MoneyExchangeTimeoutManager(hostWindow);
+                _timeout.TimedOut += (_, __) => GoToStep(0);
+            }
+
             GoToStep(0);
         }
 
-        private void UserControl_Unloaded(object sender, RoutedEventArgs e) { }
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _timeout?.Stop();
+        }
 
         private void Back_Click(object sender, RoutedEventArgs e)
         {
-            if (_stepIndex == 0) { BackRequested?.Invoke(this, EventArgs.Empty); return; }
+            if (_stepIndex == 0)
+            {
+                BackRequested?.Invoke(this, EventArgs.Empty);
+                return;
+            }
             GoToStep(_stepIndex - 1);
         }
 
         private void GoToStep(int idx)
         {
             _stepIndex = idx;
-            StepText.Text = $"{L10n.T("Mx_Title", "Money Exchange")} • Step {idx + 1}/6";
+
+            // 1. Update Progress Bar
+            StepProgressBar.Value = idx;
+
+            // 2. Map indices to user-friendly step names
+            string[] stepNames = new string[]
+            {
+                L10n.T("Mx_Step_Currency", "Currency Selection"),
+                L10n.T("Mx_Step_Terms", "Terms & Conditions"),
+                L10n.T("Mx_Step_Details", "Customer Details"),
+                L10n.T("Mx_Step_Face", "Face Verification"),
+                L10n.T("Mx_Step_Cash", "Insert Cash"),
+                L10n.T("Mx_Step_Receipt", "Receipt")
+            };
+
+            // 3. Update Text Overlays
+            StepNameText.Text = stepNames[idx];
+            StepText.Text = $"{L10n.T("Mx_Step", "Step")} {idx + 1} / 6";
+
+            // Timeout only matters once a customer has committed to a currency
+            if (idx == 0) _timeout?.Stop();
+            else _timeout?.Start();
 
             UserControl step = idx switch
             {
@@ -56,6 +93,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange
                 nav.BackRequested += (_, __) => GoToStep(Math.Max(0, _stepIndex - 1));
                 nav.ExitRequested += (_, __) => BackRequested?.Invoke(this, EventArgs.Empty);
             }
+
             Host.Content = step;
         }
     }

@@ -60,7 +60,8 @@ namespace OmniKiosk.Wpf.Services
             try
             {
                 // Note: If you ever write an Auto-Detect for the Acceptor too, you would put it here!
-                var port = SerialPort.GetPortNames().FirstOrDefault(p => p.Contains("COM")) ?? "COM1";
+                //var port = SerialPort.GetPortNames().FirstOrDefault(p => p.Contains("COM")) ?? "COM1";
+                var port = "COM2";
                 MoneyReceiver.Open(port);
             }
             catch { }

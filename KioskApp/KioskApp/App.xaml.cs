@@ -1,7 +1,4 @@
-﻿using OmniKiosk.Wpf.Logging;
-using Serilog;
-using System;
-using System.IO;
+﻿using System;
 using System.Windows;
 
 namespace OmniKiosk.Wpf
@@ -14,29 +11,10 @@ namespace OmniKiosk.Wpf
 
             // 🚀 The old 32-bit MeiHardwareService launcher has been completely removed!
             // We are now running 100% native 64-bit serial communication.
-
-            string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-            Directory.CreateDirectory(logDirectory);
-
-            // Configure the Global Logger
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug() // Log everything!
-                .Enrich.With(new JourneyIdEnricher()) // 🚀 Inject our Journey ID!
-                .WriteTo.File(
-                    path: Path.Combine(logDirectory, "KioskLog_.txt"),
-                    rollingInterval: RollingInterval.Day, // Creates a new file every day at midnight
-                    retainedFileCountLimit: 30, // Automatically deletes logs older than 30 days
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [Journey: {JourneyId}] {Message:lj}{NewLine}{Exception}"
-                )
-                .CreateLogger();
-
-            Log.Information("🖥️ OmniKiosk Application Booting Up...");
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
-            Log.Information("🛑 OmniKiosk Application Shutting Down.");
-            Log.CloseAndFlush();
             // (If you have any other global shutdown logic, it goes here)
             base.OnExit(e);
         }

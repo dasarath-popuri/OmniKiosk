@@ -18,7 +18,7 @@ namespace OmniKiosk.Wpf.Services.MoneyReceiver
         private CancellationTokenSource _cts;
         private bool _isAccepting = false;
         private byte _ackBit = 0;
-        private string _targetPort = "COM1";
+        private string _targetPort = "COM2";
 
         private bool _stackRequested = false;
         private bool _returnRequested = false;

@@ -296,7 +296,7 @@ Your current transaction will be cancelled.</value>
     <value>Purpose of Remittance</value>
   </data>
   <data name="QueueXchange" xml:space="preserve">
-    <value>Money Exchange</value>
+    <value>Skip the Queue</value>
   </data>
   <data name="Rate" xml:space="preserve">
     <value>Rate</value>
@@ -421,4 +421,163 @@ Your current transaction will be cancelled.</value>
   <data name="YouSend" xml:space="preserve">
     <value>You Send</value>
   </data>
-<data name="MoneyExchange" xml:space="preserve"><value>Money Exchange</value></data><data name="MoneyExchangeDesc" xml:space="preserve"><value>Exchange cash to MYR</value></data><data name="Mx_Title" xml:space="preserve"><value>Money Exchange</value></data><data name="Mx_SelectCurrency" xml:space="preserve"><value>Select currency</value></data><data name="Mx_YouGive" xml:space="preserve"><value>You give</value></data><data name="Mx_YouReceive" xml:space="preserve"><value>You receive (MYR)</value></data><data name="Mx_Rate" xml:space="preserve"><value>Rate</value></data><data name="Mx_Next" xml:space="preserve"><value>Next</value></data><data name="Mx_Back" xml:space="preserve"><value>Back</value></data><data name="Mx_CustomerDetails" xml:space="preserve"><value>Customer details</value></data><data name="Mx_ScanPassport" xml:space="preserve"><value>Scan passport</value></data><data name="Mx_ScanIC" xml:space="preserve"><value>Scan IC</value></data><data name="Mx_ManualEntry" xml:space="preserve"><value>Manual entry</value></data><data name="Mx_PassportNo" xml:space="preserve"><value>Passport No</value></data><data name="Mx_FullName" xml:space="preserve"><value>Full name</value></data><data name="Mx_Nationality" xml:space="preserve"><value>Nationality</value></data><data name="Mx_Dob" xml:space="preserve"><value>Date of birth</value></data><data name="Mx_Sex" xml:space="preserve"><value>Sex</value></data><data name="Mx_Continue" xml:space="preserve"><value>Continue</value></data><data name="Mx_FaceVerify" xml:space="preserve"><value>Face verification</value></data><data name="Mx_Welcome" xml:space="preserve"><value>Welcome</value></data><data name="Mx_ConfirmIdentity" xml:space="preserve"><value>Is this you?</value></data><data name="Mx_NotYou" xml:space="preserve"><value>Not you</value></data><data name="Mx_RegisterNew" xml:space="preserve"><value>Register new</value></data><data name="Mx_CashIn" xml:space="preserve"><value>Insert cash</value></data><data name="Mx_Target" xml:space="preserve"><value>Target</value></data><data name="Mx_Inserted" xml:space="preserve"><value>Inserted</value></data><data name="Mx_InsertNotes" xml:space="preserve"><value>Insert notes one by one</value></data><data name="Mx_Processing" xml:space="preserve"><value>Processing…</value></data><data name="Mx_Complete" xml:space="preserve"><value>Complete</value></data><data name="Mx_Receipt" xml:space="preserve"><value>Receipt</value></data><data name="Mx_Done" xml:space="preserve"><value>Done</value></data><data name="Mx_RemovePassport" xml:space="preserve"><value>Remove passport</value></data><data name="Mx_Reading" xml:space="preserve"><value>Reading…</value></data><data name="Mx_DeviceNotReady" xml:space="preserve"><value>Device not ready</value></data></root>
+<data name="MoneyExchange" xml:space="preserve"><value>Money Exchange</value></data><data name="MoneyExchangeDesc" xml:space="preserve"><value>Exchange cash to MYR</value></data><data name="Mx_Title" xml:space="preserve"><value>Money Exchange</value></data><data name="Mx_SelectCurrency" xml:space="preserve"><value>Select currency</value></data><data name="Mx_YouGive" xml:space="preserve"><value>You give</value></data><data name="Mx_YouReceive" xml:space="preserve"><value>You receive (MYR)</value></data><data name="Mx_Rate" xml:space="preserve"><value>Rate</value></data><data name="Mx_Next" xml:space="preserve"><value>Next</value></data><data name="Mx_Back" xml:space="preserve"><value>Back</value></data><data name="Mx_CustomerDetails" xml:space="preserve"><value>Customer details</value></data><data name="Mx_ScanPassport" xml:space="preserve"><value>Scan passport</value></data><data name="Mx_ScanIC" xml:space="preserve"><value>Scan IC</value></data><data name="Mx_ManualEntry" xml:space="preserve"><value>Manual entry</value></data><data name="Mx_PassportNo" xml:space="preserve"><value>Passport No</value></data><data name="Mx_FullName" xml:space="preserve"><value>Full name</value></data><data name="Mx_Nationality" xml:space="preserve"><value>Nationality</value></data><data name="Mx_Dob" xml:space="preserve"><value>Date of birth</value></data><data name="Mx_Sex" xml:space="preserve"><value>Sex</value></data><data name="Mx_Continue" xml:space="preserve"><value>Continue</value></data><data name="Mx_FaceVerify" xml:space="preserve"><value>Face verification</value></data><data name="Mx_Welcome" xml:space="preserve"><value>Welcome</value></data><data name="Mx_ConfirmIdentity" xml:space="preserve"><value>Is this you?</value></data><data name="Mx_NotYou" xml:space="preserve"><value>Not you</value></data><data name="Mx_RegisterNew" xml:space="preserve"><value>Register new</value></data><data name="Mx_CashIn" xml:space="preserve"><value>Insert cash</value></data><data name="Mx_Target" xml:space="preserve"><value>Target</value></data><data name="Mx_Inserted" xml:space="preserve"><value>Inserted</value></data><data name="Mx_InsertNotes" xml:space="preserve"><value>Insert notes one by one</value></data><data name="Mx_Processing" xml:space="preserve"><value>Processing…</value></data><data name="Mx_Complete" xml:space="preserve"><value>Complete</value></data><data name="Mx_Receipt" xml:space="preserve"><value>Receipt</value></data><data name="Mx_Done" xml:space="preserve"><value>Done</value></data><data name="Mx_RemovePassport" xml:space="preserve"><value>Remove passport</value></data><data name="Mx_Reading" xml:space="preserve"><value>Reading…</value></data><data name="Mx_DeviceNotReady" xml:space="preserve"><value>Device not ready</value></data>
+  <data name="WelcomeText" xml:space="preserve">
+    <value>Welcome to Vivo Money</value>
+  </data>
+  <data name="Mx_SelectCurrencySubtitle" xml:space="preserve">
+    <value>Choose the foreign currency you'd like to exchange for Malaysian Ringgit</value>
+  </data>
+  <data name="Mx_Terms_Title" xml:space="preserve">
+    <value>Terms and Conditions</value>
+  </data>
+  <data name="Mx_Terms_Subtitle" xml:space="preserve">
+    <value>Please read carefully before continuing</value>
+  </data>
+  <data name="Mx_Terms_ConfirmHeader" xml:space="preserve">
+    <value>By continuing, you confirm that:</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogTitle" xml:space="preserve">
+    <value>Do you agree to the Terms and Conditions?</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogBody" xml:space="preserve">
+    <value>Please confirm you have read and agree to the terms and conditions shown.</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogYes" xml:space="preserve">
+    <value>Yes, I Agree</value>
+  </data>
+  <data name="Mx_Terms_ConfirmDialogNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Mx_Terms_AgreeCheckbox" xml:space="preserve">
+    <value>I have read and agree to the terms and conditions above</value>
+  </data>
+  <data name="Mx_Terms_Bnm" xml:space="preserve">
+    <value>This transaction is conducted under a licensed money-changing service regulated by Bank Negara Malaysia (BNM).</value>
+  </data>
+  <data name="Mx_Terms_Reporting" xml:space="preserve">
+    <value>We are required by law to report suspicious transactions to the relevant authorities.</value>
+  </data>
+  <data name="Mx_Terms_Rate" xml:space="preserve">
+    <value>The exchange rate shown is confirmed at the point you accept it, and may change if the transaction is not completed.</value>
+  </data>
+  <data name="Mx_Terms_Id" xml:space="preserve">
+    <value>A valid passport or identity card is required, and identity verification may include a biometric or electronic KYC check.</value>
+  </data>
+  <data name="Mx_Terms_Notes" xml:space="preserve">
+    <value>All notes inserted are checked by an automated validator. Notes that cannot be verified will be returned, not accepted.</value>
+  </data>
+  <data name="Mx_Terms_NoReversal" xml:space="preserve">
+    <value>Once Ringgit has been dispensed, the transaction cannot be reversed.</value>
+  </data>
+  <data name="Mx_Terms_Retention" xml:space="preserve">
+    <value>Transaction and identification records are retained in line with BNM and anti-money-laundering record-keeping requirements.</value>
+  </data>
+  <data name="Mx_Terms_Receipt" xml:space="preserve">
+    <value>Please keep your receipt for your records.</value>
+  </data>
+  <data name="Mx_Terms_ConfirmAccurate" xml:space="preserve">
+    <value>The information you provide during this transaction is true and accurate</value>
+  </data>
+  <data name="Mx_Terms_ConfirmUnderstood" xml:space="preserve">
+    <value>You have read and understood these terms</value>
+  </data>
+  <data name="Mx_Terms_ConfirmComply" xml:space="preserve">
+    <value>You agree to comply with all applicable regulations</value>
+  </data>
+  <data name="Mx_IdSubtitle" xml:space="preserve"><value>Please select your nationality to proceed.</value></data>
+  <data name="Mx_MalaysianCitizen" xml:space="preserve"><value>Malaysian Citizen</value></data>
+  <data name="Mx_ForeignNational" xml:space="preserve"><value>Foreign National</value></data>
+  <data name="Mx_IdentityConfirmed" xml:space="preserve"><value>Identity Confirmed</value></data>
+  <data name="Mx_DocumentNo" xml:space="preserve"><value>DOCUMENT NO.</value></data>
+  <data name="Mx_NationalityLabel" xml:space="preserve"><value>NATIONALITY</value></data>
+  <data name="Mx_MobileNo" xml:space="preserve"><value>MOBILE NUMBER</value></data>
+  <data name="Mx_MobileHint" xml:space="preserve"><value>We'll use this to speed up your next visit</value></data>
+  <data name="Mx_VerifyFace" xml:space="preserve"><value>Verify Face ➔</value></data>
+  <data name="Mx_InsertMyKad" xml:space="preserve"><value>Please insert your MyKad into the reader</value></data>
+  <data name="Mx_PlacePassport" xml:space="preserve"><value>Please place your passport face-down on the scanner</value></data>
+  <data name="Mx_SelectDocSubtitle" xml:space="preserve"><value>Please select the document you have with you.</value></data>
+  <data name="Mx_IcDocTitle" xml:space="preserve"><value>MyKad / IC</value></data>
+  <data name="Mx_ReadIC" xml:space="preserve"><value>Read IC</value></data>
+  <data name="Mx_PassportDocTitle" xml:space="preserve"><value>Passport</value></data>
+  <data name="Mx_GenderLabel" xml:space="preserve"><value>GENDER</value></data>
+  <data name="Mx_DobLabel" xml:space="preserve"><value>DATE OF BIRTH</value></data>
+  <data name="Mx_ExpiryLabel" xml:space="preserve"><value>EXPIRY DATE</value></data>
+  <data name="Mx_ReadingGuidance" xml:space="preserve"><value>Please follow the instructions below to complete the reading.</value></data>
+  <data name="Mx_PassportExpiredTitle" xml:space="preserve"><value>Passport Expired</value></data>
+  <data name="Mx_PassportExpiredBody" xml:space="preserve"><value>This passport expired on {0} and cannot be used for this transaction. Please use a valid, unexpired document.</value></data>
+  <data name="Mx_FaceVerifySubtitle" xml:space="preserve"><value>Please look at the camera to confirm your identity.</value></data>
+  <data name="Mx_IdentityVerified" xml:space="preserve"><value>Identity Verified</value></data>
+  <data name="Mx_WelcomeBackTitle" xml:space="preserve"><value>Welcome back!</value></data>
+  <data name="Mx_WelcomeBackBody" xml:space="preserve"><value>We already have your details on file. Just look at the camera to confirm it's you - this only takes a moment.</value></data>
+  <data name="Mx_FirstTimeTitle" xml:space="preserve"><value>First time here?</value></data>
+  <data name="Mx_FirstTimeBody" xml:space="preserve"><value>Since this is your first visit, we'll verify your identity with our verification partner. Please look directly at the camera and hold still - this takes a few seconds longer.</value></data>
+  <data name="Mx_InitCamera" xml:space="preserve"><value>Initializing Camera…</value></data>
+  <data name="Mx_AlignFace" xml:space="preserve"><value>Align your face in the frame</value></data>
+  <data name="Mx_Detecting" xml:space="preserve"><value>Detecting…</value></data>
+  <data name="Mx_LookStraight" xml:space="preserve"><value>Please look straight</value></data>
+  <data name="Mx_CaptureSuccess" xml:space="preserve"><value>Capture success ✅</value></data>
+  <data name="Mx_VerifyingEkyc" xml:space="preserve"><value>Verifying with eKYC service…</value></data>
+  <data name="Mx_TakesFewSeconds" xml:space="preserve"><value>This can take a few seconds</value></data>
+  <data name="Mx_VerificationFailed" xml:space="preserve"><value>Verification Failed</value></data>
+  <data name="Mx_VerificationFailedBody" xml:space="preserve"><value>We couldn't confirm your identity. Please proceed to the counter for manual assistance.</value></data>
+  <data name="Mx_ExitTransaction" xml:space="preserve"><value>Exit Transaction</value></data>
+  <data name="Mx_SkipContinue" xml:space="preserve"><value>Skip &amp; Continue ➔</value></data>
+  <data name="Mx_Matched" xml:space="preserve"><value>Matched ✅</value></data>
+  <data name="Mx_Mismatch" xml:space="preserve"><value>Mismatch ❌</value></data>
+  <data name="Mx_RetryOrSkip" xml:space="preserve"><value>Please retry, or skip to continue.</value></data>
+  <data name="Mx_ComparingLocal" xml:space="preserve"><value>Comparing with your saved profile…</value></data>
+  <data name="Mx_CashInSubtitle" xml:space="preserve"><value>Please insert your notes into the acceptor below.</value></data>
+  <data name="Mx_RateLabel" xml:space="preserve"><value>Rate:</value></data>
+  <data name="Mx_TotalInserted" xml:space="preserve"><value>TOTAL INSERTED (FOREIGN)</value></data>
+  <data name="Mx_EquivalentAmount" xml:space="preserve"><value>EQUIVALENT AMOUNT (MYR)</value></data>
+  <data name="Mx_PayableAmount" xml:space="preserve"><value>PAYABLE AMOUNT (ROUNDED)</value></data>
+  <data name="Mx_MachineReady" xml:space="preserve"><value>Machine is ready and accepting notes…</value></data>
+  <data name="Mx_SlotHint" xml:space="preserve"><value>Insert one note at a time. Wait for confirmation before inserting the next.</value></data>
+  <data name="Mx_NoteDetected" xml:space="preserve"><value>Note Detected</value></data>
+  <data name="Mx_ReturnNote" xml:space="preserve"><value>Return Note</value></data>
+  <data name="Mx_AcceptNote" xml:space="preserve"><value>Accept Note</value></data>
+  <data name="Mx_AcceptanceStopped" xml:space="preserve"><value>Acceptance Stopped</value></data>
+  <data name="Mx_ProceedingToDispense" xml:space="preserve"><value>Proceeding to dispense your cash…</value></data>
+  <data name="Mx_CancelTransaction" xml:space="preserve"><value>Cancel Transaction</value></data>
+  <data name="Mx_FinishGetCash" xml:space="preserve"><value>Finish &amp; Get Cash ➔</value></data>
+  <data name="Mx_CancelConfirmTitle" xml:space="preserve"><value>Cancel this transaction?</value></data>
+  <data name="Mx_CancelConfirmBody" xml:space="preserve"><value>You've already inserted {0:0.00} {1} ({2}). If you cancel now, we'll print a slip so you can collect this amount at the counter.</value></data>
+  <data name="Mx_CancelConfirmYes" xml:space="preserve"><value>Yes, Cancel</value></data>
+  <data name="Mx_CancelConfirmNo" xml:space="preserve"><value>No, Continue</value></data>
+  <data name="Mx_OutOfCashTitle" xml:space="preserve"><value>Out of Cash</value></data>
+  <data name="Mx_OutOfCashBody" xml:space="preserve"><value>Sorry, this kiosk is currently out of MYR cash. Please proceed to the counter.</value></data>
+  <data name="Mx_NoteRejectedTitle" xml:space="preserve"><value>Note Rejected</value></data>
+  <data name="Mx_NoteRejectedBody" xml:space="preserve"><value>The machine could not accept that note. Please flatten the note and try again, or try a different note.</value></data>
+  <data name="Mx_InvalidDocTitle" xml:space="preserve"><value>Invalid Document</value></data>
+  <data name="Mx_InvalidDocBody" xml:space="preserve"><value>This machine only accepts valid currency notes. Barcodes, coupons, or unrecognized items are not accepted.</value></data>
+  <data name="Mx_InvalidCurrencyTitle" xml:space="preserve"><value>Invalid Currency</value></data>
+  <data name="Mx_InvalidCurrencyBody" xml:space="preserve"><value>Please insert {0} notes only. You inserted a {1} {2} note.</value></data>
+  <data name="Mx_LimitReachedTitle" xml:space="preserve"><value>Limit Reached</value></data>
+  <data name="Mx_LimitReachedBody" xml:space="preserve"><value>The machine only has RM {0} available. You cannot insert more notes. Please finish.</value></data>
+  <data name="Mx_CollectCashSubtitle" xml:space="preserve"><value>Please collect your cash from the dispenser below.</value></data>
+  <data name="Mx_TotalDispensed" xml:space="preserve"><value>TOTAL DISPENSED</value></data>
+  <data name="Mx_VerifiedCustomer" xml:space="preserve"><value>VERIFIED CUSTOMER</value></data>
+  <data name="Mx_ForeignInserted" xml:space="preserve"><value>FOREIGN INSERTED</value></data>
+  <data name="Mx_ExchangeRateLabel" xml:space="preserve"><value>EXCHANGE RATE</value></data>
+  <data name="Mx_NotesBreakdown" xml:space="preserve"><value>Notes Dispensed Breakdown</value></data>
+  <data name="Mx_PrintReceipt" xml:space="preserve"><value>Print Receipt</value></data>
+  <data name="Mx_CompleteTransaction" xml:space="preserve"><value>Complete Transaction</value></data>
+  <data name="Mx_DispenserNoticeTitle" xml:space="preserve"><value>Dispenser Notice</value></data>
+  <data name="Mx_DispenserNoticeBody" xml:space="preserve"><value>The machine could not dispense the cash.
+Reason: {0}
+
+Please print your Counter Slip and proceed to the counter.</value></data>
+  <data name="Mx_HardwareOffline" xml:space="preserve"><value>Hardware Offline (Check USB Cable/Power)</value></data>
+  <data name="Mx_PrintErrorTitle" xml:space="preserve"><value>Print Error</value></data>
+  <data name="Mx_PrintErrorBody" xml:space="preserve"><value>Failed to print. Check if the printer has paper and is connected.</value></data>
+  <data name="Home_TapToStart" xml:space="preserve">
+    <value>Tap anywhere to begin</value>
+  </data>
+  <data name="LanguageSelection_Title" xml:space="preserve">
+    <value>Select your language</value>
+  </data>
+  <data name="LanguageSelection_Subtitle" xml:space="preserve">
+    <value>Choose how you'd like to continue</value>
+  </data>
+</root>

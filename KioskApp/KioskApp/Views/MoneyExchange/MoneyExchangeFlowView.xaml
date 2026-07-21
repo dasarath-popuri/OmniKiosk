@@ -8,18 +8,35 @@
     <Grid Margin="32">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- Header Row -->
+            <RowDefinition Height="Auto"/>
+            <!-- Progress Bar Row -->
             <RowDefinition Height="*"/>
+            <!-- Content Row -->
         </Grid.RowDefinitions>
 
+        <!-- Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,24">
             <Button Content="←" Width="64" Height="64" Style="{DynamicResource OutlineButton}" BorderThickness="1" Click="Back_Click"/>
-            <StackPanel Orientation="Vertical" Margin="24,0,0,0" VerticalAlignment="Center">
-                <TextBlock x:Name="TitleText" Text="Money Exchange" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="32" FontWeight="Bold"/>
-                <TextBlock x:Name="StepText" Text="Step 1/6" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="16" Margin="0,4,0,0"/>
-            </StackPanel>
+            <TextBlock x:Name="TitleText" Text="Money Exchange" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="32" FontWeight="Bold" Margin="24,0,0,0" VerticalAlignment="Center"/>
         </DockPanel>
 
-        <Border Grid.Row="1" CornerRadius="20" ClipToBounds="True" Background="White">
+        <!-- Kiosk Progress Indicator -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,24" Orientation="Vertical">
+            <Grid Margin="0,0,0,12">
+                <!-- Descriptive Step Name -->
+                <TextBlock x:Name="StepNameText" Text="Currency Selection" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Left"/>
+                <!-- Step Counter -->
+                <TextBlock x:Name="StepText" Text="Step 1 / 6" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+            </Grid>
+
+            <!-- Standard WPF ProgressBar -->
+            <ProgressBar x:Name="StepProgressBar" Minimum="0" Maximum="5" Value="0" Height="12" BorderThickness="0" 
+                         Foreground="{DynamicResource PrimaryBrush}" Background="#E0E0E0" />
+        </StackPanel>
+
+        <!-- Main Step Content -->
+        <Border Grid.Row="2" CornerRadius="20" ClipToBounds="True" Background="White">
             <ContentControl x:Name="Host" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         </Border>
     </Grid>

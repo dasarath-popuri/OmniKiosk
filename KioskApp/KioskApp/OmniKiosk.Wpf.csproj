@@ -24,6 +24,15 @@
   <ItemGroup>
     <None Remove="Assets\Audio\thanks.mp3" />
     <None Remove="Assets\Audio\welcome.mp3" />
+    <None Remove="Assets\Flags\au.svg" />
+    <None Remove="Assets\Flags\cn.svg" />
+    <None Remove="Assets\Flags\eu.svg" />
+    <None Remove="Assets\Flags\gb.svg" />
+    <None Remove="Assets\Flags\id.svg" />
+    <None Remove="Assets\Flags\in.svg" />
+    <None Remove="Assets\Flags\jp.svg" />
+    <None Remove="Assets\Flags\sg.svg" />
+    <None Remove="Assets\Flags\us.svg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +45,7 @@
     <PackageReference Include="QRCoder" Version="1.7.0" />
     <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="SharpVectors.Wpf" Version="1.8.5" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.5" />
@@ -88,6 +98,36 @@
     <Reference Include="MPOST">
       <HintPath>..\..\..\..\..\..\Documents\Crane Payment Innovations\MPOST .NET\MPOST .NET API\MPOST.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Flags\au.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\cn.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\eu.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\gb.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\id.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\in.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\jp.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\sg.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\Flags\us.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Resources\Strings.Designer.cs">

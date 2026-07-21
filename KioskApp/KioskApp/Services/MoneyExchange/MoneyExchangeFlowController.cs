@@ -33,6 +33,12 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         public CustomerProfile UpsertCustomer(CustomerProfile c)
         {
             var existing = _customers.GetByIdNo(c.IdType, c.IdNo);
+
+            // This lookup is the single source of truth for "have we seen this
+            // person before" - FaceVerificationStep reads it to decide between
+            // a fast local face match and a full Innov8tif eKYC verification.
+            State.IsExistingCustomer = existing != null;
+
             if (existing != null)
             {
                 // keep existing face if new doesn't have it

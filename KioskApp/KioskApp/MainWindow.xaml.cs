@@ -1,15 +1,9 @@
-﻿using Microsoft.Web.WebView2.Core;
-using OmniKiosk.Wpf.APIServices.Clients;
-using OmniKiosk.Wpf.APIServices.Clients.v1;
-using OmniKiosk.Wpf.Logging;
-using OmniKiosk.Wpf.Themes;
-using OmniKiosk.Wpf.Views;
-using OmniKiosk.Wpf.Views.MoneyExchange;
+﻿using OmniKiosk.Wpf.Views;
 using OmniKiosk.Wpf.Views.Remittance;
 using OmniKiosk.Wpf.Views.SDKTest;
-using Serilog;
+using OmniKiosk.Wpf.Views.MoneyExchange;
+using Microsoft.Web.WebView2.Core;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Resources;
@@ -20,6 +14,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Collections.Generic;
 
 
 namespace OmniKiosk.Wpf
@@ -28,7 +23,6 @@ namespace OmniKiosk.Wpf
     {
         private readonly Uri queueXUri = new Uri("http://121.122.30.121:5110/QueueXchange");
         private readonly Uri omniUri = new Uri("https://omniremit.ai");
-        private ResourceManager _resManager;
         private bool _isDarkMode = false;
         private string _currentLanguage = "en";
         private readonly Stack<UserControl> _sdkNav = new();
@@ -43,11 +37,9 @@ namespace OmniKiosk.Wpf
         public MainWindow()
         {
             InitializeComponent();
-            _resManager = new ResourceManager("OmniKiosk.Wpf.Resources.Strings", typeof(MainWindow).Assembly);
 
             // Load default theme
             LoadTheme(false);
-            this.Loaded += MainWindow_Loaded;
         }
 
         private void LoadTheme(bool isDark)
@@ -56,36 +48,16 @@ namespace OmniKiosk.Wpf
             // Theme loading logic can be added here if needed
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            var apiClient = new OmniApiClient();
-
-            // 1. Attempt to log in with our branch credentials
-            bool isLoggedIn = await apiClient.AuthenticateKioskAsync("00000", "KioskAdmin123!");
-
-            if (isLoggedIn)
-            {
-                // 2. We got the JWT token! Now we can make secure calls.
-                MessageBox.Show("Kiosk successfully authenticated with Enterprise API!", "Security Connected", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            }
-            else
-            {
-                MessageBox.Show("CRITICAL ERROR: Kiosk failed to authenticate. Please check branch credentials.", "Auth Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             _ = OmniKiosk.Wpf.Services.GlobalHardwareManager.InitializeAllAsync();
             try
             {
-                BackgroundVideo.Source = new Uri("https://raw.githubusercontent.com/dasarath-popuri/rma-partners-logos/main/Logos/RMApplication.mp4");
+                BackgroundVideo.Source = new Uri("https://raw.githubusercontent.com/dasarath-popuri/rma-partners-logos/main/Logos/VivoVideoBG.mp4");
                 BackgroundVideo.Volume = 0;
                 BackgroundVideo.Play();
             }
             catch { }
-
-            UpdateLocalizedText();
         }
 
         private void BackgroundVideo_MediaEnded(object sender, RoutedEventArgs e)
@@ -107,14 +79,12 @@ namespace OmniKiosk.Wpf
                     return;
                 source = VisualTreeHelper.GetParent(source);
             }
-            JourneyManager.StartNewJourney();
-            Log.Information("Customer tapped the idle screen. Transitioning to Language Selection.");
 
             // Pause video when leaving home screen
             PauseBackgroundVideo();
 
             HomeScreen.Visibility = Visibility.Collapsed;
-            LanguageSelectionScreen.Visibility = Visibility.Visible;
+            FadeIn(LanguageSelectionScreen);
             BtnCloseApp.Content = "Close";
             TapCatcher.Visibility = Visibility.Collapsed;
         }
@@ -128,24 +98,22 @@ namespace OmniKiosk.Wpf
             if (WebViewScreen.Visibility == Visibility.Visible)
             {
                 WebViewScreen.Visibility = Visibility.Collapsed;
-                MenuScreen.Visibility = Visibility.Visible;
+                FadeIn(MenuScreen);
                 try { WebView.CoreWebView2.Navigate("about:blank"); } catch { }
             }
             else if (MenuScreen.Visibility == Visibility.Visible)
             {
                 MenuScreen.Visibility = Visibility.Collapsed;
-                LanguageSelectionScreen.Visibility = Visibility.Visible;
+                FadeIn(LanguageSelectionScreen);
                 //TapCatcher.Visibility = Visibility.Visible;
                 //BtnCloseApp.Content = "Exit";
             }
             else if (LanguageSelectionScreen.Visibility == Visibility.Visible)
             {
                 LanguageSelectionScreen.Visibility = Visibility.Collapsed;
-                HomeScreen.Visibility = Visibility.Visible;
+                FadeIn(HomeScreen);
                 TapCatcher.Visibility = Visibility.Visible;
                 BtnCloseApp.Content = "Exit";
-
-                JourneyManager.ClearJourney();
             }
             else if (Convert.ToString(BtnCloseApp.Content) == "Exit")
             {
@@ -170,15 +138,15 @@ namespace OmniKiosk.Wpf
         {
             try
             {
-                Log.Information("Customer selected language: {LanguageCode}", langCode); 
                 _currentLanguage = langCode;
-                Thread.CurrentThread.CurrentUICulture = new CultureInfo(langCode);
-                Thread.CurrentThread.CurrentCulture = new CultureInfo(langCode);
 
-                UpdateLocalizedText();
+                // Sets thread culture AND raises PropertyChanged, which every
+                // {loc:Loc ...} binding across the window listens to - one call
+                // now refreshes every piece of localized text automatically.
+                Helpers.LocalizationManager.Instance.SetLanguage(langCode);
 
                 LanguageSelectionScreen.Visibility = Visibility.Collapsed;
-                MenuScreen.Visibility = Visibility.Visible;
+                FadeIn(MenuScreen);
             }
             catch (Exception ex)
             {
@@ -186,60 +154,15 @@ namespace OmniKiosk.Wpf
             }
         }
 
-        private void UpdateLocalizedText()
+        // Cheap, safe screen-transition polish: a single Opacity animation, no
+        // layout recompute, no effects that force a re-render. Called at every
+        // point a screen becomes visible instead of a bare Visibility assignment.
+        private static void FadeIn(UIElement element, double milliseconds = 220)
         {
-            TxtWelcome.Text = GetString("WelcomeText") ?? "Welcome to RMA";
-            //TxtTapToStart.Text = GetString("TapToStart") ?? "Tap anywhere to start";
-            TxtMainMenu.Text = GetString("MainMenu") ?? "Main Menu";
-            SelectMenu.Text = GetString("SelectMenu") ?? "Main Menu";
-            SMLblTxt.Text = GetString("SMLblTxt") ?? "Send money abroad quickly and securely";
-            MCLblTxt.Text = GetString("MCLblTxt") ?? "Start the Pre Booking to skip the Queue";
-            StartTxt.Text = GetString("StartTxt") ?? "Start";
-            StartTxt1.Text = GetString("StartTxt") ?? "Start";
-            BrowseTxt.Text = GetString("BrowseTxt") ?? "Browse our products and services";
-            BTxt.Text = GetString("BTxt") ?? "Browse";
-            RatesTxt.Text = GetString("RatesTxt") ?? "View Remittance & Money Exchange Rates";
-            ViewRateTxt.Text = GetString("ViewRateTxt") ?? "View Rates";
-
-
-            if (BtnQueueX != null)
-            {
-                BtnQueueX.Text = GetString("QueueXchange") ?? "Money Exchange";
-            }
-            if (BtnOmni != null)
-            {
-                BtnOmni.Text = GetString("VisitOmni") ?? "Visit OmniRemit";
-            }
-            if (BtnSM != null)
-            {
-                BtnSM.Text = GetString("SendMoney") ?? "Send Money";
-            }
-            if (BtnRates != null)
-            {
-                BtnRates.Text = GetString("RatesToday") ?? "Today's Rates";
-            }
-
-            if (BtnMoneyExchange != null)
-            {
-                BtnMoneyExchange.Text = GetString("MoneyExchange") ?? "Money Exchange";
-            }
-
-            if (BtnNavClose != null)
-            {
-                BtnNavClose.Content = GetString("Back") ?? "Back to Home";
-            }
-        }
-
-        private string GetString(string key)
-        {
-            try
-            {
-                return _resManager.GetString(key, Thread.CurrentThread.CurrentUICulture);
-            }
-            catch
-            {
-                return key;
-            }
+            element.Visibility = Visibility.Visible;
+            element.Opacity = 0;
+            var animation = new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(milliseconds));
+            element.BeginAnimation(UIElement.OpacityProperty, animation);
         }
 
         private void OpenRemittance_Click(object sender, RoutedEventArgs e)
@@ -480,8 +403,7 @@ namespace OmniKiosk.Wpf
         
 private void OpenMoneyExchange_Click(object sender, MouseButtonEventArgs e)
 {
-            Log.Information("Customer launched the Money Exchange Flow.");
-            PauseBackgroundVideo();
+    PauseBackgroundVideo();
 
     HomeScreen.Visibility = Visibility.Collapsed;
     MenuScreen.Visibility = Visibility.Collapsed;
@@ -539,8 +461,6 @@ private async void ShowWebPage(string url)
 
                 // Resume video when returning to home screen
                 ResumeBackgroundVideo();
-
-                JourneyManager.ClearJourney();
             }
         }
 
@@ -821,15 +741,6 @@ private async void ShowWebPage(string url)
             StopBackgroundVideo();
             OmniKiosk.Wpf.Services.GlobalHardwareManager.ShutdownAll();
             base.OnClosed(e);
-        }
-        private void BtnStandard_Click(object sender, RoutedEventArgs e)
-        {
-            ThemeManager.ApplyTheme("Standard");
-        }
-
-        private void BtnRaya_Click(object sender, RoutedEventArgs e)
-        {
-            ThemeManager.ApplyTheme("Raya");
         }
     }
 }
