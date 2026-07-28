@@ -15,5 +15,11 @@
         public const string EkycLoginId = "vivoprod2574@dfsdf";
         public const string EkycLoginPassword = "vivo@#$23sftyg";
         public const string EkycSharedSecretKey = "Rm@-&In$sP";
+
+        public const string MoneyExchangeApiBaseUrl = "https://localhost:7002";
+
+        public const string ConfigApiBaseUrl = "http://YOUR_CONFIG_API_SERVER:PORT/";
+        public const string KioskLoginId = "KIOSK-K101";       // matches the UserProfile row for this specific terminal
+        public const string KioskLoginPassword = "REPLACE_ME"; // the machine secret, hashed the same way staff passwords are
     }
 }

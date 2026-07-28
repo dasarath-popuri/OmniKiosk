@@ -30,6 +30,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private readonly IcReaderService _icSvc = GlobalHardwareManager.IcReader;
 
         private CancellationTokenSource? _cts;
+        private readonly MoneyExchangeApiClient _api = new();
 
         // Document TYPE the customer chose, independent of nationality - a
         // Malaysian can hold a passport too, so this is no longer inferred
@@ -258,6 +259,22 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             return parsed.Date < DateTime.Today;
         }
 
+        // Same format list as IsExpired above - used for DOB/expiry when
+        // sending a new customer's details to the API, which wants a real
+        // DateTime, not the raw SDK string. Returns null if unparseable
+        // rather than guessing - a null DateOfBirth on a new SenderMaster
+        // record is honest; a wrong one is worse than missing.
+        private static DateTime? TryParseSdkDate(string? sdkDate)
+        {
+            if (string.IsNullOrWhiteSpace(sdkDate)) return null;
+
+            DateTime parsed;
+            bool ok = DateTime.TryParseExact(sdkDate, SdkDateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed);
+            if (!ok) ok = DateTime.TryParse(sdkDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed);
+
+            return ok ? parsed : null;
+        }
+
         private void PopulateResultView()
         {
             var cust = _ctl.State.Customer;
@@ -307,7 +324,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             else BackRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        private void Next_Click(object sender, RoutedEventArgs e)
+        private async void Next_Click(object sender, RoutedEventArgs e)
         {
             if (_ctl.State.Customer == null) _ctl.State.Customer = new CustomerProfile();
             _ctl.State.Customer.IdType = _selectedDocType;
@@ -316,9 +333,113 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _ctl.State.Customer.Nationality = TxtNat.Text;
             _ctl.State.Customer.MobileNo = TxtMobile.Text.Trim();
 
-            // Sets State.IsExistingCustomer as a side effect - FaceVerificationStep
-            // reads that flag to choose local match vs eKYC.
+            // Local upsert still happens - this is what caches a face-match
+            // feature for fast local re-verification on a future visit, and
+            // sets State.IsExistingCustomer as a first pass. The central
+            // check below is what actually decides, at the business level,
+            // whether this is a known customer - it overrides the local
+            // result rather than working alongside it.
             _ctl.UpsertCustomer(_ctl.State.Customer);
+
+            BtnNext.IsEnabled = false;
+            StatusText.Text = L10n.T("Mx_CheckingCustomer", "Checking customer record…");
+
+            try
+            {
+                var result = await _api.CheckCustomerAsync(_selectedDocType, TxtIdNo.Text);
+
+                if (result.IsBlocked == true)
+                {
+                    BtnNext.IsEnabled = true;
+                    StatusText.Text = "";
+                    CustomDialog.ShowError(
+                        L10n.T("Mx_CustomerBlockedTitle", "Unable to Proceed"),
+                        L10n.T("Mx_CustomerBlockedBody", "This transaction cannot be completed at this kiosk. Please see a member of staff for assistance."));
+                    return;
+                }
+
+                _ctl.State.IsExistingCustomer = result.Found;
+                _ctl.State.SenderId = result.SenderId;
+
+                // New customer - no SenderMaster row exists yet. Create one
+                // now so screening (and the transaction's CustomerRef later)
+                // has a real SenderId to attach to, the same as an existing
+                // customer already has.
+                //
+                // *** FALLBACK - see the note at the top of Ksk_CreateNewSender.sql.
+                // If a real sender-creation proc already exists in this system,
+                // this call should be replaced with that instead of the raw
+                // INSERT this currently triggers. ***
+                if (!result.Found)
+                {
+                    try
+                    {
+                        var newSenderId = await _api.CreateCustomerAsync(new CreateCustomerApiRequest
+                        {
+                            KioskId = "K1", // TODO: real kiosk identity once machine auth exists
+                            IdType = _selectedDocType,
+                            IdNo = TxtIdNo.Text,
+                            FullName = TxtName.Text,
+                            Nationality = TxtNat.Text,
+                            DateOfBirth = TryParseSdkDate(_ctl.State.Customer.DateOfBirth),
+                            Gender = _ctl.State.Customer.Sex,
+                            MobileNo = TxtMobile.Text.Trim(),
+                            IdExpiryDate = TryParseSdkDate(_ctl.State.Customer.DateOfExpiry)
+                        });
+
+                        if (newSenderId > 0)
+                        {
+                            _ctl.State.SenderId = newSenderId;
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("[CustomerDetails] CreateCustomer returned no SenderId - screening will be skipped for this customer.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Could not create the central record - this customer
+                        // proceeds without a SenderId, same as the existing
+                        // "screening skipped" fallback below, not blocked
+                        // outright over a network/API problem.
+                        System.Diagnostics.Debug.WriteLine("[CustomerDetails] Failed to create SenderMaster record: " + ex.Message);
+                    }
+                }
+
+                // Watchlist screening - needs a real SenderMaster.SenderID,
+                // which now exists whether this customer was found or just
+                // created above.
+                if (_ctl.State.SenderId.HasValue)
+                {
+                    var screening = await _api.ScreenCustomerAsync(_ctl.State.SenderId.Value, _ctl.State.ScreeningTransGuid!);
+
+                    if (screening.HasMatch)
+                    {
+                        BtnNext.IsEnabled = true;
+                        StatusText.Text = "";
+                        CustomDialog.ShowError(
+                            L10n.T("Mx_ScreeningMatchTitle", "Unable to Proceed at This Kiosk"),
+                            L10n.T("Mx_ScreeningMatchBody", "We're unable to complete this transaction here. Please proceed to the counter for assistance."));
+                        return;
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[CustomerDetails] No SenderId resolved - watchlist screening skipped for this (new) customer.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Central check unreachable - falls back to the local
+                // determination already set by UpsertCustomer above rather
+                // than blocking the whole transaction on an API outage.
+                // Worth knowing this happened, not worth stopping a
+                // legitimate customer over a network hiccup.
+                System.Diagnostics.Debug.WriteLine("[CustomerDetails] SenderMaster check failed, using local fallback: " + ex.Message);
+            }
+
+            BtnNext.IsEnabled = true;
+            StatusText.Text = "";
 
             NextRequested?.Invoke(this, EventArgs.Empty);
         }

@@ -46,6 +46,22 @@
             </ItemsControl>
         </ScrollViewer>
 
+        <!-- Shown while GetCurrenciesAsync is in flight -->
+        <StackPanel x:Name="LoadingPanel" Grid.Row="1" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="⏳" FontSize="56" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+            <TextBlock Text="Loading currencies..." FontSize="{StaticResource FontSizeNormal}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Shown if the API call fails - network down, API not running,
+             DB unreachable. A customer facing an empty screen with no
+             explanation is worse than a clear "try again" state. -->
+        <StackPanel x:Name="ErrorPanel" Grid.Row="1" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="600">
+            <TextBlock Text="⚠️" FontSize="56" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+            <TextBlock Text="Couldn't load currencies right now." FontSize="{StaticResource FontSizeNormal}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+            <TextBlock Text="Please try again, or ask a member of staff for assistance." FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,8,0,20"/>
+            <Button x:Name="BtnRetryLoad" Content="Try Again" Width="240" Click="BtnRetryLoad_Click" Style="{StaticResource PrimaryButton}"/>
+        </StackPanel>
+
         <Grid Grid.Row="2" Margin="0,28,0,0">
             <Button x:Name="BtnBack" Width="220" HorizontalAlignment="Left" Click="Back_Click" Style="{StaticResource OutlineButton}"/>
             <Button x:Name="BtnNext" Width="280" HorizontalAlignment="Right" IsEnabled="False" Click="Next_Click" Style="{StaticResource PrimaryButton}"/>

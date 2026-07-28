@@ -10,6 +10,7 @@ using OmniKiosk.Wpf.Sdk.Printer;
 using OmniKiosk.Wpf.Sdk.Dispenser;
 using OmniKiosk.Wpf.Services;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 {
@@ -18,6 +19,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private readonly MoneyExchangeFlowController _ctl;
         private readonly BixolonPrinterService _printerSvc = GlobalHardwareManager.Printer;
         private readonly PuloonDispenserService _dispenserSvc = GlobalHardwareManager.MoneyDispenser;
+        private readonly MoneyExchangeApiClient _api = new();
 
         public event EventHandler? NextRequested;
         public event EventHandler? BackRequested;
@@ -46,6 +48,32 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             LoadTransactionData();
 
+            // Cross-check against the DB-configured denominations before
+            // dispensing - the dispenser hardware is hardcoded to exactly 4
+            // fixed cassettes (DispenseAsync always takes 4 counts), so this
+            // validates the DB agrees with that rather than trying to make
+            // the physical dispense call itself dynamic. If the DB ever has
+            // something other than exactly [100,50,10,1], that's a
+            // configuration problem worth knowing about, not something to
+            // silently paper over - falls back to the values already
+            // calculated locally either way, so a failed API call never
+            // blocks a customer from getting their cash.
+            try
+            {
+                var apiDenoms = await _api.GetDenominationsAsync("MYR");
+                var expected = new[] { 100, 50, 10, 1 };
+                var actual = apiDenoms.Select(d => d.DenominationValue).ToArray();
+                if (!expected.SequenceEqual(actual))
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[FinalReceipt] DB denominations [{string.Join(",", actual)}] don't match the 4 physical cassettes [{string.Join(",", expected)}] - dispensing with the hardcoded breakdown regardless, but this is worth fixing in Ksk_BanknoteDenominations.");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[FinalReceipt] Could not reach denominations API, continuing with local calculation: " + ex.Message);
+            }
+
             // 🚀 FIX: Mapped exactly to your physical cassette order (Top to Bottom)
             int c1 = int.Parse(Txt1.Text);   // Cassette 1 (Top)    = RM 1
             int c2 = int.Parse(Txt10.Text);  // Cassette 2          = RM 10
@@ -63,27 +91,47 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                         _dispenseSuccessful = false;
                         _dispenseErrorMsg = L10n.T("Mx_HardwareOffline", "Hardware Offline (Check USB Cable/Power)");
                         ShowDispenserNotice();
+                        await CompleteTransactionSafeAsync("DispenseFailed");
                         return;
                     }
                 }
 
-                // Send the perfectly mapped notes to the dispenser
                 var response = await _dispenserSvc.DispenseAsync(c1, c2, c3, c4);
 
                 if (response.Success)
                 {
                     _dispenseSuccessful = true;
+                    await CompleteTransactionSafeAsync("Completed");
                 }
                 else
                 {
                     _dispenseSuccessful = false;
                     _dispenseErrorMsg = response.Message;
                     ShowDispenserNotice();
+                    await CompleteTransactionSafeAsync("DispenseFailed");
                 }
             }
             else
             {
                 _dispenseSuccessful = true;
+                await CompleteTransactionSafeAsync("Completed");
+            }
+        }
+
+        // Cash has already physically moved (dispensed or not) by the time
+        // this runs - a failed API call here must never be shown to the
+        // customer or change what already happened at the machine.
+        private async Task CompleteTransactionSafeAsync(string status)
+        {
+            if (!_ctl.State.TransactionId.HasValue) return;
+
+            try
+            {
+                await _api.CompleteTransactionAsync(_ctl.State.TransactionId.Value, status);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FinalReceipt] Failed to mark transaction {_ctl.State.TransactionId} as {status}: {ex.Message}");
             }
         }
 
@@ -102,9 +150,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             TxtRate.Text = $"{s.RateToMyr:0.0000}";
             TxtMyr.Text = $"RM {s.MyrAmount:0}";
 
-            // The customer's own live capture from FaceVerificationStep - the
-            // one piece the original screen had a placeholder for but never
-            // actually populated.
             if (!string.IsNullOrWhiteSpace(s.LiveFaceImageBase64))
             {
                 try
@@ -118,7 +163,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     bmp.EndInit();
                     LiveFaceImage.Source = bmp;
                 }
-                catch { /* portrait stays blank if the capture can't be decoded */ }
+                catch { }
             }
 
             CalculateDispenserNotes((int)s.MyrAmount);
@@ -137,8 +182,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             Txt10.Text = count10.ToString();
             Txt1.Text = count1.ToString();
 
-            // A customer paid in RM10s and RM1s doesn't need to see an
-            // "RM100 x 0" row - only show denominations that actually dispensed.
             Row100.Visibility = count100 > 0 ? Visibility.Visible : Visibility.Collapsed;
             Row50.Visibility = count50 > 0 ? Visibility.Visible : Visibility.Collapsed;
             Row10.Visibility = count10 > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -161,22 +204,18 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     r.Append(ReceiptFormatter.BuildHeader("CASH"));
                     r.Append(ReceiptFormatter.BuildCustomerBlock(receiptNo, custName, maskedDoc));
 
-                    // Force center alignment for the transaction details
                     r.Append(BixolonPrinterService.ESC_ALIGN_CENTER);
 
-                    // 1. Foreign Currency Inserted
                     r.Append(BixolonPrinterService.ESC_BOLD_ON);
                     r.Append("FOREIGN INSERTED\n");
                     r.Append(BixolonPrinterService.ESC_BOLD_OFF);
                     r.Append($"{s.FromAmount:0.00} {s.FromCurrency}\n\n");
 
-                    // 2. Exchange Rate
                     r.Append(BixolonPrinterService.ESC_BOLD_ON);
                     r.Append("EXCHANGE RATE\n");
                     r.Append(BixolonPrinterService.ESC_BOLD_OFF);
                     r.Append($"{s.RateToMyr:0.0000}\n\n");
 
-                    // 3. Total Amount Dispensed (Highlight with double size)
                     r.Append(BixolonPrinterService.ESC_BOLD_ON);
                     r.Append("TOTAL DISPENSED\n");
                     r.Append(BixolonPrinterService.ESC_DOUBLE_SIZE);
@@ -184,7 +223,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     r.Append(BixolonPrinterService.ESC_NORMAL_SIZE);
                     r.Append(BixolonPrinterService.ESC_BOLD_OFF);
 
-                    // 4. Notes Dispensed Breakdown
                     r.Append("--------------------------------\n");
                     r.Append(BixolonPrinterService.ESC_BOLD_ON);
                     r.Append("NOTES DISPENSED\n");
@@ -205,7 +243,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 }
                 else
                 {
-                    // Format for failed dispense (Counter Slip)
                     r.Append(ReceiptFormatter.BuildHeader("CASH"));
                     r.Append(BixolonPrinterService.ESC_ALIGN_CENTER);
                     r.Append(BixolonPrinterService.ESC_BOLD_ON);

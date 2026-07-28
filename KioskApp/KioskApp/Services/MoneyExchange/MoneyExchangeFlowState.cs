@@ -13,10 +13,25 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         // Customer
         public CustomerProfile? Customer { get; set; }
 
-        // Set by MoneyExchangeFlowController.UpsertCustomer - true if this
-        // IdType+IdNo was already in the local database before this visit.
-        // Drives FaceVerificationStep: existing customers get the fast local
-        // TaiSDK match, new customers go through Innov8tif eKYC.
+        // Resolved from SenderMaster via CustomersController.CheckCustomer -
+        // null until CustomerDetailsStep completes the check, then set if a
+        // match was found. Sent as CustomerRef when creating the transaction.
+        public int? SenderId { get; set; }
+
+        // Generated once by MoneyExchangeFlowController's constructor, right
+        // at the start of the flow - not at screening time. Sent to
+        // KSK_TransScreening (CustomerDetailsStep) and later to
+        // KSK_CommitScreening (at completion, once a real Mc_TransMaster.TxnID
+        // exists) - the same identifier ties the two together.
+        public string? ScreeningTransGuid { get; set; }
+
+        // Authoritative source is now CustomersController.CheckCustomer
+        // against SenderMaster (set in CustomerDetailsStep), not the local
+        // SQLite cache - the local upsert still happens for its own reason
+        // (caching a face-match feature for fast local re-verification), but
+        // the central check is what determines existing-vs-new at the
+        // business level, and drives FaceVerificationStep's local-match vs
+        // eKYC branch.
         public bool IsExistingCustomer { get; set; }
 
         // Face

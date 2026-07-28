@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,6 +12,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
     public partial class CurrencySelectionStep : UserControl, IStepNav
     {
         private readonly MoneyExchangeFlowController _ctl;
+        private readonly MoneyExchangeApiClient _api = new();
         public event EventHandler? NextRequested;
         public event EventHandler? BackRequested;
         public event EventHandler? ExitRequested;
@@ -23,27 +25,57 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _ctl = ctl;
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             TitleText.Text = L10n.T("Mx_SelectCurrency", "Select currency");
             SubtitleText.Text = L10n.T("Mx_SelectCurrencySubtitle", "Choose the foreign currency you'd like to exchange for Malaysian Ringgit");
             BtnBack.Content = L10n.T("Mx_Back", "Back");
             BtnNext.Content = L10n.T("Mx_Next", "Next");
 
-            var currencies = new List<CurrencyDisplayOption>
-            {
-                new() { Code = "USD", CountryName = "US Dollar", RateToMyr = 4.75, FlagUri = FlagUri("us") },
-                new() { Code = "SGD", CountryName = "Singapore Dollar", RateToMyr = 3.52, FlagUri = FlagUri("sg") },
-                new() { Code = "EUR", CountryName = "Euro", RateToMyr = 5.12, FlagUri = FlagUri("eu") },
-                new() { Code = "GBP", CountryName = "British Pound", RateToMyr = 6.01, FlagUri = FlagUri("gb") },
-                new() { Code = "AUD", CountryName = "Australian Dollar", RateToMyr = 3.10, FlagUri = FlagUri("au") },
-                new() { Code = "JPY", CountryName = "Japanese Yen", RateToMyr = 0.032, FlagUri = FlagUri("jp") },
-                new() { Code = "IDR", CountryName = "Indonesian Rupiah", RateToMyr = 0.000232, FlagUri = FlagUri("id") },
-                new() { Code = "CNY", CountryName = "Chinese Yuan", RateToMyr = 0.572, FlagUri = FlagUri("cn") }
-            };
-            foreach (var c in currencies) c.RateDisplay = $"1 = RM {c.RateToMyr:0.00##}";
-            LstCurrencies.ItemsSource = currencies;
+            await LoadCurrenciesAsync();
         }
+
+        // Was a hardcoded List<CurrencyDisplayOption> before - now comes
+        // from GET /api/v1/Currencies, joined with each currency's active
+        // rate. Kept as its own method (rather than inline in Loaded) so
+        // BtnRetry_Click (added below) can call it again without duplicating
+        // this logic.
+        private async System.Threading.Tasks.Task LoadCurrenciesAsync()
+        {
+            LstCurrencies.Visibility = Visibility.Collapsed;
+            ErrorPanel.Visibility = Visibility.Collapsed;
+            LoadingPanel.Visibility = Visibility.Visible;
+
+            try
+            {
+                var apiCurrencies = await _api.GetCurrenciesAsync();
+
+                var currencies = apiCurrencies.Select(c => new CurrencyDisplayOption
+                {
+                    Code = c.CurrencyCode,
+                    CountryName = c.CurrencyName,
+                    RateToMyr = (double)c.BuyRate,
+                    FlagUri = FlagUri(c.FlagCountryCode ?? c.CurrencyCode.ToLowerInvariant())
+                }).ToList();
+
+                foreach (var c in currencies) c.RateDisplay = $"1 = RM {c.RateToMyr:0.00##}";
+
+                LstCurrencies.ItemsSource = currencies;
+                LoadingPanel.Visibility = Visibility.Collapsed;
+                LstCurrencies.Visibility = Visibility.Visible;
+            }
+            catch (Exception ex)
+            {
+                // Network down, API not running, DB unreachable - whatever it
+                // is, the customer needs a clear "can't continue" state, not
+                // a silently empty currency list.
+                System.Diagnostics.Debug.WriteLine("Failed to load currencies: " + ex.Message);
+                LoadingPanel.Visibility = Visibility.Collapsed;
+                ErrorPanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        private async void BtnRetryLoad_Click(object sender, RoutedEventArgs e) => await LoadCurrenciesAsync();
 
         private static Uri FlagUri(string isoCode) => new($"pack://application:,,,/Assets/Flags/{isoCode}.svg");
 

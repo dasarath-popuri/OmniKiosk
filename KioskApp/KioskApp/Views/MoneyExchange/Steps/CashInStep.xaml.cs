@@ -16,6 +16,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private readonly MoneyExchangeFlowController _ctl;
         private readonly MoneyReceiverService _svc = GlobalHardwareManager.MoneyReceiver;
         private readonly BixolonPrinterService _printerSvc = GlobalHardwareManager.Printer;
+        private readonly MoneyExchangeApiClient _api = new();
 
         public event EventHandler? NextRequested;
         public event EventHandler? BackRequested;
@@ -24,6 +25,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private double _totalForeign = 0;
         private double _pendingEscrowValue = 0;
         private int _maxMyrAvailable = 0;
+        private int _noteSequence = 0;
 
         public CashInStep(MoneyExchangeFlowController ctl)
         {
@@ -91,9 +93,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _svc.OnRejected -= Svc_OnRejected;
         }
 
-        // Hardware log events still fire for anyone wiring up file/telemetry
-        // logging later - just no longer rendered as raw text in front of a
-        // customer, per "neat, customer-facing" screens throughout this flow.
         private void Svc_OnLog(string s) => System.Diagnostics.Debug.WriteLine("[CashIn] " + s);
         private void Svc_OnStatus(string s) => Dispatcher.Invoke(() => TxtStatus.Text = s);
         private void Svc_OnError(string s) => System.Diagnostics.Debug.WriteLine("[CashIn:ERROR] " + s);
@@ -116,7 +115,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 return;
             }
 
-            // SECURITY CHECK: Ensure it matches the requested currency
             string expectedCurrency = _ctl.State.FromCurrency;
             string insertedCurrency = string.IsNullOrWhiteSpace(info.CurrencyCode) ? "UNKNOWN" : info.CurrencyCode;
 
@@ -145,8 +143,15 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void Svc_OnStacked(EscrowInfo info) => Dispatcher.Invoke(() =>
         {
+            double acceptedValue = _pendingEscrowValue;
             _pendingEscrowValue = 0;
             BtnNext.IsEnabled = true;
+
+            // The note is physically in the vault the instant this event
+            // fires - everything below is best-effort record-keeping and
+            // must never be allowed to affect what already happened in
+            // hardware. Fire-and-forget with its own error handling.
+            _ = SaveNoteAcceptedAsync(acceptedValue);
 
             if (_ctl.State.MyrAmount >= _maxMyrAvailable)
             {
@@ -157,18 +162,80 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
         });
 
+        private async Task SaveNoteAcceptedAsync(double acceptedValue)
+        {
+            try
+            {
+                // First accepted note - create the parent transaction record
+                // before logging the note itself, so every note logged from
+                // here on has a real TransactionId to attach to. Stored on
+                // shared flow state so FinalReceiptStep can complete the
+                // same record later.
+                if (_ctl.State.TransactionId == null)
+                {
+                    var receiptNo = ReceiptFormatter.BuildReceiptNo(null);
+                    var newId = await _api.CreateTransactionAsync(new CreateTransactionApiRequest
+                    {
+                        KioskId = "K1", // TODO: real kiosk identity once machine auth exists
+                        ReceiptNo = receiptNo,
+                        CustomerRef = _ctl.State.SenderId, // now resolved by CustomerDetailsStep's SenderMaster check
+                        ScreeningTransGuid = _ctl.State.ScreeningTransGuid, // generated at flow start, committed at completion
+                        FromCurrency = _ctl.State.FromCurrency,
+                        FromAmount = 0, // running totals updated as notes come in - see below
+                        Rate = (decimal)_ctl.State.RateToMyr,
+                        MyrAmount = 0,
+                        CashInsertedMyr = 0,
+                        CreatedBy = "KIOSK"
+                    });
+                    _ctl.State.TransactionId = newId;
+                }
+
+                _noteSequence++;
+                await _api.RecordNoteAsync(_ctl.State.TransactionId.Value, _noteSequence, _ctl.State.FromCurrency, (decimal)acceptedValue, "Accepted");
+            }
+            catch (Exception ex)
+            {
+                // Deliberately not shown to the customer - the physical note
+                // was already accepted and is sitting in the vault. A logging
+                // failure here is a backend problem to investigate, not
+                // something that should interrupt someone mid-transaction.
+                System.Diagnostics.Debug.WriteLine("[CashIn] Failed to save accepted note to API: " + ex.Message);
+            }
+        }
+
         private void Svc_OnReturned(EscrowInfo info) => Dispatcher.Invoke(() =>
         {
             if (_pendingEscrowValue > 0)
             {
+                double returnedValue = _pendingEscrowValue;
                 _totalForeign -= _pendingEscrowValue;
                 if (_totalForeign < 0) _totalForeign = 0;
 
                 _pendingEscrowValue = 0;
                 UpdateConversionUI();
                 BtnNext.IsEnabled = _totalForeign > 0;
+
+                if (_ctl.State.TransactionId.HasValue)
+                {
+                    _noteSequence++;
+                    var txnId = _ctl.State.TransactionId.Value;
+                    var seq = _noteSequence;
+                    _ = SaveNoteReturnedAsync(txnId, seq, returnedValue);
+                }
             }
         });
+
+        private async Task SaveNoteReturnedAsync(long transactionId, int sequenceNo, double returnedValue)
+        {
+            try
+            {
+                await _api.RecordNoteAsync(transactionId, sequenceNo, _ctl.State.FromCurrency, (decimal)returnedValue, "Returned");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[CashIn] Failed to save returned note to API: " + ex.Message);
+            }
+        }
 
         private void EscrowAccept_Click(object sender, RoutedEventArgs e)
         {
@@ -198,10 +265,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _ctl.State.MyrAmount = roundedMyr;
         }
 
-        // Cancel is always available, but behaves differently depending on
-        // whether any notes have actually gone into the vault - per the spec,
-        // cancelling after notes are inserted needs confirmation and prints a
-        // counter slip; cancelling with nothing inserted just leaves quietly.
         private async void Back_Click(object sender, RoutedEventArgs e)
         {
             if (_totalForeign <= 0)
@@ -220,12 +283,17 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             try { _svc.EnableAcceptance(false); } catch { }
             PrintCancelSlip();
+
+            if (_ctl.State.TransactionId.HasValue)
+            {
+                try { await _api.CompleteTransactionAsync(_ctl.State.TransactionId.Value, "Cancelled"); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[CashIn] Failed to mark transaction cancelled: " + ex.Message); }
+            }
+
             await Task.Delay(300);
             ExitRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        // Same counter-slip pattern FinalReceiptStep already uses for a failed
-        // dispense - reused here for a customer-initiated cancellation instead.
         private void PrintCancelSlip()
         {
             try
@@ -233,10 +301,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 var s = _ctl.State;
                 var custName = s.Customer?.FullName ?? "Walk-in Customer";
                 var maskedDoc = ReceiptFormatter.MaskDocumentNo(s.Customer?.IdNo);
-                // No transaction record exists yet at this point (cancellation
-                // happens before CreateTransaction runs) - falls back to a
-                // timestamp-based receipt number.
-                var receiptNo = ReceiptFormatter.BuildReceiptNo(null);
+                var receiptNo = ReceiptFormatter.BuildReceiptNo(s.TransactionId);
 
                 var r = new StringBuilder();
                 r.Append(ReceiptFormatter.BuildHeader("CASH"));
@@ -268,7 +333,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             DoneOverlay.Visibility = Visibility.Visible;
             _ctl.State.CashInsertedMyr = _ctl.State.MyrAmount;
-            _ctl.CreateTransaction();
+
+            // NOTE: Completion status here is "InProgress -> still open" -
+            // the transaction gets marked Completed once dispensing actually
+            // succeeds in FinalReceiptStep, not here. This step only
+            // confirms cash-in is done, not that MYR has been handed over yet.
 
             await Task.Delay(1500);
             NextRequested?.Invoke(this, EventArgs.Empty);

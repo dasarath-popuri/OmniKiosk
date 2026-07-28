@@ -18,6 +18,12 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
             _rates = new ExchangeRatesService();
             _customers = new CustomerRepository(db);
             _txns = new TransactionRepository(db);
+
+            // Generated once, here, at the very start of the flow - not at
+            // screening time. The same value is used for KSK_TransScreening
+            // (CustomerDetailsStep) and, later, KSK_CommitScreening (once a
+            // real Mc_TransMaster.TxnID exists at completion).
+            State.ScreeningTransGuid = Guid.NewGuid().ToString();
         }
 
         public ExchangeRatesService Rates => _rates;

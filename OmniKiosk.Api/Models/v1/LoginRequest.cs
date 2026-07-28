@@ -3,6 +3,8 @@
     public class LoginRequest
     {
         public string BranchCode { get; set; }
+
+        public string LoginId { get; set; }
         public string Password { get; set; }
     }
 }
