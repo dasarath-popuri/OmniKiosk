@@ -23,7 +23,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
     public class CreateTransactionApiRequest
     {
         public string KioskId { get; set; } = "";
-        public string ReceiptNo { get; set; } = "";
+        public int BranchId { get; set; }
         public int? CustomerRef { get; set; }
         public string FromCurrency { get; set; } = "";
         public decimal FromAmount { get; set; }
@@ -57,6 +57,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
     public class CreateCustomerApiRequest
     {
         public string KioskId { get; set; } = "";
+        public int BranchId { get; set; }
         public string IdType { get; set; } = "";
         public string IdNo { get; set; } = "";
         public string FullName { get; set; } = "";
@@ -65,6 +66,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         public string? Gender { get; set; }
         public string? MobileNo { get; set; }
         public DateTime? IdExpiryDate { get; set; }
+        public string? Picture1Base64 { get; set; }
     }
 
     // Talks to OmniKiosk.MoneyExchange.Api. Every call now attaches a
@@ -149,12 +151,23 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
             return result ?? new ScreeningResult { HasMatch = false };
         }
 
-        public async Task<long> CreateTransactionAsync(CreateTransactionApiRequest request, CancellationToken ct = default)
+        public async Task<(long TransactionId, string ReceiptNo)> CreateTransactionAsync(CreateTransactionApiRequest request, CancellationToken ct = default)
         {
             var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, "api/v1/Transactions") { Content = JsonContent.Create(request) }, ct);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<CreateTransactionResult>(cancellationToken: ct);
-            return result?.TransactionId ?? 0;
+            return (result?.TransactionId ?? 0, result?.ReceiptNo ?? "");
+        }
+
+        // Call this once cash-in is done, before CompleteTransactionAsync -
+        // pushes the final running totals to the transaction record.
+        // KSK_MirrorToMcTransaction reads these same columns later, so
+        // skipping this call means the Mc_ mirror runs against 0 values.
+        public async Task UpdateTransactionAmountsAsync(long transactionId, decimal fromAmount, decimal myrAmount, decimal cashInsertedMyr, CancellationToken ct = default)
+        {
+            var body = new { FromAmount = fromAmount, MyrAmount = myrAmount, CashInsertedMyr = cashInsertedMyr };
+            var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, $"api/v1/Transactions/{transactionId}/amounts") { Content = JsonContent.Create(body) }, ct);
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task CompleteTransactionAsync(long transactionId, string status, CancellationToken ct = default)
@@ -173,6 +186,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         private class CreateTransactionResult
         {
             public long TransactionId { get; set; }
+            public string ReceiptNo { get; set; } = "";
         }
 
         private class CreateCustomerResult

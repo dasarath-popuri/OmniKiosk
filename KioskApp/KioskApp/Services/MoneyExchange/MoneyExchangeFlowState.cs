@@ -43,6 +43,13 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         // Transaction
         public long? TransactionId { get; set; }
 
+        // The real, sequential receipt number from KSK_GetReceiptNo,
+        // returned when CashInStep creates the transaction. Replaces the
+        // old client-side ReceiptFormatter.BuildReceiptNo generation -
+        // FinalReceiptStep's printed receipt should use this, not generate
+        // its own.
+        public string? ReceiptNo { get; set; }
+
         // Add this inside OmniKiosk.Wpf.Models.MoneyExchange.MoneyExchangeState
         public System.Collections.ObjectModel.ObservableCollection<OmniKiosk.Wpf.Views.MoneyExchange.Steps.TransactionItem> Transactions { get; set; } = new();
         public string? LiveFaceImageBase64 { get; set; } // To store the live face for the final receipt

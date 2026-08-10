@@ -78,8 +78,27 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
 
             using var con = new SqlConnection(_connectionString);
 
+            // Decode base64 back to raw bytes here - the wire format is
+            // base64 (JSON has no binary type), but SenderMaster.Picture1
+            // is varbinary(max) and needs actual bytes, not base64 text.
+            // A missing or malformed photo shouldn't fail the whole
+            // customer creation - log it and proceed with no photo rather
+            // than block a legitimate customer over a capture issue.
+            byte[]? picture1Bytes = null;
+            if (!string.IsNullOrWhiteSpace(request.Picture1Base64))
+            {
+                try
+                {
+                    picture1Bytes = Convert.FromBase64String(request.Picture1Base64);
+                }
+                catch (FormatException)
+                {
+                    _logger.LogWarning("CreateCustomer: Picture1Base64 was not valid base64, proceeding without a photo");
+                }
+            }
+
             var p = new DynamicParameters();
-            p.Add("@KioskId", request.KioskId);
+            p.Add("@BranchId", request.BranchId);
             p.Add("@IdType", idTypeCode);
             p.Add("@IdNo", request.IdNo);
             p.Add("@FullName", request.FullName);
@@ -88,6 +107,7 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
             p.Add("@Gender", request.Gender);
             p.Add("@MobileNo", request.MobileNo);
             p.Add("@IdExpiryDate", request.IdExpiryDate);
+            p.Add("@Picture1", picture1Bytes, dbType: DbType.Binary);
             p.Add("@NewSenderId", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
             try

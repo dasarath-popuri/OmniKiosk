@@ -376,7 +376,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     {
                         var newSenderId = await _api.CreateCustomerAsync(new CreateCustomerApiRequest
                         {
-                            KioskId = "K1", // TODO: real kiosk identity once machine auth exists
+                            KioskId = "K1", // TODO: still a placeholder, separate from BranchId (see note below)
+                            BranchId = await KioskAuthService.GetKioskBranchIdAsync(),
                             IdType = _selectedDocType,
                             IdNo = TxtIdNo.Text,
                             FullName = TxtName.Text,
@@ -384,7 +385,13 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                             DateOfBirth = TryParseSdkDate(_ctl.State.Customer.DateOfBirth),
                             Gender = _ctl.State.Customer.Sex,
                             MobileNo = TxtMobile.Text.Trim(),
-                            IdExpiryDate = TryParseSdkDate(_ctl.State.Customer.DateOfExpiry)
+                            IdExpiryDate = TryParseSdkDate(_ctl.State.Customer.DateOfExpiry),
+                            // The portrait captured off the MyKad chip or
+                            // passport scan (StartIcScanAsync/PassportReadLoop
+                            // already populate this as base64) - same data
+                            // that's cached locally for face matching, now
+                            // also written to the central record.
+                            Picture1Base64 = _ctl.State.Customer.FaceImageBase64
                         });
 
                         if (newSenderId > 0)

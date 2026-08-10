@@ -173,11 +173,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 // same record later.
                 if (_ctl.State.TransactionId == null)
                 {
-                    var receiptNo = ReceiptFormatter.BuildReceiptNo(null);
-                    var newId = await _api.CreateTransactionAsync(new CreateTransactionApiRequest
+                    var kioskUserId = await KioskAuthService.GetKioskUserIdAsync();
+                    var (newId, generatedReceiptNo) = await _api.CreateTransactionAsync(new CreateTransactionApiRequest
                     {
-                        KioskId = "K1", // TODO: real kiosk identity once machine auth exists
-                        ReceiptNo = receiptNo,
+                        KioskId = "K1", // TODO: still a placeholder - separate from the CreatedBy/BranchId fixes
+                        BranchId = await KioskAuthService.GetKioskBranchIdAsync(),
                         CustomerRef = _ctl.State.SenderId, // now resolved by CustomerDetailsStep's SenderMaster check
                         ScreeningTransGuid = _ctl.State.ScreeningTransGuid, // generated at flow start, committed at completion
                         FromCurrency = _ctl.State.FromCurrency,
@@ -185,9 +185,17 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                         Rate = (decimal)_ctl.State.RateToMyr,
                         MyrAmount = 0,
                         CashInsertedMyr = 0,
-                        CreatedBy = "KIOSK"
+                        // Real numeric UserID from the kiosk's own login, not a made-up
+                        // string. KSK_MirrorToMcTransaction later needs this to cast
+                        // cleanly to int for Mc_TransMaster/Mc_Transaction - "KIOSK" as
+                        // a string silently failed that cast and the whole mirror never
+                        // ran, even though the customer-facing flow completed normally.
+                        CreatedBy = kioskUserId.ToString()
                     });
                     _ctl.State.TransactionId = newId;
+                    // Real sequential receipt number from KSK_GetReceiptNo, not the old
+                    // client-generated ReceiptFormatter.BuildReceiptNo value.
+                    _ctl.State.ReceiptNo = generatedReceiptNo;
                 }
 
                 _noteSequence++;
@@ -301,7 +309,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 var s = _ctl.State;
                 var custName = s.Customer?.FullName ?? "Walk-in Customer";
                 var maskedDoc = ReceiptFormatter.MaskDocumentNo(s.Customer?.IdNo);
-                var receiptNo = ReceiptFormatter.BuildReceiptNo(s.TransactionId);
+                // By the time a cancel slip can print, at least one note was
+                // accepted, which means ReceiptNo was already set by
+                // SaveNoteAcceptedAsync - falls back to the transaction ID
+                // only in the unexpected case it's somehow still empty.
+                var receiptNo = !string.IsNullOrWhiteSpace(s.ReceiptNo) ? s.ReceiptNo : ReceiptFormatter.BuildReceiptNo(s.TransactionId);
 
                 var r = new StringBuilder();
                 r.Append(ReceiptFormatter.BuildHeader("CASH"));
@@ -333,6 +345,34 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             DoneOverlay.Visibility = Visibility.Visible;
             _ctl.State.CashInsertedMyr = _ctl.State.MyrAmount;
+
+            // Cash-in is done - push the final totals to the transaction
+            // record now, before moving on. KSK_MirrorToMcTransaction reads
+            // these same columns later at completion time; without this
+            // call the row (and everything mirrored from it) stays at the
+            // 0 values it was created with on the first note accepted.
+            if (_ctl.State.TransactionId.HasValue)
+            {
+                try
+                {
+                    await _api.UpdateTransactionAmountsAsync(
+                        _ctl.State.TransactionId.Value,
+                        (decimal)_ctl.State.FromAmount,
+                        (decimal)_ctl.State.MyrAmount,
+                        (decimal)_ctl.State.CashInsertedMyr);
+                }
+                catch (Exception ex)
+                {
+                    // Same fire-and-forget philosophy as the rest of this
+                    // step - cash is already committed, a logging/DB hiccup
+                    // here shouldn't stop the customer from getting their
+                    // money. But this one matters more than most, since a
+                    // failure here means the eventual Mc_ mirror will still
+                    // be wrong even if everything else succeeds - logged
+                    // clearly so it's findable.
+                    System.Diagnostics.Debug.WriteLine($"[CashIn] Failed to update transaction amounts for {_ctl.State.TransactionId}: {ex.Message}");
+                }
+            }
 
             // NOTE: Completion status here is "InProgress -> still open" -
             // the transaction gets marked Completed once dispensing actually

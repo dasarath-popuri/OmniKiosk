@@ -38,6 +38,7 @@ namespace OmniKiosk.Config.Api.Controllers.v1
 
             var user = await con.QuerySingleOrDefaultAsync<UserProfileRow>(@"
                 SELECT u.UserID, u.LoginId, u.Password, u.FirstName, u.LastName,
+                       u.UserCode,
                        u.NoOfAttempts, u.PasswordLock, u.UserStatus, u.Status,
                        u.ExpiryDate, u.CompanyId, u.RoleID, r.RoleName
                 FROM UserProfile u
@@ -98,7 +99,15 @@ namespace OmniKiosk.Config.Api.Controllers.v1
 
             var fullName = $"{user.FirstName} {user.LastName}".Trim();
             var (token, expiresAt) = IssueToken(user, fullName);
-            return Ok(new LoginResponse { Token = token, ExpiresAtUtc = expiresAt, FullName = fullName, Role = user.RoleName });
+            return Ok(new LoginResponse
+            {
+                Token = token,
+                ExpiresAtUtc = expiresAt,
+                FullName = fullName,
+                Role = user.RoleName,
+                UserId = user.UserID,
+                UserCode = user.UserCode ?? ""
+            });
         }
 
         // Matches the existing GetSHAHash(inputString) exactly: SHA-512 of
@@ -172,6 +181,7 @@ namespace OmniKiosk.Config.Api.Controllers.v1
             public string Password { get; set; } = "";
             public string FirstName { get; set; } = "";
             public string? LastName { get; set; }
+            public string? UserCode { get; set; }
             public int NoOfAttempts { get; set; }
             public bool? PasswordLock { get; set; }
             public int UserStatus { get; set; }

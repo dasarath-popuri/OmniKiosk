@@ -195,7 +195,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 var s = _ctl.State;
                 var custName = s.Customer?.FullName ?? "Walk-in Customer";
                 var maskedDoc = ReceiptFormatter.MaskDocumentNo(s.Customer?.IdNo);
-                var receiptNo = ReceiptFormatter.BuildReceiptNo(s.TransactionId);
+                var receiptNo = !string.IsNullOrWhiteSpace(s.ReceiptNo) ? s.ReceiptNo : ReceiptFormatter.BuildReceiptNo(s.TransactionId);
 
                 var r = new StringBuilder();
 
