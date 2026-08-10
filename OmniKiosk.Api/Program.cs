@@ -9,7 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var secretKey = "OmniKioskSuperSecretEnterpriseKey2026!!!"; // Must match the controller
+var secretKey = builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("Jwt:SecretKey is not configured. Set it in appsettings.json or an environment variable.");
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -23,11 +25,20 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = "OmniKiosk.Api",
-        ValidAudience = "OmniKiosk.Wpf",
+        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "OmniKiosk.Api",
+        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "OmniKiosk.Wpf",
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
+
+// Same policy names as MoneyExchange.Api - a token issued here carries the
+// same claims regardless of which API validates it, since both share the
+// same Jwt:SecretKey/Issuer/Audience.
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("KioskOnly", p => p.RequireClaim("MachineType", "Kiosk"))
+    .AddPolicy("StaffOnly", p => p.RequireClaim("MachineType", "Staff"))
+    .AddPolicy("AdminOrSupervisor", p => p.RequireRole("Administrator", "Supervisor"));
+
 builder.Services.AddMemoryCache();
 builder.Services.AddApiVersioning(options =>
 {
@@ -48,7 +59,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication(); // Verifies who you are (Reads the JWT)
 app.UseAuthorization();  // Verifies what you are allowed to do

@@ -16,10 +16,14 @@
         public const string EkycLoginPassword = "vivo@#$23sftyg";
         public const string EkycSharedSecretKey = "Rm@-&In$sP";
 
-        public const string MoneyExchangeApiBaseUrl = "https://localhost:7002";
+        //public const string MoneyExchangeApiBaseUrl = "https://localhost:7002";
 
-        public const string ConfigApiBaseUrl = "http://YOUR_CONFIG_API_SERVER:PORT/";
-        public const string KioskLoginId = "KIOSK-K101";       // matches the UserProfile row for this specific terminal
-        public const string KioskLoginPassword = "REPLACE_ME"; // the machine secret, hashed the same way staff passwords are
+        //public const string ConfigApiBaseUrl = "https://localhost:7001";
+        public const string MoneyExchangeApiBaseUrl = "http://172.168.0.13:7002";
+
+        public const string ConfigApiBaseUrl = "http://172.168.0.13:7001";
+
+        public const string KioskLoginId = "KIOSKK101";       // matches the UserProfile row for this specific terminal
+        public const string KioskLoginPassword = "P@ssw0rd"; // the machine secret, hashed the same way staff passwords are
     }
 }
