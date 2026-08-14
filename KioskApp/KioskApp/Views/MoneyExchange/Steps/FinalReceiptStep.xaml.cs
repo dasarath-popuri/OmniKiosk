@@ -65,13 +65,13 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 var actual = apiDenoms.Select(d => d.DenominationValue).ToArray();
                 if (!expected.SequenceEqual(actual))
                 {
-                    System.Diagnostics.Debug.WriteLine(
-                        $"[FinalReceipt] DB denominations [{string.Join(",", actual)}] don't match the 4 physical cassettes [{string.Join(",", expected)}] - dispensing with the hardcoded breakdown regardless, but this is worth fixing in Ksk_BanknoteDenominations.");
+                    KioskLocalLogger.LogError("FinalReceipt",
+                        $"DB denominations [{string.Join(",", actual)}] don't match the 4 physical cassettes [{string.Join(",", expected)}] - dispensing with the hardcoded breakdown regardless, but this is worth fixing in Ksk_BanknoteDenominations.");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("[FinalReceipt] Could not reach denominations API, continuing with local calculation: " + ex.Message);
+                KioskLocalLogger.LogError("FinalReceipt", "Could not reach denominations API, continuing with local calculation: " + ex.Message);
             }
 
             // 🚀 FIX: Mapped exactly to your physical cassette order (Top to Bottom)
@@ -123,15 +123,20 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // customer or change what already happened at the machine.
         private async Task CompleteTransactionSafeAsync(string status)
         {
-            if (!_ctl.State.TransactionId.HasValue) return;
+            if (!_ctl.State.TransactionId.HasValue)
+            {
+                KioskLocalLogger.LogError("FinalReceipt", $"CompleteTransactionSafeAsync({status}) called with no TransactionId set - nothing sent to the API at all.");
+                return;
+            }
 
             try
             {
                 await _api.CompleteTransactionAsync(_ctl.State.TransactionId.Value, status);
+                KioskLocalLogger.LogInfo("FinalReceipt", $"Transaction {_ctl.State.TransactionId} marked {status}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FinalReceipt] Failed to mark transaction {_ctl.State.TransactionId} as {status}: {ex.Message}");
+                KioskLocalLogger.LogError("FinalReceipt", $"Failed to mark transaction {_ctl.State.TransactionId} as {status}: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
             }
         }
 

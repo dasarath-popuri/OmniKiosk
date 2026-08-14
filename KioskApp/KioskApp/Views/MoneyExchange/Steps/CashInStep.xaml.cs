@@ -95,7 +95,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void Svc_OnLog(string s) => System.Diagnostics.Debug.WriteLine("[CashIn] " + s);
         private void Svc_OnStatus(string s) => Dispatcher.Invoke(() => TxtStatus.Text = s);
-        private void Svc_OnError(string s) => System.Diagnostics.Debug.WriteLine("[CashIn:ERROR] " + s);
+        private void Svc_OnError(string s) => KioskLocalLogger.LogError("CashIn", s);
 
         private void Svc_OnRejected(string reason) => Dispatcher.Invoke(() =>
         {
@@ -207,7 +207,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 // was already accepted and is sitting in the vault. A logging
                 // failure here is a backend problem to investigate, not
                 // something that should interrupt someone mid-transaction.
-                System.Diagnostics.Debug.WriteLine("[CashIn] Failed to save accepted note to API: " + ex.Message);
+                KioskLocalLogger.LogError("CashIn", "Failed to save accepted note to API: " + ex.Message);
             }
         }
 
@@ -241,7 +241,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("[CashIn] Failed to save returned note to API: " + ex.Message);
+                KioskLocalLogger.LogError("CashIn", "Failed to save returned note to API: " + ex.Message);
             }
         }
 
@@ -295,7 +295,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             if (_ctl.State.TransactionId.HasValue)
             {
                 try { await _api.CompleteTransactionAsync(_ctl.State.TransactionId.Value, "Cancelled"); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[CashIn] Failed to mark transaction cancelled: " + ex.Message); }
+                catch (Exception ex) { KioskLocalLogger.LogError("CashIn", "Failed to mark transaction cancelled: " + ex.Message); }
             }
 
             await Task.Delay(300);
@@ -360,6 +360,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                         (decimal)_ctl.State.FromAmount,
                         (decimal)_ctl.State.MyrAmount,
                         (decimal)_ctl.State.CashInsertedMyr);
+                    KioskLocalLogger.LogInfo("CashIn", $"Amounts updated for Transaction {_ctl.State.TransactionId}: {_ctl.State.FromAmount} {_ctl.State.FromCurrency} -> RM {_ctl.State.MyrAmount}");
                 }
                 catch (Exception ex)
                 {
@@ -370,7 +371,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     // failure here means the eventual Mc_ mirror will still
                     // be wrong even if everything else succeeds - logged
                     // clearly so it's findable.
-                    System.Diagnostics.Debug.WriteLine($"[CashIn] Failed to update transaction amounts for {_ctl.State.TransactionId}: {ex.Message}");
+                    KioskLocalLogger.LogError("CashIn", $"Failed to update transaction amounts for {_ctl.State.TransactionId}: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
                 }
             }
 
