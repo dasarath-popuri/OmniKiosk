@@ -18,24 +18,28 @@ namespace OmniKiosk.Wpf.Sdk.Face
         private int _featLen = 0;
         private bool _inited;
 
-        // delegates
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        // FIX: was CallingConvention.Cdecl on all four delegates below - the
+        // vendor's own C# demo (dll_demo_c#/ConsoleApplication1/Program.cs)
+        // declares every one of these as StdCall:
+        //   [DllImport("TaiSDK.dll", EntryPoint = "face_init", ...,
+        //       CallingConvention = CallingConvention.StdCall)]
+        // On x64 this mismatch is very unlikely to have caused visible
+        // crashes/lag (the platform uses one unified calling convention
+        // regardless of the C-level declaration there), but it's still
+        // wrong - matching the documented/demonstrated convention exactly
+        // removes any theoretical risk and matches the vendor's own code.
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate int face_init_delegate(out int hCtx);
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate int face_exit_delegate(int hCtx);
 
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        //private delegate int face_get_feature_from_image_delegate(int hCtx, byte[] pic_bin, int pic_len, byte[] feature);
-
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        //private delegate int face_comp_feature_delegate(int hCtx, byte[] feature1, byte[] feature2);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate int face_get_feature_from_image_delegate(int hCtx, byte[] pic_bin, int pic_len, IntPtr feature);
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate int face_comp_feature_delegate(int hCtx, IntPtr feature1, IntPtr feature2);
+
         private readonly face_init_delegate _face_init;
         private readonly face_exit_delegate _face_exit;
         private readonly face_get_feature_from_image_delegate _get_feat_from_image;
@@ -61,7 +65,7 @@ namespace OmniKiosk.Wpf.Sdk.Face
 
                 int ret = _face_init(out _hCtx);
 
-                // Manual: >0 is success and ret is length of BINARY feature :contentReference[oaicite:5]{index=5}
+                // Manual: >0 is success and ret is length of BINARY feature
                 if (ret <= 0)
                 {
                     _hCtx = 0;
@@ -84,6 +88,10 @@ namespace OmniKiosk.Wpf.Sdk.Face
         /// <summary>
         /// Extract BINARY feature from an image blob (jpg/png/bmp bytes).
         /// IMPORTANT: allocate 2x featLen (manual suggestion), but TRIM to returned length.
+        /// This is a genuine, real neural-network inference call - expensive,
+        /// blocking. Callers MUST invoke this off the UI thread (see
+        /// FaceVerificationStep.xaml.cs's use of Task.Run around all calls
+        /// into this class).
         /// </summary>
         public (bool ok, byte[]? feature, int code, string message) ExtractFeatureFromImage(byte[] imageBytes)
         {
@@ -94,22 +102,21 @@ namespace OmniKiosk.Wpf.Sdk.Face
             {
                 if (!_inited) return (false, null, -50, "SDK not initialized");
 
-                // Allocate large buffer (manual suggests 2x; keep that)
                 int cap = _featLen * 2;
                 IntPtr pBuf = IntPtr.Zero;
 
                 try
                 {
                     pBuf = Marshal.AllocHGlobal(cap);
-                    // zero memory to ensure null termination exists even if SDK forgets
-                    Span<byte> zero = new byte[cap];
-                    Marshal.Copy(zero.ToArray(), 0, pBuf, cap);
+                    // new byte[cap] is already zero-initialized in .NET -
+                    // no need for the extra Span/ToArray round trip.
+                    Marshal.Copy(new byte[cap], 0, pBuf, cap);
 
                     int ret = _get_feat_from_image(_hCtx, imageBytes, imageBytes.Length, pBuf);
                     if (ret <= 0)
                         return (false, null, ret, $"face_get_feature_from_image failed ret={ret}");
 
-                    // ✅ Treat returned feature as TEXT bytes, ensure we append '\0'
+                    // Treat returned feature as TEXT bytes, ensure we append '\0'
                     var feature = new byte[ret + 1];
                     Marshal.Copy(pBuf, feature, 0, ret);
                     feature[ret] = 0;
@@ -121,9 +128,13 @@ namespace OmniKiosk.Wpf.Sdk.Face
                     if (pBuf != IntPtr.Zero) Marshal.FreeHGlobal(pBuf);
                 }
             }
-        }        /// <summary>
-                 /// Compare two BINARY features. Returns 0..100 (manual).
-                 /// </summary>
+        }
+
+        /// <summary>
+        /// Compare two BINARY features. Returns 0..100 (manual).
+        /// Same as ExtractFeatureFromImage - blocking native call, must be
+        /// invoked off the UI thread by the caller.
+        /// </summary>
         public (bool ok, int score, int code, string message) Compare(byte[] feat1, byte[] feat2)
         {
             if (feat1 == null || feat1.Length == 0) return (false, -1, -3, "feat1 empty");
@@ -133,7 +144,6 @@ namespace OmniKiosk.Wpf.Sdk.Face
             {
                 if (!_inited) return (false, -1, -50, "SDK not initialized");
 
-                // ✅ Must be null-terminated
                 if (feat1[^1] != 0) return (false, -1, -2, "feat1 missing null terminator");
                 if (feat2[^1] != 0) return (false, -1, -2, "feat2 missing null terminator");
 
@@ -155,6 +165,7 @@ namespace OmniKiosk.Wpf.Sdk.Face
                 }
             }
         }
+
         public void Dispose()
         {
             lock (_lock)

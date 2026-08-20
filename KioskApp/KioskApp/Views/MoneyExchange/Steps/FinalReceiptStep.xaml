@@ -20,65 +20,75 @@
         </EventTrigger>
     </UserControl.Triggers>
 
-    <Grid Margin="60,32">
+    <Grid Margin="64,36">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,20" HorizontalAlignment="Center">
-            <TextBlock x:Name="TitleText" Style="{StaticResource HeaderText}" TextAlignment="Center"/>
-            <TextBlock x:Name="SubtitleText" Foreground="{StaticResource TextSecondaryBrush}" FontSize="{StaticResource FontSizeSmall}" Margin="0,8,0,0" TextAlignment="Center"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,24" HorizontalAlignment="Center">
+            <TextBlock x:Name="TitleText" Style="{StaticResource HeaderText}" FontSize="{StaticResource FontSizeXLarge}" TextAlignment="Center"/>
+            <TextBlock x:Name="SubtitleText" Foreground="{StaticResource TextSecondaryBrush}" FontSize="{StaticResource FontSizeNormal}" Margin="0,10,0,0" TextAlignment="Center"/>
         </StackPanel>
 
-        <!-- Everything below flows top-to-bottom in one column - photo, name,
-             and every detail stacked vertically rather than split across
-             side-by-side panels, both for readability and because this suits
-             a portrait kiosk screen better than a wide horizontal split. -->
+        <!-- FIX: previously one narrow (MaxWidth=700) centered column with
+             three cards stacked, leaving wide empty margins on both sides
+             and dead space at the bottom on a screen this tall (screenshot
+             14). Now customer/summary and the dispense animation sit side
+             by side at the top - using the screen's width, not just fighting
+             its height - with the notes breakdown full-width below. -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel MaxWidth="700" HorizontalAlignment="Center">
+            <StackPanel MaxWidth="1200" HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                <Border Style="{StaticResource Card}" Padding="32" Margin="0,0,0,20">
-                    <StackPanel HorizontalAlignment="Center">
-                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="14" ClipToBounds="True" Width="180" Height="230" Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Center">
-                            <Image x:Name="LiveFaceImage" Stretch="Uniform"/>
-                        </Border>
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                        <TextBlock x:Name="VerifiedCustomerLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" Margin="0,18,0,0"/>
-                        <TextBlock x:Name="TxtCustomer" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,2,0,20"/>
-
-                        <TextBlock x:Name="ForeignInsertedLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="TxtForeign" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-
-                        <TextBlock x:Name="ExchangeRateLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="TxtRate" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource Card}" Padding="32" Margin="0,0,0,20">
-                    <StackPanel HorizontalAlignment="Center">
-                        <Grid Height="180" Width="240" ClipToBounds="True">
-                            <Border Width="240" Height="20" Background="{StaticResource TextPrimaryBrush}" CornerRadius="10" VerticalAlignment="Top" Panel.ZIndex="10"/>
-                            <Border x:Name="CashNote" Width="190" Height="112" Background="{StaticResource AccentBrush}" BorderBrush="{StaticResource PrimaryHoverBrush}" BorderThickness="4" CornerRadius="8" VerticalAlignment="Top" Margin="0,10,0,0">
-                                <Border.RenderTransform>
-                                    <TranslateTransform x:Name="CashNoteTrans" Y="-150"/>
-                                </Border.RenderTransform>
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="💵" FontSize="38" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="MYR" Foreground="White" FontWeight="Black" FontSize="16" HorizontalAlignment="Center"/>
-                                </StackPanel>
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="36">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="16" ClipToBounds="True" Width="200" Height="256" Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Center">
+                                <Image x:Name="LiveFaceImage" Stretch="Uniform"/>
                             </Border>
-                        </Grid>
 
-                        <TextBlock x:Name="TotalDispensedLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                        <TextBlock x:Name="TxtMyr" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource AccentBrush}" FontSize="56" FontWeight="Black" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
+                            <TextBlock x:Name="VerifiedCustomerLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                            <TextBlock x:Name="TxtCustomer" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,2,0,24"/>
 
-                <Border Style="{StaticResource Card}" Padding="32">
+                            <TextBlock x:Name="ForeignInsertedLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="TxtForeign" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,18"/>
+
+                            <TextBlock x:Name="ExchangeRateLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="TxtRate" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="36">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid Height="200" Width="270" ClipToBounds="True">
+                                <Border Width="270" Height="22" Background="{StaticResource TextPrimaryBrush}" CornerRadius="11" VerticalAlignment="Top" Panel.ZIndex="10"/>
+                                <Border x:Name="CashNote" Width="214" Height="126" Background="{StaticResource AccentBrush}" BorderBrush="{StaticResource PrimaryHoverBrush}" BorderThickness="4" CornerRadius="10" VerticalAlignment="Top" Margin="0,12,0,0">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="CashNoteTrans" Y="-150"/>
+                                    </Border.RenderTransform>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="💵" FontSize="42" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="MYR" Foreground="White" FontWeight="Black" FontSize="18" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <TextBlock x:Name="TotalDispensedLabel" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            <TextBlock x:Name="TxtMyr" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource AccentBrush}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Style="{StaticResource Card}" Padding="36">
                     <StackPanel>
-                        <TextBlock x:Name="BreakdownLabel" Style="{StaticResource HeaderText}" FontSize="{StaticResource FontSizeLarge}" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                        <TextBlock x:Name="BreakdownLabel" Style="{StaticResource HeaderText}" FontSize="{StaticResource FontSizeLarge}" HorizontalAlignment="Center" Margin="0,0,0,24"/>
 
                         <!-- Each row hidden entirely when its count is zero -
                              a customer paid in RM10s and RM1s doesn't need an
@@ -87,30 +97,32 @@
                              UserControl_Loaded already reads/writes - Run
                              supports Text the same way TextBlock does, so the
                              existing calculation code needs zero changes. -->
-                        <Border x:Name="Row100" Background="{StaticResource BackgroundBrush}" CornerRadius="12" Padding="20,16" Margin="0,0,0,10">
-                            <Grid>
-                                <TextBlock Text="RM 100" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="22" FontWeight="Bold"/>
-                                <TextBlock FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt100" Text="0"/></TextBlock>
-                            </Grid>
-                        </Border>
-                        <Border x:Name="Row50" Background="{StaticResource BackgroundBrush}" CornerRadius="12" Padding="20,16" Margin="0,0,0,10">
-                            <Grid>
-                                <TextBlock Text="RM 50" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="22" FontWeight="Bold"/>
-                                <TextBlock FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt50" Text="0"/></TextBlock>
-                            </Grid>
-                        </Border>
-                        <Border x:Name="Row10" Background="{StaticResource BackgroundBrush}" CornerRadius="12" Padding="20,16" Margin="0,0,0,10">
-                            <Grid>
-                                <TextBlock Text="RM 10" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="22" FontWeight="Bold"/>
-                                <TextBlock FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt10" Text="0"/></TextBlock>
-                            </Grid>
-                        </Border>
-                        <Border x:Name="Row1" Background="{StaticResource BackgroundBrush}" CornerRadius="12" Padding="20,16">
-                            <Grid>
-                                <TextBlock Text="RM 1" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="22" FontWeight="Bold"/>
-                                <TextBlock FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt1" Text="0"/></TextBlock>
-                            </Grid>
-                        </Border>
+                        <UniformGrid Columns="2" Rows="2">
+                            <Border x:Name="Row100" Background="{StaticResource BackgroundBrush}" CornerRadius="14" Padding="24,20" Margin="0,0,10,12">
+                                <Grid>
+                                    <TextBlock Text="RM 100" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="24" FontWeight="Bold"/>
+                                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt100" Text="0"/></TextBlock>
+                                </Grid>
+                            </Border>
+                            <Border x:Name="Row50" Background="{StaticResource BackgroundBrush}" CornerRadius="14" Padding="24,20" Margin="10,0,0,12">
+                                <Grid>
+                                    <TextBlock Text="RM 50" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="24" FontWeight="Bold"/>
+                                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt50" Text="0"/></TextBlock>
+                                </Grid>
+                            </Border>
+                            <Border x:Name="Row10" Background="{StaticResource BackgroundBrush}" CornerRadius="14" Padding="24,20" Margin="0,0,10,0">
+                                <Grid>
+                                    <TextBlock Text="RM 10" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="24" FontWeight="Bold"/>
+                                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt10" Text="0"/></TextBlock>
+                                </Grid>
+                            </Border>
+                            <Border x:Name="Row1" Background="{StaticResource BackgroundBrush}" CornerRadius="14" Padding="24,20" Margin="10,0,0,0">
+                                <Grid>
+                                    <TextBlock Text="RM 1" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="24" FontWeight="Bold"/>
+                                    <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"><Run Text="×"/><Run Text=" "/><Run x:Name="Txt1" Text="0"/></TextBlock>
+                                </Grid>
+                            </Border>
+                        </UniformGrid>
                     </StackPanel>
                 </Border>
 

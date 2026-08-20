@@ -1,50 +1,90 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<? xml version = "1.0" encoding="utf-8" ?>
 <param>
-  <track>0</track>
-  
-  <!-- FIX 1: Set intervals to 0 (default) to stop starving the CPU -->
-  <previewDetectInterval>0</previewDetectInterval>
-  <detectInterval>0</detectInterval>
-  <liveInterval>0</liveInterval>
-
-  <Infrared>1</Infrared>
-
-  <imgWidth>640</imgWidth>
-  <imgHeight>480</imgHeight>
-  <imgCompress>85</imgCompress>
-
-  <minFaceWide>80</minFaceWide>
-
-  <timeOut>30</timeOut>
-  <liveThreshold>0.25</liveThreshold>
-
-  <deviceIdxCol>0</deviceIdxCol>
-  <deviceIdxNir>1</deviceIdxNir>
-
-  <headLeft>35</headLeft>
-  <headRight>35</headRight>
-  <headRoll>15</headRoll>
-
-  <stableCount>0</stableCount>
-  <stableThreshold>0</stableThreshold>
-
-  <multiFace>0</multiFace>
-  <expectedFacesCount>1</expectedFacesCount>
-
-  <openByThread>1</openByThread>
-
-  <mask>1</mask>
-  <flip>1</flip>
-  <fill>1</fill>
-  
-  <language>1</language>
-  
-  <!-- FIX 2: Enable Voice Prompts -->
-  <isAudio>1</isAudio>
-
-  <useCameraThread>1</useCameraThread>
-  <motor111Type>0</motor111Type>
-  
-  <!-- FIX 3: Enable Hardware Auto-Rotation -->
-  <enableRotate>1</enableRotate>
+    <track>0</track>
+    <previewDetectInterval>0</previewDetectInterval>
+    <TrackFaceWidth>400</TrackFaceWidth>
+    <TrackFaceHeight>300</TrackFaceHeight>
+    <Infrared>1</Infrared>
+    <imgWidth>640</imgWidth>
+    <imgHeight>480</imgHeight>
+    <imgCompress>85</imgCompress>  
+    <pupilDistMin>0</pupilDistMin>
+    <pupilDistMax>0</pupilDistMax>
+    <minFaceWide>60</minFaceWide>
+    <confidenceScore>70</confidenceScore>
+    <isActived>1</isActived>
+    <nirCount>1</nirCount>
+    <nirCountContinuous>0</nirCountContinuous>
+    <liveThreshold>0.6</liveThreshold>
+    <isAudio>1</isAudio>
+    <isText>1</isText>
+    <timeOut>10</timeOut>
+    <deviceIdxCol>0</deviceIdxCol>
+    <deviceIdxNir>1</deviceIdxNir>
+    <definitionAsk>0</definitionAsk>
+    <compareFacePos>1</compareFacePos>
+    <headLeft>10</headLeft>
+    <headRight>10</headRight>
+    <headLow>0</headLow>
+    <headHigh>0</headHigh>
+    <headRoll>10</headRoll>
+    <eyeDegree>0</eyeDegree>
+    <mouthDegree>0</mouthDegree>
+    <mocc>0</mocc>
+    <eocc>0</eocc>
+    <occEx>0</occEx>
+    <sunGlass>77</sunGlass>
+    <mask>5</mask>
+    <glass>77</glass>
+    <beard>39</beard>
+    <phone>49</phone>
+    <hat>31</hat>
+    <leftCheek>50</leftCheek>
+    <rightCheek>50</rightCheek>
+    <forehead>70</forehead>
+    <chin>50</chin>
+    <AlphaLayerType>0</AlphaLayerType>
+    <FaceRectStyle>0</FaceRectStyle>
+    <moveList></moveList>
+    <flip>1</flip>
+    <updw>0</updw>
+    <rota>0</rota>
+    <fill>1</fill>
+    <roiX>0</roiX>
+    <roiY>0</roiY>
+    <roiW>0</roiW>
+    <roiH>0</roiH>
+    <brightnessMin>50</brightnessMin>
+    <brightnessMax>255</brightnessMax>
+    <delay>0</delay>
+    <stableCount>0</stableCount>
+    <stableThreshold>0</stableThreshold>
+    <unliveEvent>0</unliveEvent>
+    <unliveEventContinuous>0</unliveEventContinuous>
+    <multiFace>0</multiFace>
+    <distanceFromAxis>0</distanceFromAxis>
+    <openByThread>1</openByThread>
+    <savePath></savePath>
+    <backgroundGray>255</backgroundGray>
+    <LocalFileCache>0</LocalFileCache>
+    <saveResult></saveResult>
+    <backlightInterval>0</backlightInterval>
+    <backlightRangeVis>9,14</backlightRangeVis>
+    <backlightRangeNir>4,13</backlightRangeNir>
+    <threshold_eye>60</threshold_eye>
+    <threshold_mouth>15</threshold_mouth>
+    <threshold_headYaw>10</threshold_headYaw>
+    <threshold_headPitch>8</threshold_headPitch>
+    <language>1</language>
+    <detectInterval>0</detectInterval>
+    <liveInterval>0</liveInterval>
+    <dualCameras>735f2209735f2210</dualCameras>
+    <singleCameras></singleCameras>
+    <enableRotate>0</enableRotate>
+    <useBlackMask>1</useBlackMask>
+    <expectedFacesCount>1</expectedFacesCount>
+    <enableHalfFaceLive>0</enableHalfFaceLive>
+    <useCameraThread>0</useCameraThread>
+    <motor111Type>0</motor111Type>
+    <nirDelayOpen>0</nirDelayOpen>
 </param>

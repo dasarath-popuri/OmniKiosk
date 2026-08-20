@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
@@ -14,419 +15,1264 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
     public partial class FaceVerificationStep : UserControl, IStepNav
     {
         private readonly MoneyExchangeFlowController _ctl;
+
         public event EventHandler? NextRequested;
         public event EventHandler? BackRequested;
         public event EventHandler? ExitRequested;
 
+        // ================================================================
+        // EYECOOL CALLBACK
+        // ================================================================
+
         private EcFaceCamSdkHelper.CallbackDelegate? _cb;
+
+        // ================================================================
+        // CAMERA STATE
+        // ================================================================
+
         private bool _opened;
+        private bool _stopping;
         private bool _handledThisSession;
 
-        // Remote eKYC face-match client - used only for first-time customers.
-        private readonly EkycFaceMatchClient _ekyc = new();
-        private Task<(bool ok, string? journeyId, string? error)>? _journeyTask;
+        // ================================================================
+        // PREVIEW (JPEG-pull)
+        //
+        // Reused across frames to avoid a fresh allocation on every
+        // callback - JpegPull_net7's reference implementation allocates
+        // a new byte[200*1024] per frame, which is fine for a short manual
+        // test but adds GC churn on a kiosk running continuously for hours.
+        // _previewBusy is a cheap reentrancy guard: if the previous frame's
+        // decode+dispatch hasn't finished yet, drop this one instead of
+        // queueing it up behind other UI work.
+        // ================================================================
 
-        // Dedicated, message-pumping STA thread for the camera SDK. See the
-        // notes from the lag investigation: CameraConfig/xmlSamples_IR_ON.txt
-        // runs with useCameraThread=1 now, but every SDK call still goes
-        // through this one dedicated thread for consistency - never the
-        // WPF UI thread, never a bare ThreadPool task.
-        private Thread? _sdkThread;
-        private Dispatcher? _sdkDispatcher;
+        private readonly byte[] _previewBuffer = new byte[200 * 1024];
+        private int _previewBusy;
+
+        // ================================================================
+        // eKYC
+        // ================================================================
+
+        private readonly EkycFaceMatchClient _ekyc =
+            new();
+
+        private Task<(bool ok, string? journeyId, string? error)>?
+            _journeyTask;
+
+        // ================================================================
+        // SDK EVENTS
+        // ================================================================
+
+        private const int CALLBACK_EVENT_PREVIEW = 50;
 
         private const int CALLBACK_EVENT_SUCC = 100;
-        private const int CALLBACK_EVENT_FAIL = -100;
-        private const int CALLBACK_EVENT_TIMEOUT = -101;
+
+        private const int CALLBACK_EVENT_FAIL = 101;
+
+        private const int CALLBACK_EVENT_TIMEOUT = 102;
+
+        private const int CALLBACK_EVENT_MOTIVE = 7;
+
+        // ================================================================
+        // IMAGE
+        // ================================================================
+
         private const int IMAGE_TYPE_CROP_VIS = 4;
+
+        private const int IMAGE_TYPE_VIS = 0;
+
+        // ================================================================
+        // LOCAL MATCH
+        // ================================================================
+
         private const int LocalMatchThreshold = 75;
 
-        public FaceVerificationStep(MoneyExchangeFlowController ctl)
+        // ================================================================
+        // CONSTRUCTOR
+        // ================================================================
+
+        public FaceVerificationStep(
+            MoneyExchangeFlowController ctl)
         {
             InitializeComponent();
+
             _ctl = ctl;
         }
 
-        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
+        // ================================================================
+        // LOADED
+        // ================================================================
+
+        private async void UserControl_Loaded(
+            object sender,
+            RoutedEventArgs e)
         {
-            Hdr.Text = L10n.T("Mx_FaceVerify", "Face Verification");
-            SubtitleText.Text = L10n.T("Mx_FaceVerifySubtitle", "Please look at the camera to confirm your identity.");
-            WelcomeTitle.Text = L10n.T("Mx_IdentityVerified", "Identity Verified");
-            WelcomeName.Text = _ctl.State.Customer?.FullName ?? "";
-            FailTitle.Text = L10n.T("Mx_VerificationFailed", "Verification Failed");
-            FailBody.Text = L10n.T("Mx_VerificationFailedBody", "We couldn't confirm your identity. Please proceed to the counter for manual assistance.");
-            FailAcknowledgeButton.Content = L10n.T("Mx_ExitTransaction", "Exit Transaction");
-            BtnSkip.Content = L10n.T("Mx_SkipContinue", "Skip & Continue ➔");
-            BtnSkipBack.Content = L10n.T("Mx_Back", "Back");
+            Hdr.Text =
+                L10n.T(
+                    "Mx_FaceVerify",
+                    "Face Verification");
+
+            SubtitleText.Text =
+                L10n.T(
+                    "Mx_FaceVerifySubtitle",
+                    "Please look at the camera to confirm your identity.");
+
+            WelcomeTitle.Text =
+                L10n.T(
+                    "Mx_IdentityVerified",
+                    "Identity Verified");
+
+            WelcomeName.Text =
+                _ctl.State.Customer?.FullName ?? "";
+
+            FailTitle.Text =
+                L10n.T(
+                    "Mx_VerificationFailed",
+                    "Verification Failed");
+
+            FailBody.Text =
+                L10n.T(
+                    "Mx_VerificationFailedBody",
+                    "We couldn't confirm your identity. Please proceed to the counter for manual assistance.");
+
+            FailAcknowledgeButton.Content =
+                L10n.T(
+                    "Mx_ExitTransaction",
+                    "Exit Transaction");
+
+            BtnSkip.Content =
+                L10n.T(
+                    "Mx_SkipContinue",
+                    "Skip & Continue ➔");
+
+            BtnSkipBack.Content =
+                L10n.T(
+                    "Mx_Back",
+                    "Back");
+
+            BtnRetry.Content =
+                L10n.T(
+                    "Mx_Retry",
+                    "Retry");
 
             ShowBranchInstructions();
+
+            // ------------------------------------------------------------
+            // Start eKYC journey while camera starts.
+            // This doesn't touch the native preview.
+            // ------------------------------------------------------------
+
+            if (!_ctl.State.IsExistingCustomer)
+            {
+                _journeyTask =
+                    _ekyc.CreateJourneyIdAsync(
+                        _ctl.State.Customer?.IdNo);
+            }
+
             await StartCameraAndDetectAsync();
         }
 
-        // The one piece of UI that genuinely differs between the two paths:
-        // a returning customer sees a quick "we recognize you" framing, a
-        // first-time customer sees what eKYC actually involves.
+        // ================================================================
+        // BRANCH INSTRUCTIONS
+        // ================================================================
+
         private void ShowBranchInstructions()
         {
             if (_ctl.State.IsExistingCustomer)
             {
                 InstructionsIcon.Text = "👋";
-                InstructionsTitle.Text = L10n.T("Mx_WelcomeBackTitle", "Welcome back!");
-                InstructionsBody.Text = L10n.T("Mx_WelcomeBackBody", "We already have your details on file. Just look at the camera to confirm it's you - this only takes a moment.");
+
+                InstructionsTitle.Text =
+                    L10n.T(
+                        "Mx_WelcomeBackTitle",
+                        "Welcome back!");
+
+                InstructionsBody.Text =
+                    L10n.T(
+                        "Mx_WelcomeBackBody",
+                        "We already have your details on file. Just look at the camera to confirm it's you - this only takes a moment.");
             }
             else
             {
                 InstructionsIcon.Text = "🔒";
-                InstructionsTitle.Text = L10n.T("Mx_FirstTimeTitle", "First time here?");
-                InstructionsBody.Text = L10n.T("Mx_FirstTimeBody", "Since this is your first visit, we'll verify your identity with our verification partner. Please look directly at the camera and hold still - this takes a few seconds longer.");
+
+                InstructionsTitle.Text =
+                    L10n.T(
+                        "Mx_FirstTimeTitle",
+                        "First time here?");
+
+                InstructionsBody.Text =
+                    L10n.T(
+                        "Mx_FirstTimeBody",
+                        "Since this is your first visit, we'll verify your identity with our verification partner. Please look directly at the camera and hold still - this takes a few seconds longer.");
             }
         }
 
-        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
-        {
-            WelcomePopup.IsOpen = false; FailPopup.IsOpen = false;
+        // ================================================================
+        // UNLOADED
+        // ================================================================
 
-            bool wasOpened = _opened;
+        private void UserControl_Unloaded(
+            object sender,
+            RoutedEventArgs e)
+        {
+            WelcomePopup.IsOpen = false;
+
+            FailPopup.IsOpen = false;
+
+            _stopping = true;
+
+            StopCamera();
+        }
+
+        // ================================================================
+        // CAMERA STOP
+        // ================================================================
+
+        private void StopCamera()
+        {
+            if (!_opened)
+                return;
+
+            // Clear the last displayed frame so a stale image isn't left
+            // on screen between sessions (e.g. Retry, or navigating away).
+            VisImage.Source = null;
+
+            try
+            {
+                EcFaceCamSdkHelper.ECF_Stop();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[Eyecool] ECF_Stop: " +
+                    ex.Message);
+            }
+
+            try
+            {
+                EcFaceCamSdkHelper.ECF_Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[Eyecool] ECF_Close: " +
+                    ex.Message);
+            }
+
             _opened = false;
-
-            var sdkDispatcher = _sdkDispatcher;
-            _sdkDispatcher = null;
-            _sdkThread = null;
-
-            if (sdkDispatcher != null)
-            {
-                sdkDispatcher.InvokeAsync(() =>
-                {
-                    if (wasOpened)
-                    {
-                        try
-                        {
-                            EcFaceCamSdkHelper.ECF_Stop();
-                            EcFaceCamSdkHelper.ECF_Close();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Camera Stop Error: " + ex.Message);
-                        }
-                    }
-                    sdkDispatcher.InvokeShutdown();
-                });
-            }
         }
 
-        private void Back_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
+        // ================================================================
+        // BACK
+        // ================================================================
 
-        private void Skip_Click(object sender, RoutedEventArgs e)
+        private void Back_Click(
+            object sender,
+            RoutedEventArgs e)
         {
-            _ctl.State.FaceVerified = true;
-            NextRequested?.Invoke(this, EventArgs.Empty);
+            BackRequested?.Invoke(
+                this,
+                EventArgs.Empty);
         }
 
-        private async void Retry_Click(object sender, RoutedEventArgs e) => await StartDetectAsync();
+        // ================================================================
+        // SKIP
+        // ================================================================
 
-        private void ShowSkipOption(string msg)
+        private void Skip_Click(
+            object sender,
+            RoutedEventArgs e)
         {
-            Dispatcher.Invoke(() =>
-            {
-                StatusText.Text = msg;
-                HintText.Text = L10n.T("Mx_RetryOrSkip", "Please retry, or skip to continue.");
-                BtnSkip.Visibility = Visibility.Visible;
-            });
+            _ctl.State.FaceVerified =
+                true;
+
+            NextRequested?.Invoke(
+                this,
+                EventArgs.Empty);
         }
 
-        private Task<Dispatcher> EnsureSdkThreadAsync()
+        // ================================================================
+        // RETRY
+        // ================================================================
+
+        private async void Retry_Click(
+            object sender,
+            RoutedEventArgs e)
         {
-            if (_sdkDispatcher != null) return Task.FromResult(_sdkDispatcher);
-
-            var tcs = new TaskCompletionSource<Dispatcher>();
-            _sdkThread = new Thread(() =>
-            {
-                _sdkDispatcher = Dispatcher.CurrentDispatcher;
-                tcs.SetResult(_sdkDispatcher);
-                Dispatcher.Run();
-            })
-            {
-                IsBackground = true,
-                Name = "EcFaceCamSdkThread",
-                Priority = ThreadPriority.AboveNormal
-            };
-            _sdkThread.SetApartmentState(ApartmentState.STA);
-            _sdkThread.Start();
-            return tcs.Task;
+            await StartDetectAsync();
         }
+
+        // ================================================================
+        // CAMERA START
+        //
+        // Video is generated by WPF: CALLBACK_EVENT_PREVIEW pulls each
+        // frame via ECF_CopyFrameWithAlpha and displays it in VisImage.
+        // See OnSdkEvent / HandlePreviewFrame below.
+        // ================================================================
 
         private async Task StartCameraAndDetectAsync()
         {
-            StatusText.Text = L10n.T("Mx_InitCamera", "Initializing Camera…");
-            HintText.Text = L10n.T("Mx_AlignFace", "Align your face in the frame");
+            StatusText.Text =
+                L10n.T(
+                    "Mx_InitCamera",
+                    "Initializing Camera…");
 
-            // Only new customers need a journey - kick it off in parallel with
-            // camera bring-up so neither one waits on the other.
-            if (!_ctl.State.IsExistingCustomer)
-                _journeyTask = _ekyc.CreateJourneyIdAsync(_ctl.State.Customer?.IdNo);
+            HintText.Text =
+                L10n.T(
+                    "Mx_AlignFace",
+                    "Align your face in the frame");
 
-            if (VisHost.HostHandle == IntPtr.Zero || NirHost.HostHandle == IntPtr.Zero)
+            BtnSkip.Visibility =
+                Visibility.Collapsed;
+
+            _stopping = false;
+
+            try
             {
-                ShowSkipOption(L10n.T("Mx_CameraHandlesMissing", "❌ Camera hardware render handles not found."));
+                // --------------------------------------------------------
+                // SDK initialization
+                // --------------------------------------------------------
+
+                int initRet =
+                    EcFaceCamSdkHelper
+                        .EnsureInitialized();
+
+                if (initRet != 0)
+                {
+                    ShowSkipOption(
+                        $"❌ Camera Init failed (Code {initRet}).");
+
+                    return;
+                }
+
+                // --------------------------------------------------------
+                // Keep callback alive
+                // --------------------------------------------------------
+
+                _cb ??=
+                    new EcFaceCamSdkHelper.CallbackDelegate(
+                        OnSdkEvent);
+
+                // --------------------------------------------------------
+                // Callback BEFORE ECF_Open
+                // --------------------------------------------------------
+
+                int callbackRet =
+                    EcFaceCamSdkHelper.ECF_SetCallBack(
+                        _cb,
+                        IntPtr.Zero);
+
+                if (callbackRet != 0)
+                {
+                    ShowSkipOption(
+                        $"❌ Callback setup failed (Code {callbackRet}).");
+
+                    return;
+                }
+
+                // --------------------------------------------------------
+                // No display window setup here.
+                //
+                // Video is rendered entirely by WPF via JPEG-pull:
+                // CALLBACK_EVENT_PREVIEW -> ECF_CopyFrameWithAlpha ->
+                // BitmapImage -> VisImage.Source. See OnSdkEvent below.
+                // This matches JpegPull_net7, the only architecture
+                // confirmed smooth on the actual kiosk hardware with
+                // SsDuck_model.dat present - ECF_SetDisplayWindowEx
+                // (native HWND hosting) did not eliminate the lag.
+                // --------------------------------------------------------
+
+                // --------------------------------------------------------
+                // XML configuration
+                // --------------------------------------------------------
+
+                string paramsPath =
+                    Path.Combine(
+                        AppDomain.CurrentDomain.BaseDirectory,
+                        "CameraConfig",
+                        "xmlSamples_IR_ON.txt");
+
+                if (!File.Exists(paramsPath))
+                {
+                    ShowSkipOption(
+                        $"❌ Camera configuration not found:\n{paramsPath}");
+
+                    return;
+                }
+
+                string xmlParams =
+                    File.ReadAllText(
+                        paramsPath);
+
+                // --------------------------------------------------------
+                // OPEN
+                // --------------------------------------------------------
+
+                int openRet =
+                    EcFaceCamSdkHelper.ECF_Open(
+                        xmlParams);
+
+                if (openRet != 0)
+                {
+                    ShowSkipOption(
+                        $"❌ Camera open failed (Code {openRet}).");
+
+                    return;
+                }
+
+                _opened = true;
+
+                // --------------------------------------------------------
+                // START ASYNCHRONOUS LIVENESS
+                // --------------------------------------------------------
+
+                await StartDetectAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[Eyecool] Start camera exception:");
+
+                Console.WriteLine(ex);
+
+                ShowSkipOption(
+                    "❌ Camera Exception: " +
+                    ex.Message);
+            }
+        }
+
+        // ================================================================
+        // START DETECTION
+        // ================================================================
+
+        private Task StartDetectAsync()
+        {
+            if (!_opened ||
+                _stopping)
+            {
+                return Task.CompletedTask;
+            }
+
+            WelcomePopup.IsOpen = false;
+            FailPopup.IsOpen = false;
+
+            _handledThisSession = false;
+
+            BtnSkip.Visibility =
+                Visibility.Collapsed;
+
+            try
+            {
+                int ret =
+                    EcFaceCamSdkHelper
+                        .ECF_StartDetectAsyn();
+
+                if (ret != 0)
+                {
+                    ShowSkipOption(
+                        $"❌ Start detection failed (Code {ret}).");
+
+                    return Task.CompletedTask;
+                }
+
+                StatusText.Text =
+                    L10n.T(
+                        "Mx_Detecting",
+                        "Detecting…");
+
+                HintText.Text =
+                    L10n.T(
+                        "Mx_LookStraight",
+                        "Please look straight");
+            }
+            catch (Exception ex)
+            {
+                ShowSkipOption(
+                    "❌ Start Detect Error: " +
+                    ex.Message);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        // ================================================================
+        // SDK CALLBACK
+        //
+        // CALLBACK_EVENT_PREVIEW drives the visible video via JPEG-pull -
+        // this matches JpegPull_net7, the only architecture confirmed
+        // smooth on the real kiosk hardware with SsDuck_model.dat present.
+        // Native HWND hosting (ECF_SetDisplayWindowEx) was the previous
+        // approach here and did not fix the lag.
+        // ================================================================
+
+        private void OnSdkEvent(
+            int eventId,
+            IntPtr context)
+        {
+            if (_stopping)
+                return;
+
+            // ------------------------------------------------------------
+            // PREVIEW
+            // ------------------------------------------------------------
+
+            if (eventId ==
+                CALLBACK_EVENT_PREVIEW)
+            {
+                HandlePreviewFrame();
                 return;
             }
 
-            IntPtr visHandle = VisHost.HostHandle;
-            IntPtr nirHandle = NirHost.HostHandle;
+            // ------------------------------------------------------------
+            // MOTION BLUR
+            // ------------------------------------------------------------
 
-            try
+            if (eventId ==
+                CALLBACK_EVENT_MOTIVE)
             {
-                _cb ??= new EcFaceCamSdkHelper.CallbackDelegate(OnSdkEvent);
-                var sdkDispatcher = await EnsureSdkThreadAsync();
-
-                int ret = await sdkDispatcher.InvokeAsync(() =>
-                {
-                    EcFaceCamSdkHelper.ECF_SetCallBack(_cb, IntPtr.Zero);
-                    EcFaceCamSdkHelper.ECF_SetDisplayWindowEx(0, visHandle, 0, 0, 0, 0);
-                    EcFaceCamSdkHelper.ECF_SetDisplayWindowEx(1, nirHandle, 0, 0, 0, 0);
-
-                    var paramsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CameraConfig", "xmlSamples_IR_ON.txt");
-                    var openParams = File.Exists(paramsPath) ? File.ReadAllText(paramsPath) : "";
-                    return EcFaceCamSdkHelper.ECF_Open(openParams);
-                });
-
-                if (ret == 0) { _opened = true; await StartDetectAsync(); }
-                else { ShowSkipOption($"❌ Camera Init failed (Code {ret})."); }
-            }
-            catch (Exception ex)
-            {
-                ShowSkipOption("❌ Camera Exception: " + ex.Message);
-            }
-        }
-
-        private async Task StartDetectAsync()
-        {
-            if (!_opened || _sdkDispatcher == null) return;
-            WelcomePopup.IsOpen = false; FailPopup.IsOpen = false; _handledThisSession = false;
-            BtnSkip.Visibility = Visibility.Collapsed;
-
-            try
-            {
-                await _sdkDispatcher.InvokeAsync(() => EcFaceCamSdkHelper.ECF_StartDetectAsyn());
-                StatusText.Text = L10n.T("Mx_Detecting", "Detecting…");
-                HintText.Text = L10n.T("Mx_LookStraight", "Please look straight");
-            }
-            catch (Exception ex)
-            {
-                ShowSkipOption("❌ Start Detect Error: " + ex.Message);
-            }
-        }
-
-        private void OnSdkEvent(int eventId, IntPtr context)
-        {
-            if (_handledThisSession && eventId == CALLBACK_EVENT_SUCC) return;
-
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (eventId == CALLBACK_EVENT_SUCC)
-                {
-                    _handledThisSession = true;
-                    StatusText.Text = L10n.T("Mx_CaptureSuccess", "Capture success ✅");
-                    var faceJpg = TryGetCapturedFaceJpeg();
-
-                    if (faceJpg == null || faceJpg.Length == 0)
+                Dispatcher.BeginInvoke(
+                    new Action(() =>
                     {
-                        _handledThisSession = false;
-                        ShowSkipOption("❌ Could not read camera frame.");
-                        return;
-                    }
+                        if (!IsLoaded ||
+                            _stopping)
+                        {
+                            return;
+                        }
 
-                    _ctl.State.LiveFaceImageBase64 = Convert.ToBase64String(faceJpg);
-                    _ = HandleCaptureAsync(faceJpg);
-                }
-                else if (eventId == CALLBACK_EVENT_FAIL)
+                        HintText.Text =
+                            L10n.T(
+                                "Mx_KeepStill",
+                                "Please keep your face steady.");
+                    }),
+                    DispatcherPriority.Background);
+
+                return;
+            }
+
+            // ------------------------------------------------------------
+            // SUCCESS
+            // ------------------------------------------------------------
+
+            if (eventId ==
+                CALLBACK_EVENT_SUCC)
+            {
+                if (_handledThisSession)
+                    return;
+
+                _handledThisSession = true;
+
+                // Get image ONCE after successful detection.
+                //
+                // This is not preview processing.
+                byte[]? faceJpg =
+                    TryGetCapturedFaceJpeg();
+
+                if (faceJpg == null ||
+                    faceJpg.Length == 0)
                 {
                     _handledThisSession = false;
-                    ShowSkipOption(L10n.T("Mx_LivenessFailed", "Liveness check failed ❌ Please try again."));
+
+                    Dispatcher.BeginInvoke(
+                        new Action(() =>
+                        {
+                            ShowSkipOption(
+                                "❌ Could not read captured face image.");
+                        }),
+                        DispatcherPriority.Background);
+
+                    return;
                 }
-                else if (eventId == CALLBACK_EVENT_TIMEOUT)
-                {
-                    _handledThisSession = false;
-                    ShowSkipOption(L10n.T("Mx_DetectTimeout", "Timeout ⏳ No face detected."));
-                }
-            }));
+
+                Dispatcher.BeginInvoke(
+                    new Action(() =>
+                    {
+                        if (!IsLoaded ||
+                            _stopping)
+                        {
+                            return;
+                        }
+
+                        StatusText.Text =
+                            L10n.T(
+                                "Mx_CaptureSuccess",
+                                "Capture success ✅");
+
+                        _ctl.State.LiveFaceImageBase64 =
+                            Convert.ToBase64String(
+                                faceJpg);
+
+                        _ = HandleCaptureAsync(
+                            faceJpg);
+                    }),
+                    DispatcherPriority.Background);
+
+                return;
+            }
+
+            // ------------------------------------------------------------
+            // FAIL
+            // ------------------------------------------------------------
+
+            if (eventId ==
+                CALLBACK_EVENT_FAIL)
+            {
+                _handledThisSession = false;
+
+                Dispatcher.BeginInvoke(
+                    new Action(() =>
+                    {
+                        if (!IsLoaded ||
+                            _stopping)
+                        {
+                            return;
+                        }
+
+                        ShowSkipOption(
+                            L10n.T(
+                                "Mx_LivenessFailed",
+                                "Liveness check failed ❌ Please try again."));
+                    }),
+                    DispatcherPriority.Background);
+
+                return;
+            }
+
+            // ------------------------------------------------------------
+            // TIMEOUT
+            // ------------------------------------------------------------
+
+            if (eventId ==
+                CALLBACK_EVENT_TIMEOUT)
+            {
+                _handledThisSession = false;
+
+                Dispatcher.BeginInvoke(
+                    new Action(() =>
+                    {
+                        if (!IsLoaded ||
+                            _stopping)
+                        {
+                            return;
+                        }
+
+                        ShowSkipOption(
+                            L10n.T(
+                                "Mx_DetectTimeout",
+                                "Timeout ⏳ No face detected."));
+                    }),
+                    DispatcherPriority.Background);
+
+                return;
+            }
         }
 
-        // Single entry point after a good capture - routes to whichever
-        // verification method matches this customer's IsExistingCustomer flag.
-        private async Task HandleCaptureAsync(byte[] faceJpg)
+        // ================================================================
+        // PREVIEW FRAME (JPEG-pull)
+        //
+        // Called on every CALLBACK_EVENT_PREVIEW - whatever thread the SDK
+        // invokes the callback on, not the UI thread. Decode happens here,
+        // off the UI thread; the resulting BitmapImage is frozen (making it
+        // safely shareable across threads) before being handed to the
+        // Dispatcher, so the UI thread only ever does a trivial Source
+        // assignment rather than a JPEG decode.
+        //
+        // _previewBuffer is reused across calls rather than freshly
+        // allocated per frame like JpegPull_net7's own demo code does -
+        // BitmapCacheOption.OnLoad forces WPF to fully decode and cache
+        // pixel data during EndInit(), so the buffer is safe to overwrite
+        // on the next frame the moment EndInit() returns.
+        // ================================================================
+
+        private void HandlePreviewFrame()
+        {
+            // Drop this frame if the previous one hasn't finished
+            // decoding/dispatching yet, rather than queueing up behind it.
+            if (Interlocked.CompareExchange(
+                    ref _previewBusy,
+                    1,
+                    0) != 0)
+            {
+                return;
+            }
+
+            try
+            {
+                int dataLen = 0;
+
+                int ret =
+                    EcFaceCamSdkHelper
+                        .ECF_CopyFrameWithAlpha(
+                            IMAGE_TYPE_VIS,
+                            _previewBuffer,
+                            ref dataLen,
+                            null);
+
+                if (ret != 0 ||
+                    dataLen <= 0 ||
+                    dataLen > _previewBuffer.Length)
+                {
+                    return;
+                }
+
+                var frame = new BitmapImage();
+
+                frame.BeginInit();
+                frame.CacheOption = BitmapCacheOption.OnLoad;
+                frame.StreamSource =
+                    new MemoryStream(
+                        _previewBuffer,
+                        0,
+                        dataLen);
+                frame.EndInit();
+                frame.Freeze();
+
+                Dispatcher.BeginInvoke(
+                    new Action(() =>
+                    {
+                        if (!IsLoaded ||
+                            _stopping)
+                        {
+                            return;
+                        }
+
+                        VisImage.Source = frame;
+                    }),
+                    DispatcherPriority.Normal);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[Eyecool] Preview frame error: " +
+                    ex.Message);
+            }
+            finally
+            {
+                Interlocked.Exchange(
+                    ref _previewBusy,
+                    0);
+            }
+        }
+
+        // ================================================================
+        // GET CAPTURED FACE IMAGE
+        //
+        // ONLY called after SUCCESS.
+        //
+        // NEVER called for preview frames.
+        // ================================================================
+
+        private byte[]? TryGetCapturedFaceJpeg()
         {
             try
             {
-                var cust = _ctl.State.Customer;
-                if (cust == null || string.IsNullOrWhiteSpace(cust.FaceImageBase64))
+                int dataLen = 0;
+
+                int firstRet =
+                    EcFaceCamSdkHelper
+                        .ECF_GetImageData(
+                            IMAGE_TYPE_CROP_VIS,
+                            null,
+                            ref dataLen);
+
+                if (firstRet != 0 ||
+                    dataLen <= 0)
                 {
-                    ShowSkipOption(L10n.T("Mx_NoDocPhoto", "❌ No document photo to compare against."));
+                    return null;
+                }
+
+                byte[] buffer =
+                    new byte[dataLen];
+
+                int secondRet =
+                    EcFaceCamSdkHelper
+                        .ECF_GetImageData(
+                            IMAGE_TYPE_CROP_VIS,
+                            buffer,
+                            ref dataLen);
+
+                if (secondRet != 0 ||
+                    dataLen <= 0)
+                {
+                    return null;
+                }
+
+                if (buffer.Length != dataLen)
+                {
+                    Array.Resize(
+                        ref buffer,
+                        dataLen);
+                }
+
+                return buffer;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[Eyecool] GetImageData error:");
+
+                Console.WriteLine(ex);
+
+                return null;
+            }
+        }
+
+        // ================================================================
+        // SHOW SKIP
+        // ================================================================
+
+        private void ShowSkipOption(
+            string message)
+        {
+            Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    if (!IsLoaded)
+                        return;
+
+                    StatusText.Text =
+                        message;
+
+                    HintText.Text =
+                        L10n.T(
+                            "Mx_RetryOrSkip",
+                            "Please retry, or skip to continue.");
+
+                    BtnSkip.Visibility =
+                        Visibility.Visible;
+                }),
+                DispatcherPriority.Background);
+        }
+
+        // ================================================================
+        // CAPTURE ROUTER
+        // ================================================================
+
+        private async Task HandleCaptureAsync(
+            byte[] faceJpg)
+        {
+            try
+            {
+                var cust =
+                    _ctl.State.Customer;
+
+                if (cust == null ||
+                    string.IsNullOrWhiteSpace(
+                        cust.FaceImageBase64))
+                {
+                    ShowSkipOption(
+                        L10n.T(
+                            "Mx_NoDocPhoto",
+                            "❌ No document photo to compare against."));
+
+                    _handledThisSession = false;
+
                     return;
                 }
 
                 if (_ctl.State.IsExistingCustomer)
-                    await HandleExistingCustomerMatchAsync(cust, faceJpg);
+                {
+                    await HandleExistingCustomerMatchAsync(
+                        cust,
+                        faceJpg);
+                }
                 else
-                    await HandleNewCustomerEkycAsync(cust, faceJpg);
+                {
+                    await HandleNewCustomerEkycAsync(
+                        cust,
+                        faceJpg);
+                }
             }
             catch (Exception ex)
             {
                 _handledThisSession = false;
-                ShowSkipOption("❌ Verification error: " + ex.Message);
+
+                ShowSkipOption(
+                    "❌ Verification error: " +
+                    ex.Message);
             }
         }
 
-        // Fast path: compare the live capture against this customer's cached
-        // biometric feature (or, failing that, their stored ID photo) using
-        // the local TaiSDK engine. No network call at all.
-        private async Task HandleExistingCustomerMatchAsync(Models.MoneyExchange.CustomerProfile cust, byte[] faceJpg)
+        // ================================================================
+        // EXISTING CUSTOMER
+        // ================================================================
+
+        private async Task HandleExistingCustomerMatchAsync(
+            Models.MoneyExchange.CustomerProfile cust,
+            byte[] faceJpg)
         {
-            var engine = GlobalHardwareManager.FaceEngine?.Current;
-            if (engine == null || !engine.Info.IsAvailable)
+            var engine =
+                GlobalHardwareManager
+                    .FaceEngine?
+                    .Current;
+
+            if (engine == null ||
+                !engine.Info.IsAvailable)
             {
-                ShowSkipOption(L10n.T("Mx_LocalEngineUnavailable", "❌ Local face engine unavailable: ") + (engine?.Info.Message ?? "not loaded"));
+                ShowSkipOption(
+                    L10n.T(
+                        "Mx_LocalEngineUnavailable",
+                        "❌ Local face engine unavailable: ")
+                    +
+                    (engine?.Info.Message ??
+                     "not loaded"));
+
                 return;
             }
 
-            StatusText.Text = L10n.T("Mx_ComparingLocal", "Comparing with your saved profile…");
+            StatusText.Text =
+                L10n.T(
+                    "Mx_ComparingLocal",
+                    "Comparing with your saved profile…");
 
-            byte[]? storedFeature = null;
-            if (!string.IsNullOrWhiteSpace(cust.FaceFeatureBase64))
+            byte[]? cachedFeature = null;
+
+            if (!string.IsNullOrWhiteSpace(
+                    cust.FaceFeatureBase64))
             {
-                storedFeature = Convert.FromBase64String(cust.FaceFeatureBase64);
+                cachedFeature =
+                    Convert.FromBase64String(
+                        cust.FaceFeatureBase64);
             }
-            else if (!string.IsNullOrWhiteSpace(cust.FaceImageBase64))
+
+            byte[]? cachedImage = null;
+
+            if (cachedFeature == null &&
+                !string.IsNullOrWhiteSpace(
+                    cust.FaceImageBase64))
             {
-                var storedImage = Convert.FromBase64String(cust.FaceImageBase64);
-                if (!engine.TryExtractFeature(storedImage, out storedFeature, out var extractErr) || storedFeature == null)
+                cachedImage =
+                    Convert.FromBase64String(
+                        cust.FaceImageBase64);
+            }
+
+            var result =
+                await Task.Run(() =>
                 {
-                    ShowSkipOption("❌ " + L10n.T("Mx_StoredProfileError", "Could not read stored profile: ") + extractErr);
-                    return;
-                }
-            }
+                    byte[]? storedFeature =
+                        cachedFeature;
 
-            if (storedFeature == null)
+                    if (storedFeature == null &&
+                        cachedImage != null)
+                    {
+                        if (!engine.TryExtractFeature(
+                                cachedImage,
+                                out storedFeature,
+                                out var extractErr) ||
+                            storedFeature == null)
+                        {
+                            return new LocalMatchResult(
+                                false,
+                                null,
+                                -1,
+                                "Could not read stored profile: " +
+                                extractErr);
+                        }
+                    }
+
+                    if (storedFeature == null)
+                    {
+                        return new LocalMatchResult(
+                            false,
+                            null,
+                            -1,
+                            "No reference photo on file.");
+                    }
+
+                    if (!engine.TryExtractFeature(
+                            faceJpg,
+                            out var liveFeature,
+                            out var liveErr) ||
+                        liveFeature == null)
+                    {
+                        return new LocalMatchResult(
+                            false,
+                            null,
+                            -1,
+                            "Could not process live photo: " +
+                            liveErr);
+                    }
+
+                    if (!engine.TryCompare(
+                            liveFeature,
+                            storedFeature,
+                            out var score,
+                            out var cmpErr))
+                    {
+                        return new LocalMatchResult(
+                            false,
+                            null,
+                            -1,
+                            "Comparison failed: " +
+                            cmpErr);
+                    }
+
+                    return new LocalMatchResult(
+                        true,
+                        liveFeature,
+                        score,
+                        null);
+                });
+
+            if (!result.Success)
             {
-                ShowSkipOption("❌ " + L10n.T("Mx_NoReferencePhoto", "No reference photo on file."));
+                ShowSkipOption(
+                    "❌ " +
+                    result.Error);
+
                 return;
             }
 
-            if (!engine.TryExtractFeature(faceJpg, out var liveFeature, out var liveErr) || liveFeature == null)
-            {
-                ShowSkipOption("❌ " + L10n.T("Mx_LiveExtractError", "Could not process live photo: ") + liveErr);
-                return;
-            }
-
-            if (!engine.TryCompare(liveFeature, storedFeature, out var score, out var cmpErr))
-            {
-                ShowSkipOption("❌ " + L10n.T("Mx_CompareError", "Comparison failed: ") + cmpErr);
-                return;
-            }
-
-            bool matched = score >= LocalMatchThreshold;
+            bool matched =
+                result.Score >=
+                LocalMatchThreshold;
 
             if (matched)
             {
-                // Refresh the cached feature with today's capture so it stays current.
-                _ctl.SaveFace(Convert.ToBase64String(liveFeature), Convert.ToBase64String(faceJpg));
+                if (result.LiveFeature != null)
+                {
+                    _ctl.SaveFace(
+                        Convert.ToBase64String(
+                            result.LiveFeature),
+                        Convert.ToBase64String(
+                            faceJpg));
+                }
 
-                StatusText.Text = $"{L10n.T("Mx_Matched", "Matched ✅")} (score {score})";
-                _ctl.State.FaceVerified = true;
+                StatusText.Text =
+                    $"{L10n.T("Mx_Matched", "Matched ✅")} " +
+                    $"(score {result.Score})";
+
+                _ctl.State.FaceVerified =
+                    true;
+
                 await ShowWelcomeAndNext();
             }
             else
             {
-                StatusText.Text = $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} (score {score})";
-                _ctl.State.FaceVerified = false;
-                FailPopup.IsOpen = true;
+                StatusText.Text =
+                    $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} " +
+                    $"(score {result.Score})";
+
+                _ctl.State.FaceVerified =
+                    false;
+
+                FailPopup.IsOpen =
+                    true;
             }
         }
 
-        // First-time path: remote Innov8tif eKYC, exactly as built and tested
-        // earlier. On success, also extracts a local feature from the same
-        // live photo so this customer gets the fast path next visit.
-        private async Task HandleNewCustomerEkycAsync(Models.MoneyExchange.CustomerProfile cust, byte[] faceJpg)
+        // ================================================================
+        // NEW CUSTOMER / eKYC
+        // ================================================================
+
+        private async Task HandleNewCustomerEkycAsync(
+            Models.MoneyExchange.CustomerProfile cust,
+            byte[] faceJpg)
         {
             string? journeyId = null;
+
             if (_journeyTask != null)
             {
-                var (ok, id, err) = await _journeyTask;
-                if (ok) journeyId = id;
-                else Console.WriteLine("eKYC journey creation failed: " + err);
+                var journey =
+                    await _journeyTask;
+
+                if (journey.ok)
+                {
+                    journeyId =
+                        journey.journeyId;
+                }
+                else
+                {
+                    Console.WriteLine(
+                        "eKYC journey creation failed: " +
+                        journey.error);
+                }
             }
 
-            if (string.IsNullOrWhiteSpace(journeyId))
+            if (string.IsNullOrWhiteSpace(
+                    journeyId))
             {
-                var (ok, id, err) = await _ekyc.CreateJourneyIdAsync(cust.IdNo);
-                if (!ok || string.IsNullOrWhiteSpace(id))
+                var journey =
+                    await _ekyc.CreateJourneyIdAsync(
+                        cust.IdNo);
+
+                if (!journey.ok ||
+                    string.IsNullOrWhiteSpace(
+                        journey.journeyId))
                 {
-                    ShowSkipOption("❌ " + L10n.T("Mx_EkycUnavailable", "eKYC service unavailable: ") + (err ?? "could not create journey"));
+                    ShowSkipOption(
+                        "❌ " +
+                        L10n.T(
+                            "Mx_EkycUnavailable",
+                            "eKYC service unavailable: ")
+                        +
+                        (journey.error ??
+                         "could not create journey"));
+
                     return;
                 }
-                journeyId = id;
+
+                journeyId =
+                    journey.journeyId;
             }
 
-            StatusText.Text = L10n.T("Mx_VerifyingEkyc", "Verifying with eKYC service…");
-            HintText.Text = L10n.T("Mx_TakesFewSeconds", "This can take a few seconds");
+            StatusText.Text =
+                L10n.T(
+                    "Mx_VerifyingEkyc",
+                    "Verifying with eKYC service…");
 
-            string liveBase64 = Convert.ToBase64String(faceJpg);
-            var outcome = await _ekyc.MatchFaceAsync(journeyId!, cust.FaceImageBase64, liveBase64);
+            HintText.Text =
+                L10n.T(
+                    "Mx_TakesFewSeconds",
+                    "This can take a few seconds");
+
+            string liveBase64 =
+                Convert.ToBase64String(
+                    faceJpg);
+
+            var outcome =
+                await _ekyc.MatchFaceAsync(
+                    journeyId!,
+                    cust.FaceImageBase64,
+                    liveBase64);
 
             if (!outcome.CallSucceeded)
             {
-                ShowSkipOption("❌ " + L10n.T("Mx_EkycServiceError", "eKYC service error: ") + outcome.ErrorMessage);
+                ShowSkipOption(
+                    "❌ " +
+                    L10n.T(
+                        "Mx_EkycServiceError",
+                        "eKYC service error: ")
+                    +
+                    outcome.ErrorMessage);
+
                 return;
             }
 
-            string scoreLabel = outcome.ScorePercent.HasValue ? $"{outcome.ScorePercent.Value:0.#}%" : "n/a";
+            string scoreLabel =
+                outcome.ScorePercent.HasValue
+                    ? $"{outcome.ScorePercent.Value:0.#}%"
+                    : "n/a";
 
             if (outcome.Matched)
             {
-                // Seed the local cache from today's live photo, purely so next
-                // visit can use the fast local path instead of eKYC again.
-                var engine = GlobalHardwareManager.FaceEngine?.Current;
-                if (engine != null && engine.Info.IsAvailable &&
-                    engine.TryExtractFeature(faceJpg, out var localFeature, out _) && localFeature != null)
+                var engine =
+                    GlobalHardwareManager
+                        .FaceEngine?
+                        .Current;
+
+                if (engine != null &&
+                    engine.Info.IsAvailable)
                 {
-                    _ctl.SaveFace(Convert.ToBase64String(localFeature), liveBase64);
+                    var localFeature =
+                        await Task.Run(() =>
+                        {
+                            if (engine.TryExtractFeature(
+                                    faceJpg,
+                                    out var feature,
+                                    out _) &&
+                                feature != null)
+                            {
+                                return feature;
+                            }
+
+                            return null;
+                        });
+
+                    if (localFeature != null)
+                    {
+                        _ctl.SaveFace(
+                            Convert.ToBase64String(
+                                localFeature),
+                            liveBase64);
+                    }
                 }
 
-                StatusText.Text = $"{L10n.T("Mx_Matched", "Matched ✅")} (score {scoreLabel})";
-                _ctl.State.FaceVerified = true;
+                StatusText.Text =
+                    $"{L10n.T("Mx_Matched", "Matched ✅")} " +
+                    $"(score {scoreLabel})";
+
+                _ctl.State.FaceVerified =
+                    true;
+
                 await ShowWelcomeAndNext();
             }
             else
             {
-                StatusText.Text = outcome.FriendlyMessage != null
-                    ? $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} — {outcome.FriendlyMessage}"
-                    : $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} (score {scoreLabel})";
-                _ctl.State.FaceVerified = false;
-                FailPopup.IsOpen = true;
+                StatusText.Text =
+                    outcome.FriendlyMessage != null
+                        ? $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} — " +
+                          outcome.FriendlyMessage
+                        : $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} " +
+                          $"(score {scoreLabel})";
+
+                _ctl.State.FaceVerified =
+                    false;
+
+                FailPopup.IsOpen =
+                    true;
             }
         }
 
-        private async Task ShowWelcomeAndNext() { WelcomePopup.IsOpen = true; await Task.Delay(2500); NextRequested?.Invoke(this, EventArgs.Empty); }
-        private void FailAcknowledge_Click(object sender, RoutedEventArgs e) => ExitRequested?.Invoke(this, EventArgs.Empty);
+        // ================================================================
+        // SUCCESS
+        // ================================================================
 
-        private byte[]? TryGetCapturedFaceJpeg()
+        private async Task ShowWelcomeAndNext()
         {
-            if (_sdkDispatcher == null) return null;
-            try
+            if (!IsLoaded)
+                return;
+
+            WelcomePopup.IsOpen =
+                true;
+
+            await Task.Delay(2500);
+
+            if (!IsLoaded)
+                return;
+
+            NextRequested?.Invoke(
+                this,
+                EventArgs.Empty);
+        }
+
+        // ================================================================
+        // FAILURE POPUP
+        // ================================================================
+
+        private void FailAcknowledge_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            ExitRequested?.Invoke(
+                this,
+                EventArgs.Empty);
+        }
+
+        // ================================================================
+        // LOCAL MATCH RESULT
+        // ================================================================
+
+        private sealed class LocalMatchResult
+        {
+            public bool Success { get; }
+
+            public byte[]? LiveFeature { get; }
+
+            public int Score { get; }
+
+            public string? Error { get; }
+
+            public LocalMatchResult(
+                bool success,
+                byte[]? liveFeature,
+                int score,
+                string? error)
             {
-                return _sdkDispatcher.Invoke(() =>
-                {
-                    int len = 0;
-                    if (EcFaceCamSdkHelper.ECF_GetImageData(IMAGE_TYPE_CROP_VIS, null, ref len) != 0 || len <= 0) return null;
-                    var buf = new byte[len];
-                    if (EcFaceCamSdkHelper.ECF_GetImageData(IMAGE_TYPE_CROP_VIS, buf, ref len) != 0 || len <= 0) return null;
-                    if (buf.Length != len) Array.Resize(ref buf, len);
-                    return buf;
-                });
-            }
-            catch (Exception ex)
-            {
-                ShowSkipOption("❌ Frame Extraction Error: " + ex.Message);
-                return null;
+                Success = success;
+                LiveFeature = liveFeature;
+                Score = score;
+                Error = error;
             }
         }
     }

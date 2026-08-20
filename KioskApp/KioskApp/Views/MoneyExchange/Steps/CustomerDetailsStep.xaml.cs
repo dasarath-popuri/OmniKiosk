@@ -57,6 +57,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             GenderLabel.Text = L10n.T("Mx_GenderLabel", "GENDER");
             DobLabel.Text = L10n.T("Mx_DobLabel", "DATE OF BIRTH");
             ExpiryLabel.Text = L10n.T("Mx_ExpiryLabel", "EXPIRY DATE");
+            DateOfIssueLabel.Text = L10n.T("Mx_DateOfIssueLabel", "DATE OF ISSUE");
+            PlaceOfBirthLabel.Text = L10n.T("Mx_PlaceOfBirthLabel", "PLACE OF BIRTH");
+            PlaceOfIssueLabel.Text = L10n.T("Mx_PlaceOfIssueLabel", "PLACE OF ISSUE");
             MobileLabel.Text = L10n.T("Mx_MobileNo", "MOBILE NUMBER");
             MobileHintText.Text = L10n.T("Mx_MobileHint", "We'll use this to speed up your next visit");
             TxtMobile.Text = "";
@@ -142,7 +145,10 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 cust.Nationality = result.Data.Nationality;
                 cust.Sex = result.Data.Gender;
                 cust.DateOfBirth = result.Data.DateOfBirth;
-                cust.DateOfExpiry = null; // MyKad has no fixed expiry the same way a passport does
+                cust.DateOfExpiry = null;  // MyKad has no fixed expiry the same way a passport does
+                cust.DateOfIssue = null;   // passport-only field - MyKad doesn't carry this
+                cust.PlaceOfBirth = null;  // passport-only field - not on the MyKad chip data currently read
+                cust.PlaceOfIssue = null;  // passport-only field - not on the MyKad chip data currently read
 
                 if (result.Data.PhotoBytes != null)
                 {
@@ -195,6 +201,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                             cust.Sex = doc.Sex ?? "";
                             cust.DateOfBirth = doc.DateOfBirth ?? "";
                             cust.DateOfExpiry = doc.DateOfExpiry;
+                            cust.DateOfIssue = doc.DateOfIssue;
+                            cust.PlaceOfBirth = doc.PlaceOfBirth;
+                            cust.PlaceOfIssue = doc.PlaceOfIssue;
 
                             if (!string.IsNullOrWhiteSpace(portraitPath) && File.Exists(portraitPath))
                             {
@@ -290,6 +299,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             {
                 IsExpired(cust.DateOfExpiry, out var display);
                 TxtExpiry.Text = display;
+                TxtDateOfIssue.Text = string.IsNullOrWhiteSpace(cust.DateOfIssue) ? "-" : cust.DateOfIssue;
+                TxtPlaceOfBirth.Text = string.IsNullOrWhiteSpace(cust.PlaceOfBirth) ? "-" : cust.PlaceOfBirth;
+                TxtPlaceOfIssue.Text = string.IsNullOrWhiteSpace(cust.PlaceOfIssue) ? "-" : cust.PlaceOfIssue;
                 ExpiryPanel.Visibility = Visibility.Visible;
             }
             else

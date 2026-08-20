@@ -13,6 +13,9 @@ namespace OmniKiosk.Wpf.Models.MoneyExchange
         public string Sex { get; set; } = "";
         public string DateOfBirth { get; set; } = ""; // keep string from SDK for now
         public string? DateOfExpiry { get; set; } // passport only - not persisted to DB, re-checked fresh every scan
+        public string? DateOfIssue { get; set; }  // passport only - not persisted to DB, keep string from SDK for now
+        public string? PlaceOfBirth { get; set; } // passport only - not persisted to DB
+        public string? PlaceOfIssue { get; set; } // passport only - not persisted to DB
         public string MobileNo { get; set; } = "";
 
         // Face
