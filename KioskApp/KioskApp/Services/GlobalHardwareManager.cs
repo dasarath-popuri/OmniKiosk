@@ -55,6 +55,25 @@ namespace OmniKiosk.Wpf.Services
             private set;
         }
 
+        // Per-SDK ready flags - added because IsInitialized above only
+        // meant "the init sequence ran to completion", NOT "every SDK
+        // actually succeeded" - every try/catch below was swallowing
+        // failures with just a Console.WriteLine, so a kiosk with (say) a
+        // disconnected IC reader would still report IsInitialized=true and
+        // look fully healthy. These are checked at startup and before
+        // entering either service flow - see MainWindow.
+        public static bool IcReaderReady { get; private set; }
+        public static bool PassportReady { get; private set; }
+        public static bool PrinterReady { get; private set; }
+        public static bool DispenserReady { get; private set; }
+        public static bool MoneyReceiverReady { get; private set; }
+
+        // Money Exchange needs all of these; a kiosk missing the printer
+        // or dispenser genuinely cannot complete a transaction. Eyecool
+        // (face) is checked separately via EyecoolReady, already existing.
+        public static bool AllCriticalSdksReady =>
+            IcReaderReady && PassportReady && PrinterReady && DispenserReady && MoneyReceiverReady && EyecoolReady;
+
         public static int EyecoolInitCode
         {
             get;
@@ -83,6 +102,15 @@ namespace OmniKiosk.Wpf.Services
             IcReader =
                 new IcReaderService();
 
+            // ASSUMPTION FLAGGED: IcReaderService's constructor doesn't
+            // appear to throw or report a connection result on its own
+            // (confirmed from the file's own Init/ReadCardAsync pattern
+            // elsewhere) - marking ready here reflects "the service object
+            // was constructed", not "a reader is physically connected and
+            // responding". If IcReaderService exposes a real connectivity
+            // check, this should call it instead.
+            IcReaderReady = true;
+
             // ========================================================
             // FACE ENGINE
             // ========================================================
@@ -100,6 +128,13 @@ namespace OmniKiosk.Wpf.Services
             Printer.PrinterName =
                 "BIXOLON BK3-3";
 
+            // ASSUMPTION FLAGGED: same caveat as IcReaderReady above -
+            // BixolonPrinterService's constructor doesn't appear to
+            // validate a physical connection on its own. This reflects
+            // "the service object was constructed", not "a printer is
+            // physically connected and responding".
+            PrinterReady = true;
+
             // ========================================================
             // DISPENSER
             // ========================================================
@@ -111,9 +146,12 @@ namespace OmniKiosk.Wpf.Services
             {
                 await MoneyDispenser
                     .AutoDetectDispenserPortAsync();
+
+                DispenserReady = MoneyDispenser.IsConnected;
             }
             catch (Exception ex)
             {
+                DispenserReady = false;
                 Console.WriteLine(
                     "[Dispenser] " +
                     ex.Message);
@@ -140,9 +178,12 @@ namespace OmniKiosk.Wpf.Services
                         libPath);
 
                 PassportScanner.Init();
+
+                PassportReady = true;
             }
             catch (Exception ex)
             {
+                PassportReady = false;
                 Console.WriteLine(
                     "[Passport] " +
                     ex.Message);
@@ -196,11 +237,14 @@ namespace OmniKiosk.Wpf.Services
 
                 MoneyReceiver.Open(port);
 
+                MoneyReceiverReady = true;
+
                 Console.WriteLine(
                     $"[MoneyReceiver] opened {port}");
             }
             catch (Exception ex)
             {
+                MoneyReceiverReady = false;
                 Console.WriteLine(
                     "[MoneyReceiver] " +
                     ex.Message);

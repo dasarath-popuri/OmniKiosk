@@ -24,6 +24,16 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
             // (CustomerDetailsStep) and, later, KSK_CommitScreening (once a
             // real Mc_TransMaster.TxnID exists at completion).
             State.ScreeningTransGuid = Guid.NewGuid().ToString();
+
+            // Full-journey audit trail - the session conceptually starts
+            // here, at the moment the customer chose Money Exchange from
+            // the menu (this constructor runs right when that happens in
+            // MainWindow.OpenMoneyExchange_Click). True main-menu-level
+            // tracking - people who look at the menu but pick nothing -
+            // would need MainWindow itself instrumented too, which this
+            // does not cover.
+            _ = new MoneyExchangeApiClient().LogJourneyEventAsync(
+                State.SessionId, "MoneyExchange", "SessionStart", "MainMenu");
         }
 
         public ExchangeRatesService Rates => _rates;

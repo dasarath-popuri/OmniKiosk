@@ -142,7 +142,7 @@ namespace OmniKiosk.Wpf.Views.SDKTest
                     // If locked, we only watch for removal
                     if (_lockedUntilRemoved)
                     {
-                        var okLocked = _svc.TryReadPassport(out _, out _);
+                        var okLocked = _svc.TryReadPassport(out _, out _, out _);
 
                         if (!okLocked) _noReadStreak++;
                         else _noReadStreak = 0;
@@ -169,7 +169,7 @@ namespace OmniKiosk.Wpf.Views.SDKTest
                     }
 
                     // Normal read mode
-                    var ok = _svc.TryReadPassport(out var doc, out var portraitPath);
+                    var ok = _svc.TryReadPassport(out var doc, out var portraitPath, out var fullPageImagePath);
                     if (!ok)
                     {
                         Thread.Sleep(loopDelayMs);

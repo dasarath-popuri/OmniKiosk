@@ -73,7 +73,16 @@
                         </Border>
                         <TextBlock Text="⬇" FontSize="30" Foreground="{StaticResource AccentGoldBrush}" HorizontalAlignment="Center" Margin="0,14,0,0"/>
 
-                        <TextBlock x:Name="SlotHintText" Foreground="{StaticResource TextSecondaryBrush}" FontSize="21" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20,0,28" MaxWidth="320"/>
+                        <TextBlock x:Name="SlotHintText" Foreground="{StaticResource TextSecondaryBrush}" FontSize="21" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20,0,14" MaxWidth="320"/>
+
+                        <!-- Accepted denominations - compact chip row instead
+                             of a wrapped sentence, so it reads at a glance
+                             rather than as a paragraph to parse. -->
+                        <StackPanel x:Name="AcceptedDenomsPanel" HorizontalAlignment="Center" Margin="0,0,0,24">
+                            <TextBlock x:Name="AcceptedDenomsLabel" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <WrapPanel x:Name="AcceptedDenomsChipsPanel" HorizontalAlignment="Center" MaxWidth="360"/>
+                        </StackPanel>
 
                         <Border Background="{StaticResource BackgroundBrush}" CornerRadius="14" Padding="22,18" MaxWidth="340">
                             <StackPanel>
@@ -105,7 +114,22 @@
             <Border Background="{StaticResource CardBrush}" CornerRadius="24" Padding="56" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="700">
                 <StackPanel>
                     <TextBlock x:Name="NoteDetectedLabel" Foreground="{StaticResource TextSecondaryBrush}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="TxtEscrowAmount" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="60" FontWeight="Black" Margin="0,12,0,44" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtEscrowAmount" FontFamily="{StaticResource DisplayFont}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="60" FontWeight="Black" Margin="0,12,0,24" HorizontalAlignment="Center"/>
+
+                    <!-- Made into a proper warning banner (tinted background,
+                         bordered, icon) rather than plain colored text -
+                         this decision (once accepted, a note is final) is
+                         the one thing on this whole screen that must not be
+                         missed, so it gets a distinct visual treatment, not
+                         just bold text sitting among other text. -->
+                    <Border Background="#22C9772E" BorderBrush="{StaticResource WarningBrush}" BorderThickness="2"
+                            CornerRadius="14" Padding="24,18" Margin="0,0,0,32" MaxWidth="620" HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠️" FontSize="34" VerticalAlignment="Center" Margin="0,0,18,0"/>
+                            <TextBlock x:Name="TxtEscrowDisclaimer" Foreground="{StaticResource WarningBrush}" FontSize="19" FontWeight="Bold"
+                                       TextWrapping="Wrap" VerticalAlignment="Center" MaxWidth="480"/>
+                        </StackPanel>
+                    </Border>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

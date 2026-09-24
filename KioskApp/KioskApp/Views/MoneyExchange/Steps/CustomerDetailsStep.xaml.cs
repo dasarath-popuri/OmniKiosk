@@ -3,11 +3,13 @@ using OmniKiosk.Wpf.Controls;
 using OmniKiosk.Wpf.Models.MoneyExchange;
 using OmniKiosk.Wpf.Sdk.IC;
 using OmniKiosk.Wpf.Sdk.Passport;
+using OmniKiosk.Wpf.Services.Ekyc;
 using OmniKiosk.Wpf.Services.MoneyExchange;
 using OmniKiosk.Wpf.Services; // GlobalManager
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -31,6 +33,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private CancellationTokenSource? _cts;
         private readonly MoneyExchangeApiClient _api = new();
+        private readonly EkycFaceMatchClient _ekyc = new();
 
         // Document TYPE the customer chose, independent of nationality - a
         // Malaysian can hold a passport too, so this is no longer inferred
@@ -65,18 +68,30 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             TxtMobile.Text = "";
             BtnBack.Content = L10n.T("Mx_Back", "Back");
             BtnNext.Content = L10n.T("Mx_VerifyFace", "Verify Face ➔");
+            KeypadTitleText.Text = L10n.T("Mx_KeypadTitle", "ENTER YOUR MOBILE NUMBER");
+            KeypadPlaceholderText.Text = L10n.T("Mx_KeypadPlaceholder", "Tap the numbers below");
+            KeypadHintText.Text = L10n.T("Mx_KeypadHint", "Country code is added automatically");
+            KeypadClearButton.Content = L10n.T("Mx_KeypadClear", "Clear");
+            KeypadDoneButton.Content = L10n.T("Mx_KeypadDone", "Done");
+            CloseMobileKeypad();
+
+            _ = LoadDialCodesAsync();
 
             ShowView("Selection");
+
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepEntered", "CustomerDetails");
         }
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            CloseMobileKeypad();
             StopPassportLoop();
             StopScanAnimations();
         }
 
         private void ShowView(string viewName)
         {
+            CloseMobileKeypad();
             ViewSelection.Visibility = Visibility.Collapsed;
             ViewScanning.Visibility = Visibility.Collapsed;
             ViewResult.Visibility = Visibility.Collapsed;
@@ -99,19 +114,24 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             (this.Resources["CardInsertAnim"] as Storyboard)?.Stop(this);
         }
 
-        private async void BtnIc_Click(object sender, MouseButtonEventArgs e)
+        private void BtnIc_Click(object sender, MouseButtonEventArgs e)
         {
             _selectedDocType = "IC";
             SubtitleText.Text = L10n.T("Mx_ReadingGuidance", "Please follow the instructions below to complete the reading.");
-            AutoReadStatus.Text = L10n.T("Mx_InsertMyKad", "Please insert your MyKad into the reader");
+            AutoReadStatus.Text = L10n.T("Mx_PlaceMyKad", "Please place your MyKad face-up on the scanner");
             StatusText.Text = "";
 
+            // Standardized on the SAME optical reader used for passports,
+            // per instruction - no longer a separate chip-based path. The
+            // reader recognizes either document type automatically (see
+            // PassportReaderService.Init()'s "Any" mode), so this now
+            // starts the exact same scan loop as BtnPassport_Click below.
             StopScanAnimations();
-            CardAnimStage.Visibility = Visibility.Visible;
-            (this.Resources["CardInsertAnim"] as Storyboard)?.Begin(this, true);
+            PassportAnimStage.Visibility = Visibility.Visible;
+            (this.Resources["PassportPlaceAnim"] as Storyboard)?.Begin(this, true);
 
             ShowView("Scanning");
-            await StartIcScanAsync();
+            StartPassportScan();
         }
 
         private void BtnPassport_Click(object sender, MouseButtonEventArgs e)
@@ -129,47 +149,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             StartPassportScan();
         }
 
-        private async Task StartIcScanAsync()
-        {
-            StatusText.Text = L10n.T("Mx_ReadingMyKad", "Reading MyKad securely...");
-            if (_icSvc == null) { StatusText.Text = L10n.T("Mx_IcOffline", "IC Reader offline."); return; }
-
-            var result = await _icSvc.ReadCardAsync();
-            if (result.Data != null)
-            {
-                if (_ctl.State.Customer == null) _ctl.State.Customer = new CustomerProfile();
-                var cust = _ctl.State.Customer;
-
-                cust.FullName = result.Data.FullName;
-                cust.IdNo = result.Data.IdNumber;
-                cust.Nationality = result.Data.Nationality;
-                cust.Sex = result.Data.Gender;
-                cust.DateOfBirth = result.Data.DateOfBirth;
-                cust.DateOfExpiry = null;  // MyKad has no fixed expiry the same way a passport does
-                cust.DateOfIssue = null;   // passport-only field - MyKad doesn't carry this
-                cust.PlaceOfBirth = null;  // passport-only field - not on the MyKad chip data currently read
-                cust.PlaceOfIssue = null;  // passport-only field - not on the MyKad chip data currently read
-
-                if (result.Data.PhotoBytes != null)
-                {
-                    try
-                    {
-                        using var ms = new MemoryStream(result.Data.PhotoBytes);
-                        var bmp = new BitmapImage(); bmp.BeginInit(); bmp.CacheOption = BitmapCacheOption.OnLoad; bmp.StreamSource = ms; bmp.EndInit();
-                        PortraitImage.Source = bmp;
-                        cust.FaceImageBase64 = Convert.ToBase64String(result.Data.PhotoBytes);
-                    }
-                    catch { }
-                }
-
-                StopScanAnimations();
-                PopulateResultView();
-                ShowView("Result");
-                UpdateNextEnabled();
-            }
-            else { StatusText.Text = L10n.T("Mx_HardwareReadFailed", "Hardware Read Failed. Please go back and try again."); }
-        }
-
         private void StartPassportScan()
         {
             if (_svc == null)
@@ -180,6 +159,29 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _cts = new CancellationTokenSource(); _ = Task.Run(() => PassportReadLoop(_cts.Token));
         }
 
+        // ================================================================
+        // UNIFIED DOCUMENT SCAN - standardized on the optical reader for
+        // BOTH IC and Passport, per instruction. TryReadAnyDocument
+        // recognizes either document type automatically; this loop
+        // branches only where the two genuinely differ (expiry only
+        // applies to passports; OkayDoc has a separate Passport/MyKad
+        // variant).
+        //
+        // eKYC (OkayID/OkayDoc) now runs ONLY for a genuinely new
+        // customer - checked BEFORE any Innov8tif call, not after. An
+        // existing customer's document is read and used to populate the
+        // result screen exactly as before, but no eKYC call is made for
+        // them at all, per instruction.
+        //
+        // Retry: a genuine connectivity failure (couldn't create a
+        // journey, or a call to Innov8tif didn't succeed at all) offers
+        // the customer a retry - re-initializing the reader SDK and
+        // restarting this same scan loop - rather than silently
+        // continuing or hard-failing. A call that DID succeed but found a
+        // genuine issue with the document is NOT a retry case - that's a
+        // real finding, logged here and left for Scorecard (in
+        // FaceVerificationStep) to weigh, unchanged from before.
+        // ================================================================
         private void PassportReadLoop(CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
@@ -187,9 +189,13 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 try
                 {
                     if (_svc.CheckOnlineEx() != 1) { Thread.Sleep(600); continue; }
-                    if (_svc.TryReadPassport(out var doc, out var portraitPath))
+                    if (_svc.TryReadAnyDocument(out var doc, out var portraitPath, out var fullPageImagePath))
                     {
                         if (string.IsNullOrWhiteSpace(doc.PassportNumber)) { Thread.Sleep(200); continue; }
+
+                        bool isPassport = doc.DetectedDocType == "Passport";
+                        bool stopEarly = false;
+
                         Dispatcher.Invoke(() =>
                         {
                             if (_ctl.State.Customer == null) _ctl.State.Customer = new CustomerProfile();
@@ -200,10 +206,14 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                             cust.Nationality = doc.Nationality ?? "";
                             cust.Sex = doc.Sex ?? "";
                             cust.DateOfBirth = doc.DateOfBirth ?? "";
-                            cust.DateOfExpiry = doc.DateOfExpiry;
-                            cust.DateOfIssue = doc.DateOfIssue;
-                            cust.PlaceOfBirth = doc.PlaceOfBirth;
-                            cust.PlaceOfIssue = doc.PlaceOfIssue;
+                            cust.Address = doc.Address;
+
+                            // Passport-only fields - stay null for MyKad,
+                            // which doesn't carry these.
+                            cust.DateOfExpiry = isPassport ? doc.DateOfExpiry : null;
+                            cust.DateOfIssue = isPassport ? doc.DateOfIssue : null;
+                            cust.PlaceOfBirth = isPassport ? doc.PlaceOfBirth : null;
+                            cust.PlaceOfIssue = isPassport ? doc.PlaceOfIssue : null;
 
                             if (!string.IsNullOrWhiteSpace(portraitPath) && File.Exists(portraitPath))
                             {
@@ -213,30 +223,186 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                                 cust.FaceImageBase64 = Convert.ToBase64String(imageBytes);
                             }
 
-                            StopScanAnimations();
-
-                            // Block here, before ever reaching the result screen,
-                            // if the passport is expired - not something we
-                            // proceed past regardless of what else reads fine.
-                            if (IsExpired(cust.DateOfExpiry, out var expiryDisplay))
+                            // Expiry only applies to passports - MyKad has
+                            // no equivalent fixed expiry the same way.
+                            if (isPassport && IsExpired(cust.DateOfExpiry, out var expiryDisplay))
                             {
+                                StopScanAnimations();
                                 ShowView("Selection");
                                 CustomDialog.ShowError(
                                     L10n.T("Mx_PassportExpiredTitle", "Passport Expired"),
                                     string.Format(L10n.T("Mx_PassportExpiredBody", "This passport expired on {0} and cannot be used for this transaction. Please use a valid, unexpired document."), expiryDisplay));
+                                stopEarly = true;
                                 return;
                             }
 
+                            if (!string.IsNullOrWhiteSpace(fullPageImagePath) && File.Exists(fullPageImagePath))
+                                cust.IdDocumentImageBase64 = Convert.ToBase64String(File.ReadAllBytes(fullPageImagePath));
+
+                            StatusText.Text = L10n.T("Mx_VerifyingDocument", "Verifying document…");
+                        });
+
+                        if (stopEarly) { StopPassportLoop(); break; }
+
+                        var cust2 = _ctl.State.Customer;
+
+                        // Early existing-customer check, BEFORE any eKYC call -
+                        // per instruction, Innov8tif is used ONLY for new
+                        // customers. Also pre-fills the mobile number for an
+                        // existing customer, same as before.
+                        bool isNewCustomer = true;
+                        if (cust2 != null)
+                        {
+                            try
+                            {
+                                var checkResult = _api.CheckCustomerAsync(_selectedDocType, cust2.IdNo).GetAwaiter().GetResult();
+                                isNewCustomer = !checkResult.Found;
+                                if (checkResult.Found && !string.IsNullOrWhiteSpace(checkResult.MobileNo))
+                                    Dispatcher.Invoke(() => TxtMobile.Text = checkResult.MobileNo);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Fail-safe: treat as new on a failed check,
+                                // same reasoning as everywhere else this
+                                // check is made - runs one extra
+                                // verification step rather than skipping one
+                                // that was actually needed.
+                                KioskLocalLogger.LogError("CustomerDetails", "Existing-customer check failed (treating as new): " + ex.Message);
+                            }
+                        }
+
+                        bool needsRetry = false;
+                        string retryReason = "";
+
+                        if (isNewCustomer && cust2 != null && !string.IsNullOrWhiteSpace(cust2.IdDocumentImageBase64)
+                            && string.IsNullOrWhiteSpace(_ctl.State.EkycJourneyId))
+                        {
+                            var journey = _ekyc.CreateJourneyIdAsync(cust2.IdNo).GetAwaiter().GetResult();
+                            if (journey.ok && !string.IsNullOrWhiteSpace(journey.journeyId))
+                            {
+                                _ctl.State.EkycJourneyId = journey.journeyId;
+
+                                var idResult = _ekyc.VerifyDocumentAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
+                                if (!idResult.ok)
+                                {
+                                    KioskLocalLogger.LogError("CustomerDetails", "OkayID call failed: " + idResult.error);
+                                    needsRetry = true;
+                                    retryReason = idResult.error ?? "OkayID unreachable";
+                                }
+
+                                if (!needsRetry)
+                                {
+                                    var authResult = isPassport
+                                        ? _ekyc.VerifyPassportAuthenticityAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult()
+                                        : _ekyc.VerifyMyKadAuthenticityAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
+
+                                    if (authResult.CallSucceeded && !authResult.AllChecksPassed)
+                                    {
+                                        // A genuine finding, not an error - logged
+                                        // only, Scorecard (in FaceVerificationStep)
+                                        // is what actually decides, unchanged.
+                                        var failedList = string.Join(", ", authResult.FailedChecks.Select(f => $"{f.Check}={f.Result}"));
+                                        KioskLocalLogger.LogError("CustomerDetails", $"OkayDoc reported failed checks for {cust2.IdNo} (logged only, Scorecard decides): {failedList}");
+                                    }
+                                    else if (!authResult.CallSucceeded)
+                                    {
+                                        KioskLocalLogger.LogError("CustomerDetails", "OkayDoc call failed: " + authResult.ErrorMessage);
+                                        needsRetry = true;
+                                        retryReason = authResult.ErrorMessage ?? "OkayDoc unreachable";
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                KioskLocalLogger.LogError("CustomerDetails", "Could not create eKYC journey: " + journey.error);
+                                needsRetry = true;
+                                retryReason = journey.error ?? "Could not start verification";
+                            }
+                        }
+
+                        if (needsRetry)
+                        {
+                            // A genuine connectivity failure, not a document
+                            // finding - offer to retry rather than silently
+                            // continuing or hard-failing. journeyId is reset
+                            // so a retry starts a genuinely fresh journey,
+                            // not reusing one that may be in a bad state.
+                            _ctl.State.EkycJourneyId = null;
+                            bool retry = false;
+
+                            Dispatcher.Invoke(() =>
+                            {
+                                StopScanAnimations();
+                                retry = CustomDialog.ShowQuestion(
+                                    L10n.T("Mx_EkycErrorTitle", "Verification Error"),
+                                    string.Format(L10n.T("Mx_EkycErrorBody", "We couldn't verify your document ({0}). Please place it on the scanner again.\n\nTry again?"), retryReason),
+                                    L10n.T("Mx_TryAgain", "Try Again"),
+                                    L10n.T("Mx_Exit", "Exit"));
+                            });
+
+                            if (retry)
+                            {
+                                RestartDocumentScan();
+                                return;
+                            }
+                            else
+                            {
+                                Dispatcher.Invoke(() => ExitRequested?.Invoke(this, EventArgs.Empty));
+                                StopPassportLoop();
+                                return;
+                            }
+                        }
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            StopScanAnimations();
                             PopulateResultView();
                             ShowView("Result");
                             UpdateNextEnabled();
                         });
+
                         StopPassportLoop(); break;
                     }
                 }
                 catch { Thread.Sleep(500); }
             }
         }
+
+        // Re-initializes the reader SDK from scratch and restarts the scan
+        // loop, per instruction ("ask them to retry... initializing the
+        // SDKs"). Runs on whatever thread called it (PassportReadLoop's
+        // background thread), matching StartPassportScan's own pattern of
+        // kicking a fresh Task.Run for the loop itself.
+        private void RestartDocumentScan()
+        {
+            try { _svc.Init(); }
+            catch (Exception ex)
+            {
+                KioskLocalLogger.LogError("CustomerDetails", "Failed to re-initialize reader SDK for retry: " + ex.Message);
+                Dispatcher.Invoke(() =>
+                {
+                    CustomDialog.ShowError(
+                        L10n.T("Mx_ScannerMissing", "Passport Scanner missing or failed to boot."),
+                        ex.Message);
+                    ExitRequested?.Invoke(this, EventArgs.Empty);
+                });
+                return;
+            }
+
+            Dispatcher.Invoke(() =>
+            {
+                StatusText.Text = "";
+                ShowView("Scanning");
+                StopScanAnimations();
+                PassportAnimStage.Visibility = Visibility.Visible;
+                (this.Resources["PassportPlaceAnim"] as Storyboard)?.Begin(this, true);
+            });
+
+            _cts = new CancellationTokenSource();
+            _ = Task.Run(() => PassportReadLoop(_cts.Token));
+        }
+
+
 
         // Tries several date formats since the exact one the SDK returns
         // hasn't been confirmed against live hardware - if none of them parse,
@@ -315,6 +481,186 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void TxtMobile_TextChanged(object sender, TextChangedEventArgs e) => UpdateNextEnabled();
 
+        // Numeric-only keyboard input for the mobile number field - blocks
+        // any non-digit character from ever being entered, rather than
+        // accepting then stripping it after the fact.
+        private void TxtMobile_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            foreach (char c in e.Text)
+            {
+                if (!char.IsDigit(c))
+                {
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
+
+        // ── Mobile number keypad ──────────────────────────────────────────
+        // TxtMobile is Focusable="False" + IsReadOnly="True", so the Windows
+        // touch keyboard (full QWERTY) never auto-opens for it. Tapping the
+        // field opens our own digits-only keypad instead. Every key edits
+        // TxtMobile.Text directly, so TxtMobile_TextChanged ->
+        // UpdateNextEnabled() keeps working exactly as before, and Next_Click
+        // still reads TxtMobile.Text unchanged.
+        private const int MobileMaxDigits = 15; // matches TxtMobile MaxLength
+
+        private void TxtMobile_Tap(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+            OpenMobileKeypad();
+        }
+
+        private void OpenMobileKeypad()
+        {
+            KeypadDialCodeText.Text = (CboDialCode.SelectedItem as DialCodeDisplayOption)?.DialCode ?? "+60";
+            RefreshKeypadDisplay();
+            MobileKeypadOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void CloseMobileKeypad()
+        {
+            MobileKeypadOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void RefreshKeypadDisplay()
+        {
+            string digits = TxtMobile.Text ?? "";
+            KeypadDisplayText.Text = digits;
+            KeypadPlaceholderText.Visibility = digits.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void KeypadDigit_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button b || b.Tag is not string digit) return;
+            string current = TxtMobile.Text ?? "";
+            if (current.Length >= MobileMaxDigits) return;
+            TxtMobile.Text = current + digit;
+            RefreshKeypadDisplay();
+        }
+
+        private void KeypadBackspace_Click(object sender, RoutedEventArgs e)
+        {
+            string current = TxtMobile.Text ?? "";
+            if (current.Length == 0) return;
+            TxtMobile.Text = current.Substring(0, current.Length - 1);
+            RefreshKeypadDisplay();
+        }
+
+        private void KeypadClear_Click(object sender, RoutedEventArgs e)
+        {
+            TxtMobile.Text = "";
+            RefreshKeypadDisplay();
+        }
+
+        private void KeypadDone_Click(object sender, RoutedEventArgs e) => CloseMobileKeypad();
+
+        // Tap on the dimmed area outside the keypad card closes it.
+        private void MobileKeypadOverlay_BackgroundTap(object sender, MouseButtonEventArgs e) => CloseMobileKeypad();
+
+        // Stops taps on the card's empty space bubbling up to the overlay
+        // and closing the keypad by accident.
+        private void MobileKeypadCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => e.Handled = true;
+
+        // Dial code dropdown - KSK_GetCountryDialCodes via GetDialCodesAsync,
+        // which never throws (see its own comment) and returns an empty
+        // list on any failure. If that happens, this falls back to a
+        // single hardcoded Malaysia (+60) entry rather than leaving the
+        // dropdown completely empty, since this kiosk's default customer
+        // base is local regardless of whether the reference-data call
+        // succeeded.
+        private async Task LoadDialCodesAsync()
+        {
+            var codes = await _api.GetDialCodesAsync();
+
+            List<DialCodeDisplayOption> options;
+            if (codes.Count > 0)
+            {
+                options = codes.Select(c => new DialCodeDisplayOption
+                {
+                    IsoCode = c.IsoCode,
+                    CountryName = c.CountryName,
+                    DialCode = c.DialCode,
+                    FlagUri = FlagUri(c.ta3)
+                }).ToList();
+            }
+            else
+            {
+                KioskLocalLogger.LogError("CustomerDetails", "GetDialCodesAsync returned empty - falling back to Malaysia only.");
+                options = new List<DialCodeDisplayOption>
+                {
+                    new() { IsoCode = "my", CountryName = "Malaysia", DialCode = "+60", FlagUri = FlagUri("my") }
+                };
+            }
+
+            CboDialCode.ItemsSource = options;
+            CboDialCode.SelectedIndex = 0; // Malaysia is always sorted first by KSK_GetCountryDialCodes, or is the only entry in the fallback
+        }
+
+        private void CboDialCode_SelectionChanged(object sender, SelectionChangedEventArgs e) { /* no live-formatting dependency on the mobile textbox itself; the selected dial code is only read at confirm/save time */ }
+
+        //private static Uri FlagUri(string isoCode) => new($"pack://application:,,,/Assets/Flags/{isoCode.ToLowerInvariant()}.svg");
+        private static Uri FlagUri(string isoCode) => new($"https://flagcdn.com/w40/{isoCode.ToLowerInvariant()}.png");
+
+        // Fires right after a successful document read (both IC and
+        // Passport paths) - a fast, read-only lookup purely for pre-filling
+        // the mobile field if this is a returning customer whose number is
+        // already on file. This does NOT replace or change the authoritative
+        // check-and-create-if-new logic already in Next_Click below; that
+        // still runs unchanged. This is only about not making a returning
+        // customer re-type a number that's already known.
+        private async Task TryPrefillExistingCustomerMobileAsync(string idType, string idNo)
+        {
+            if (string.IsNullOrWhiteSpace(idNo)) return;
+
+            try
+            {
+                var result = await _api.CheckCustomerAsync(idType, idNo);
+                if (result.Found && !string.IsNullOrWhiteSpace(result.MobileNo))
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        // The stored number may already have a dial code
+                        // prefix (e.g. "+60123456789") - split it against
+                        // the loaded dial-code list so the ComboBox and the
+                        // local-number textbox each get their own part,
+                        // rather than dumping the whole string into
+                        // TxtMobile and doubling the dial code once Next_Click
+                        // combines them again. If the dial-code list hasn't
+                        // finished loading yet (LoadDialCodesAsync is a
+                        // separate fire-and-forget call), this falls back to
+                        // the old behavior of just showing the whole stored
+                        // string - the confirmation step still catches a
+                        // wrong-looking result before it's saved anywhere.
+                        var options = CboDialCode.ItemsSource as List<DialCodeDisplayOption>;
+                        var matched = options?
+                            .Where(o => result.MobileNo!.StartsWith(o.DialCode))
+                            .OrderByDescending(o => o.DialCode.Length) // longest match first, in case of overlapping prefixes
+                            .FirstOrDefault();
+
+                        if (matched != null)
+                        {
+                            CboDialCode.SelectedItem = matched;
+                            TxtMobile.Text = result.MobileNo!.Substring(matched.DialCode.Length);
+                        }
+                        else
+                        {
+                            TxtMobile.Text = result.MobileNo;
+                        }
+
+                        UpdateNextEnabled();
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Pure convenience lookup - a failure here just means the
+                // customer types their number again, same as any new
+                // customer. Never worth surfacing or blocking on.
+                KioskLocalLogger.LogError("CustomerDetails", "Existing-customer mobile pre-fill check failed (non-blocking): " + ex.Message);
+            }
+        }
+
         // Next stays disabled until a mobile number is entered, alongside a
         // successful scan - matches "save mobile number along with the other
         // customer details" from the spec, since the SDKs don't supply one.
@@ -338,12 +684,33 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private async void Next_Click(object sender, RoutedEventArgs e)
         {
+            // Combine the selected dial code with the entered local number
+            // into the single string SenderMaster.MobileNo actually stores -
+            // there isn't a separate column for the two parts, so this is
+            // the final, saved format ("+60123456789"), not just a display
+            // convenience.
+            string dialCode = "+" + (CboDialCode.SelectedItem as DialCodeDisplayOption)?.DialCode ?? "+60";
+            string localNumber = TxtMobile.Text.Trim();
+            string enteredMobile = dialCode.Trim() + localNumber;
+
+            // Confirm the mobile number before proceeding - shown every time,
+            // whether it was typed fresh or pre-filled from an existing
+            // record, since either could still be wrong (pre-filled numbers
+            // go stale; typed numbers get mistyped).
+            bool mobileConfirmed = CustomDialog.ShowQuestion(
+                L10n.T("Mx_ConfirmMobileTitle", "Confirm your mobile number"),
+                string.Format(L10n.T("Mx_ConfirmMobileBody", "You entered: {0}\n\nIs this correct?"), enteredMobile),
+                L10n.T("Mx_ConfirmMobileYes", "Yes, Correct"),
+                L10n.T("Mx_ConfirmMobileNo", "No, Edit"));
+
+            if (!mobileConfirmed) return;
+
             if (_ctl.State.Customer == null) _ctl.State.Customer = new CustomerProfile();
             _ctl.State.Customer.IdType = _selectedDocType;
             _ctl.State.Customer.IdNo = TxtIdNo.Text;
             _ctl.State.Customer.FullName = TxtName.Text;
             _ctl.State.Customer.Nationality = TxtNat.Text;
-            _ctl.State.Customer.MobileNo = TxtMobile.Text.Trim();
+            _ctl.State.Customer.MobileNo = enteredMobile;
 
             // Local upsert still happens - this is what caches a face-match
             // feature for fast local re-verification on a future visit, and
@@ -388,7 +755,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     {
                         var newSenderId = await _api.CreateCustomerAsync(new CreateCustomerApiRequest
                         {
-                            KioskId = "K1", // TODO: still a placeholder, separate from BranchId (see note below)
+                            KioskId = await KioskAuthService.GetKioskIdAsync(),
                             BranchId = await KioskAuthService.GetKioskBranchIdAsync(),
                             IdType = _selectedDocType,
                             IdNo = TxtIdNo.Text,
@@ -398,12 +765,17 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                             Gender = _ctl.State.Customer.Sex,
                             MobileNo = TxtMobile.Text.Trim(),
                             IdExpiryDate = TryParseSdkDate(_ctl.State.Customer.DateOfExpiry),
-                            // The portrait captured off the MyKad chip or
-                            // passport scan (StartIcScanAsync/PassportReadLoop
-                            // already populate this as base64) - same data
-                            // that's cached locally for face matching, now
-                            // also written to the central record.
-                            Picture1Base64 = _ctl.State.Customer.FaceImageBase64
+                            // The portrait captured during the unified
+                            // document scan (PassportReadLoop, via
+                            // TryReadAnyDocument - same optical reader for
+                            // both IC and passport) - same data that's
+                            // cached locally for face matching, now also
+                            // written to the central record.
+                            Picture1Base64 = _ctl.State.Customer.FaceImageBase64,
+                            // Full document image - now populated for BOTH
+                            // document types by the unified PassportReadLoop
+                            // (via TryReadAnyDocument), not passport-only.
+                            IdDocumentImageBase64 = _ctl.State.Customer.IdDocumentImageBase64
                         });
 
                         if (newSenderId > 0)
@@ -457,10 +829,77 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 System.Diagnostics.Debug.WriteLine("[CustomerDetails] SenderMaster check failed, using local fallback: " + ex.Message);
             }
 
+            // Full compliance limit check (per-transaction + daily +
+            // rolling-30-day), now that a real SenderId exists - ONLY for
+            // an existing customer. A genuinely new customer's daily/
+            // monthly totals would be zero regardless (no prior history
+            // under this SenderId), and their per-transaction cap was
+            // already confirmed at the currency selection screen using
+            // the same declared amount - re-checking here would be
+            // redundant, not incorrect, but skipped deliberately per
+            // instruction rather than just relying on it trivially passing.
+            //
+            // Deliberately its OWN try/catch, separate from the one above -
+            // that block's catch intentionally falls back and continues
+            // (an unreachable SenderMaster check shouldn't block a
+            // legitimate customer). This check has the opposite posture:
+            // it protects a regulatory control, so an unreachable or
+            // failed check here must stop the transaction, not fall
+            // through silently.
+            if (_ctl.State.IsExistingCustomer && _ctl.State.SenderId.HasValue)
+            {
+                try
+                {
+                    var kioskId = await KioskAuthService.GetKioskIdAsync();
+                    var limitResult = await _api.CheckLimitsAsync(_ctl.State.SenderId.Value, kioskId, (decimal)_ctl.State.MyrAmount);
+
+                    if (!limitResult.IsWithinLimits)
+                    {
+                        BtnNext.IsEnabled = true;
+                        StatusText.Text = "";
+
+                        string reason = limitResult.BreachedLimit switch
+                        {
+                            "PerTransaction" => L10n.T("Mx_LimitPerTxnBody", "This amount exceeds the maximum allowed for a single transaction. Please visit your nearest branch to complete this exchange."),
+                            "Daily" => L10n.T("Mx_LimitDailyBody", "You have reached your daily exchange limit. Please visit your nearest branch, or try again tomorrow."),
+                            "Rolling30Day" => L10n.T("Mx_LimitMonthlyBody", "You have reached your monthly exchange limit. Please visit your nearest branch to continue."),
+                            _ => L10n.T("Mx_LimitGenericBody", "This transaction exceeds an applicable limit. Please visit your nearest branch to complete this exchange.")
+                        };
+                        CustomDialog.ShowError(L10n.T("Mx_LimitExceededTitle", "Unable to Proceed at This Kiosk"), reason);
+                        ExitRequested?.Invoke(this, EventArgs.Empty);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KioskLocalLogger.LogError("CustomerDetails", "Full compliance limit check failed for existing customer (blocking as a precaution): " + ex.Message);
+                    BtnNext.IsEnabled = true;
+                    StatusText.Text = "";
+                    CustomDialog.ShowError(
+                        L10n.T("Mx_LimitExceededTitle", "Unable to Proceed at This Kiosk"),
+                        L10n.T("Mx_LimitCheckFailedBody", "We couldn't verify transaction limits for this customer. Please proceed to the counter for assistance."));
+                    ExitRequested?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
+            }
+
             BtnNext.IsEnabled = true;
             StatusText.Text = "";
 
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepCompleted", "CustomerDetails",
+                outcome: "Success", transactionId: _ctl.State.TransactionId);
+
             NextRequested?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    public class DialCodeDisplayOption
+    {
+        public string IsoCode { get; set; } = "";
+
+        public string ta3 { get; set; } = "";
+        public string CountryName { get; set; } = "";
+        public string DialCode { get; set; } = "";
+        public Uri? FlagUri { get; set; }
     }
 }

@@ -145,5 +145,124 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
                 return StatusCode(500, new { error = "Could not record this note. The physical note decision already happened - only the log entry failed." });
             }
         }
+        // GET /api/v1/Transactions/check-per-transaction-limit -
+        // KSK_CheckPerTransactionLimitOnly. Deliberately ID-agnostic - used
+        // at the currency selection screen, before any customer has been
+        // identified. See CheckLimits below for the full check (per-
+        // transaction + daily + monthly), which needs a real SenderId.
+        [HttpGet("check-per-transaction-limit")]
+        public async Task<ActionResult<CheckPerTransactionLimitResponse>> CheckPerTransactionLimit(
+            [FromQuery] string kioskId, [FromQuery] decimal proposedMyrAmount)
+        {
+            using var con = new SqlConnection(_connectionString);
+
+            var p = new DynamicParameters();
+            p.Add("@KioskId", kioskId);
+            p.Add("@ProposedMyrAmount", proposedMyrAmount);
+            p.Add("@IsWithinLimits", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("@PerTxnLimit", dbType: DbType.Decimal, direction: ParameterDirection.Output);
+
+            try
+            {
+                await con.ExecuteAsync("KSK_CheckPerTransactionLimitOnly", p, commandType: CommandType.StoredProcedure);
+
+                var result = new CheckPerTransactionLimitResponse
+                {
+                    IsWithinLimits = p.Get<bool>("@IsWithinLimits"),
+                    PerTxnLimit = p.Get<decimal>("@PerTxnLimit")
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Per-transaction limit check failed for KioskId {KioskId}", kioskId);
+                return StatusCode(500, new { error = "Could not check the per-transaction limit." });
+            }
+        }
+
+        // GET /api/v1/Transactions/check-limits - KSK_CheckMoneyExchangeLimits.
+        // Read-only, no transaction needs to exist yet - this is checked
+        // BEFORE and DURING cash-in (see CashInStep.xaml.cs), not against
+        // an already-created transaction record.
+        [HttpGet("check-limits")]
+        public async Task<ActionResult<CheckLimitsResponse>> CheckLimits(
+            [FromQuery] int senderId, [FromQuery] string kioskId, [FromQuery] decimal proposedMyrAmount)
+        {
+            using var con = new SqlConnection(_connectionString);
+
+            var p = new DynamicParameters();
+            p.Add("@SenderId", senderId);
+            p.Add("@KioskId", kioskId);
+            p.Add("@ProposedMyrAmount", proposedMyrAmount);
+            p.Add("@IsWithinLimits", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("@BreachedLimit", dbType: DbType.String, size: 20, direction: ParameterDirection.Output);
+            p.Add("@DailyTotalSoFar", dbType: DbType.Decimal, direction: ParameterDirection.Output);
+            p.Add("@Rolling30DayTotal", dbType: DbType.Decimal, direction: ParameterDirection.Output);
+
+            try
+            {
+                await con.ExecuteAsync("KSK_CheckMoneyExchangeLimits", p, commandType: CommandType.StoredProcedure);
+
+                var result = new CheckLimitsResponse
+                {
+                    IsWithinLimits = p.Get<bool>("@IsWithinLimits"),
+                    BreachedLimit = p.Get<string?>("@BreachedLimit"),
+                    DailyTotalSoFar = p.Get<decimal>("@DailyTotalSoFar"),
+                    Rolling30DayTotal = p.Get<decimal>("@Rolling30DayTotal")
+                };
+
+                _logger.LogInformation(
+                    "Limit check - SenderId {SenderId}, KioskId {KioskId}, Proposed RM{Proposed}: {Result}",
+                    senderId, kioskId, proposedMyrAmount, result.IsWithinLimits ? "within limits" : $"BREACHED ({result.BreachedLimit})");
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Limit check failed for SenderId {SenderId}, KioskId {KioskId}", senderId, kioskId);
+                return StatusCode(500, new { error = "Could not check transaction limits." });
+            }
+        }
+        // GET /api/v1/Transactions/check-per-txn-limit -
+        // KSK_CheckPerTransactionLimitOnly. Deliberately narrower than
+        // check-limits above - for CurrencySelectionStep, before any
+        // customer identity is known, so only the flat per-transaction cap
+        // can be meaningfully checked (no SenderId to look up daily/monthly
+        // history against yet).
+        [HttpGet("check-per-txn-limit")]
+        public async Task<ActionResult<CheckPerTxnLimitResponse>> CheckPerTransactionLimitOnly(
+            [FromQuery] string kioskId, [FromQuery] decimal proposedMyrAmount)
+        {
+            using var con = new SqlConnection(_connectionString);
+
+            var p = new DynamicParameters();
+            p.Add("@KioskId", kioskId);
+            p.Add("@ProposedMyrAmount", proposedMyrAmount);
+            p.Add("@IsWithinLimit", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("@PerTxnLimit", dbType: DbType.Decimal, direction: ParameterDirection.Output);
+
+            try
+            {
+                await con.ExecuteAsync("KSK_CheckPerTransactionLimitOnly", p, commandType: CommandType.StoredProcedure);
+
+                var result = new CheckPerTxnLimitResponse
+                {
+                    IsWithinLimit = p.Get<bool>("@IsWithinLimit"),
+                    PerTxnLimit = p.Get<decimal>("@PerTxnLimit")
+                };
+
+                _logger.LogInformation(
+                    "Per-transaction limit check - KioskId {KioskId}, Proposed RM{Proposed}: {Result}",
+                    kioskId, proposedMyrAmount, result.IsWithinLimit ? "within limit" : "BREACHED");
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Per-transaction limit check failed for KioskId {KioskId}", kioskId);
+                return StatusCode(500, new { error = "Could not check the per-transaction limit." });
+            }
+        }
     }
 }

@@ -1,3 +1,4 @@
+using OmniKiosk.Wpf.Controls;
 using OmniKiosk.Wpf.Services;
 using OmniKiosk.Wpf.Services.Ekyc;
 using OmniKiosk.Wpf.Services.MoneyExchange;
@@ -142,8 +143,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             BtnSkip.Content =
                 L10n.T(
-                    "Mx_SkipContinue",
-                    "Skip & Continue ➔");
+                    "Mx_ExitToCounter",
+                    "Exit Transaction");
 
             BtnSkipBack.Content =
                 L10n.T(
@@ -164,9 +165,24 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             if (!_ctl.State.IsExistingCustomer)
             {
-                _journeyTask =
-                    _ekyc.CreateJourneyIdAsync(
-                        _ctl.State.Customer?.IdNo);
+                // Reuse the journey CustomerDetailsStep already created
+                // during document verification (OkayID/OkayDoc), per
+                // Innov8tif's own guidance that one JourneyId should be
+                // used for the whole eKYC flow. Only create a new one here
+                // if, for some reason, that step never set it (e.g. MyKad,
+                // which has no document-image step to create one from yet).
+                if (!string.IsNullOrWhiteSpace(_ctl.State.EkycJourneyId))
+                {
+                    _journeyTask =
+                        Task.FromResult<(bool ok, string? journeyId, string? error)>(
+                            (true, _ctl.State.EkycJourneyId, null));
+                }
+                else
+                {
+                    _journeyTask =
+                        _ekyc.CreateJourneyIdAsync(
+                            _ctl.State.Customer?.IdNo);
+                }
             }
 
             await StartCameraAndDetectAsync();
@@ -277,17 +293,23 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         }
 
         // ================================================================
-        // SKIP
+        // ================================================================
+        // EXIT (was SKIP - this used to mark FaceVerified=true and let a
+        // customer continue with zero actual verification on any hardware
+        // or eKYC failure, real or clicked at will. That is not something
+        // a kiosk dispensing real cash can allow, mock/demo use or not -
+        // an unverified person could receive cash. Now mirrors
+        // FailAcknowledge_Click exactly: exits the transaction and sends
+        // the customer to a staff member, the same as every other
+        // "cannot proceed at this kiosk" outcome in this flow (sanctions
+        // match, document authenticity failure, face mismatch).
         // ================================================================
 
         private void Skip_Click(
             object sender,
             RoutedEventArgs e)
         {
-            _ctl.State.FaceVerified =
-                true;
-
-            NextRequested?.Invoke(
+            ExitRequested?.Invoke(
                 this,
                 EventArgs.Empty);
         }
@@ -835,8 +857,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
                     HintText.Text =
                         L10n.T(
-                            "Mx_RetryOrSkip",
-                            "Please retry, or skip to continue.");
+                            "Mx_RetryOrExit",
+                            "Please retry, or exit to see a staff member.");
 
                     BtnSkip.Visibility =
                         Visibility.Visible;
@@ -1114,6 +1136,12 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
                 journeyId =
                     journey.journeyId;
+
+                // Save it back for Scorecard (called further below) and in
+                // case anything else in this flow still needs it - this is
+                // the MyKad path, where no earlier step had a document
+                // image to create a journey from yet.
+                _ctl.State.EkycJourneyId = journeyId;
             }
 
             StatusText.Text =
@@ -1191,6 +1219,67 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 StatusText.Text =
                     $"{L10n.T("Mx_Matched", "Matched ✅")} " +
                     $"(score {scoreLabel})";
+
+                // Camera's job is done the moment the match succeeds - the
+                // face image needed has already been captured and used.
+                // Stopping it HERE, before Scorecard, not after - the
+                // Scorecard call is a network round-trip that can take
+                // several seconds, and the camera SDK was previously left
+                // fully running through that entire wait (StopCamera was
+                // only ever called from UserControl_Unloaded). Holding a
+                // native camera SDK active and idle through an unrelated
+                // slow network call is exactly the kind of window a
+                // threading/native-interop crash can surface in - this is
+                // the most likely explanation for the app crash reported
+                // after "Verifying document" ran for a few seconds. No
+                // reason to keep hardware busy for something it has no
+                // further part in.
+                StopCamera();
+
+                // Scorecard is now the FINAL gate, per instruction - not
+                // OkayFace's own match result in isolation. Called once,
+                // here, after OkayID, OkayDoc (both already run in
+                // CustomerDetailsStep) and OkayFace/OkayLive (just above)
+                // have all completed against the same journeyId.
+                StatusText.Text =
+                    L10n.T(
+                        "Mx_CheckingScorecard",
+                        "Finalizing verification…");
+
+                var scorecard =
+                    await _ekyc.GetScorecardResultAsync(journeyId!);
+
+                if (!scorecard.CallSucceeded)
+                {
+                    ShowSkipOption(
+                        "❌ " +
+                        L10n.T(
+                            "Mx_ScorecardUnavailable",
+                            "Verification service unavailable: ")
+                        + scorecard.ErrorMessage);
+                    return;
+                }
+
+                if (scorecard.Passed != true)
+                {
+                    // Fail-safe: Passed is false OR null (could not be
+                    // determined) - either way this does not proceed. See
+                    // the HONESTY FLAG comment on ScorecardOutcome in
+                    // EkycFaceMatchClient.cs for why an ambiguous result is
+                    // treated the same as an explicit reject.
+                    KioskLocalLogger.LogError(
+                        "FaceVerification",
+                        $"Scorecard did not pass for journey {journeyId}: {scorecard.ErrorMessage}. RawJson: {scorecard.RawJson}");
+
+                    _ctl.State.FaceVerified = false;
+
+                    CustomDialog.ShowError(
+                        L10n.T("Mx_ScorecardFailedTitle", "Unable to Verify This Customer"),
+                        L10n.T("Mx_ScorecardFailedBody", "We couldn't complete verification for this transaction. Please proceed to the counter for assistance."));
+
+                    ExitRequested?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
 
                 _ctl.State.FaceVerified =
                     true;

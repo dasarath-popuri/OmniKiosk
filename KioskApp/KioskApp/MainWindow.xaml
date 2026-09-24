@@ -48,6 +48,7 @@
 
             <!-- HOME / ATTRACT SCREEN -->
             <Grid x:Name="HomeScreen" Visibility="Visible">
+
                 <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,90"
                         Background="#CCFFFFFF" CornerRadius="18" Padding="48,22">
                     <StackPanel Orientation="Horizontal">
@@ -65,6 +66,41 @@
                         <TextBlock Text="{loc:Loc Home_TapToStart}" FontFamily="{StaticResource DisplayFont}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Bottom"/>
                     </StackPanel>
                 </Border>
+            </Grid>
+
+            <!-- NOT REGISTERED - shown instead of everything else if this
+                 machine's MAC address has no matching Ksk_Terminals row.
+                 Deliberately has no buttons or way to dismiss it - a kiosk
+                 in this state genuinely should not be usable until someone
+                 registers it, not just inconvenienced by a dialog. -->
+            <Grid x:Name="NotRegisteredScreen" Visibility="Collapsed" Background="#121816" Panel.ZIndex="9999">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="800">
+                    <TextBlock Text="&#128274;" FontSize="96" HorizontalAlignment="Center" Margin="0,0,0,32"/>
+                    <TextBlock Text="This Kiosk Is Not Registered" FontFamily="{StaticResource DisplayFont}"
+                               FontSize="40" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"
+                               TextAlignment="Center" Margin="0,0,0,20"/>
+                    <TextBlock Text="This machine has not been set up as a kiosk yet. Please contact support to register this terminal before it can be used."
+                               FontSize="22" Foreground="#CFE3E0" HorizontalAlignment="Center" TextAlignment="Center"
+                               TextWrapping="Wrap" Margin="0,0,0,28"/>
+                    <TextBlock x:Name="NotRegisteredMacText" FontSize="16" FontFamily="Consolas" Foreground="#8A9490"
+                               HorizontalAlignment="Center" TextAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- MAINTENANCE MODE - shown when Ksk_Terminals.Status for this
+                 machine isn't 'Active', or when a critical SDK failed to
+                 initialize. Also has no dismiss button, same reasoning as
+                 NotRegisteredScreen - a kiosk in either state should not be
+                 usable, not just show a warning on top of a usable kiosk. -->
+            <Grid x:Name="MaintenanceScreen" Visibility="Collapsed" Background="#121816" Panel.ZIndex="9999">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="800">
+                    <TextBlock Text="&#128295;" FontSize="96" HorizontalAlignment="Center" Margin="0,0,0,32"/>
+                    <TextBlock Text="Kiosk Temporarily Unavailable" FontFamily="{StaticResource DisplayFont}"
+                               FontSize="40" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"
+                               TextAlignment="Center" Margin="0,0,0,20"/>
+                    <TextBlock x:Name="MaintenanceMessageText" FontSize="22" Foreground="#CFE3E0" HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
             </Grid>
 
             <Border x:Name="TapCatcher" Background="Transparent" MouseDown="TapCatcher_MouseDown" Visibility="Visible"/>
@@ -132,10 +168,10 @@
                             <TextBlock x:Name="SelectMenu" Text="{loc:Loc SelectMenu}" FontSize="{StaticResource FontSizeNormal}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
 
-                        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                        <WrapPanel x:Name="ServiceCardsPanel" HorizontalAlignment="Center" Orientation="Horizontal">
 
                             <!-- 1. Send Money - Gold Border, Green Accents -->
-                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="OpenRemittance_Click">
+                            <Border x:Name="CardRemittance" Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="OpenRemittance_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource PrimarySurfaceBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
                                         <TextBlock Text="💸" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -149,7 +185,7 @@
                             </Border>
 
                             <!-- 2. Money Exchange - Gold Border, Gold Accents -->
-                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="OpenMoneyExchange_Click">
+                            <Border x:Name="CardMoneyExchange" Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="OpenMoneyExchange_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource AccentGoldLightBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
                                         <TextBlock Text="💵" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -162,8 +198,8 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 3. Queue pre-booking - Gold Border, Green Accents -->
-                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnQueueX_Click">
+                            <!-- 3. Queue pre-booking -->
+                            <Border x:Name="CardQueueX" Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnQueueX_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource PrimarySurfaceBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
                                         <TextBlock Text="🎫" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -176,8 +212,8 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 4. Browse products - Gold Border, Gold Accents -->
-                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnOmni_Click">
+                            <!-- 4. Browse products -->
+                            <Border x:Name="CardOmni" Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnOmni_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource AccentGoldLightBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
                                         <TextBlock Text="🌐" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -190,8 +226,8 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 5. Today's rates - Gold Border, Green Accents -->
-                            <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnRateBoard_Click">
+                            <!-- 5. Today's rates -->
+                            <Border x:Name="CardRates" Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Cursor="Hand" MouseDown="BtnRateBoard_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource PrimarySurfaceBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
                                         <TextBlock Text="💱" FontSize="42" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -204,7 +240,8 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 6. Test SDKs - Gold Border, De-emphasized -->
+                            <!-- 6. Test SDKs - developer/diagnostic tool, NOT part of the
+                                 customer-facing menu flag system, always visible regardless. -->
                             <Border Width="380" Height="360" Margin="14" Style="{StaticResource Card}" BorderBrush="{StaticResource AccentGoldBrush}" BorderThickness="2" Opacity="0.7" Cursor="Hand" MouseDown="OpenTest_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <Border Width="88" Height="88" CornerRadius="44" Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Center" Margin="0,0,0,24">
@@ -222,7 +259,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
-            
+
             <Grid x:Name="SdkHostScreen" Visibility="Collapsed">
                 <ContentControl x:Name="SdkHostContent" />
             </Grid>

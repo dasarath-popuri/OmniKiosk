@@ -110,6 +110,134 @@ namespace OmniKiosk.Config.Api.Controllers.v1
             });
         }
 
+        // Kiosk auto-login by MAC address - no LoginId/Password. Ksk_Terminals
+        // is the source of truth for "which physical machine is this and
+        // what is it allowed to authenticate as", via its UNIQUE MacAddress
+        // column and its OperatorUserId -> UserProfile link.
+        //
+        // Deliberately no password check here. The MAC match IS the proof
+        // of identity for this endpoint - see the design discussion this
+        // was built from for why a shared, compiled-in kiosk password
+        // wouldn't add real protection anyway, and why requiring one would
+        // reintroduce a per-machine secret to manage, which this whole
+        // change is meant to remove.
+        //
+        // NOT REGISTERED is returned as a distinct 404 with a specific
+        // error code, not folded into the generic 401 staff logins use -
+        // the kiosk app needs to tell "this machine isn't set up yet" apart
+        // from "something is wrong with an otherwise-known machine", and
+        // show a different, impossible-to-miss screen for the former.
+        [HttpPost("kiosk-login")]
+        public async Task<IActionResult> KioskLogin([FromBody] KioskLoginRequest request)
+        {
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var mac = (request.MacAddress ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(mac))
+                return BadRequest(new { error = "MISSING_MAC_ADDRESS", message = "MAC address is required." });
+
+            using var con = new SqlConnection(_connectionString);
+
+            var terminal = await con.QuerySingleOrDefaultAsync<TerminalRow>(@"
+                SELECT KioskId, BranchId, OperatorUserId, Status
+                FROM Ksk_Terminals
+                WHERE MacAddress = @mac",
+                new { mac });
+
+            if (terminal == null)
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login rejected - MAC address not registered: {mac}", "SYSTEM", ip, mac);
+                return NotFound(new
+                {
+                    error = "KIOSK_NOT_REGISTERED",
+                    message = "This kiosk is not registered yet. Please contact support to register this terminal before it can be used."
+                });
+            }
+
+            if (!string.Equals(terminal.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login rejected - terminal {terminal.KioskId} status is '{terminal.Status}'", "SYSTEM", ip, mac);
+                return StatusCode(423, new { error = "KIOSK_NOT_ACTIVE", message = $"This kiosk ({terminal.KioskId}) is registered but not active. Please contact support." });
+            }
+
+            if (!int.TryParse(terminal.OperatorUserId, out var operatorUserId))
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login rejected - terminal {terminal.KioskId} has an invalid OperatorUserId '{terminal.OperatorUserId}'", "SYSTEM", ip, mac);
+                return StatusCode(500, new { error = "INVALID_TERMINAL_CONFIG", message = "This kiosk's configuration is invalid. Please contact support." });
+            }
+
+            // Ksk_Terminals.BranchId is VARCHAR(20) in the real schema, not
+            // an int - parsed defensively here rather than assumed, same
+            // reasoning as OperatorUserId above. Every other part of the
+            // system (UserProfile, transaction creation) treats BranchId
+            // as numeric, so this needs to convert cleanly or the terminal
+            // is treated the same as a misconfigured one above.
+            if (!int.TryParse(terminal.BranchId, out var branchIdInt))
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login rejected - terminal {terminal.KioskId} has a non-numeric BranchId '{terminal.BranchId}'", "SYSTEM", ip, mac);
+                return StatusCode(500, new { error = "INVALID_TERMINAL_CONFIG", message = "This kiosk's configuration is invalid. Please contact support." });
+            }
+
+            var user = await con.QuerySingleOrDefaultAsync<UserProfileRow>(@"
+                SELECT u.UserID, u.LoginId, u.Password, u.FirstName, u.LastName,
+                       u.UserCode,
+                       u.NoOfAttempts, u.PasswordLock, u.UserStatus, u.Status,
+                       u.ExpiryDate, u.CompanyId, u.RoleID, r.RoleName
+                FROM UserProfile u
+                JOIN UserRoles r ON r.RoleID = u.RoleID
+                WHERE u.UserID = @operatorUserId",
+                new { operatorUserId });
+
+            if (user == null)
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login rejected - terminal {terminal.KioskId}'s OperatorUserId {operatorUserId} has no matching UserProfile", "SYSTEM", ip, mac);
+                return StatusCode(500, new { error = "INVALID_TERMINAL_CONFIG", message = "This kiosk's configuration is invalid. Please contact support." });
+            }
+
+            // Same account-health checks as staff login - the underlying
+            // UserProfile row could be locked/inactive/expired by an admin
+            // independent of the terminal's own Ksk_Terminals.Status.
+            if (user.PasswordLock == true)
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login blocked - underlying account locked (terminal {terminal.KioskId})", user.LoginId, ip, mac);
+                return StatusCode(423, new { error = "ACCOUNT_LOCKED", message = "This kiosk's account is locked. Contact a supervisor." });
+            }
+
+            if (user.Status != 1)
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login blocked - underlying account inactive (terminal {terminal.KioskId})", user.LoginId, ip, mac);
+                return Unauthorized(new { error = "ACCOUNT_INACTIVE", message = "This kiosk's account is not active." });
+            }
+
+            if (user.ExpiryDate.HasValue && user.ExpiryDate.Value < DateTime.Now)
+            {
+                await WriteAuditLog(con, "KioskAuth", $"Login blocked - underlying account expired (terminal {terminal.KioskId})", user.LoginId, ip, mac);
+                return Unauthorized(new { error = "ACCOUNT_EXPIRED", message = "This kiosk's account has expired." });
+            }
+
+            await con.ExecuteAsync(@"
+                UPDATE UserProfile SET NoOfAttempts = 0, LastLogDate = GETDATE()
+                WHERE UserID = @UserID",
+                new { user.UserID });
+
+            await WriteAuditLog(con, "KioskAuth", $"Successful kiosk login - terminal {terminal.KioskId}, BranchId {branchIdInt}", user.LoginId, ip, mac);
+
+            var fullName = $"{user.FirstName} {user.LastName}".Trim();
+            var (token, expiresAt) = IssueToken(user, fullName, terminal.KioskId, branchIdInt);
+
+            return Ok(new LoginResponse
+            {
+                Token = token,
+                ExpiresAtUtc = expiresAt,
+                FullName = fullName,
+                Role = user.RoleName,
+                UserId = user.UserID,
+                UserCode = user.UserCode ?? "",
+                KioskId = terminal.KioskId,
+                BranchId = branchIdInt
+            });
+        }
+
         // Matches the existing GetSHAHash(inputString) exactly: SHA-512 of
         // (inputString + salt), salt appended after the input, not before.
         // The salt itself comes from configuration - Security:PasswordSalt -
@@ -124,7 +252,7 @@ namespace OmniKiosk.Config.Api.Controllers.v1
             return Convert.ToHexString(bytes);
         }
 
-        private (string token, DateTime expiresAtUtc) IssueToken(UserProfileRow user, string fullName)
+        private (string token, DateTime expiresAtUtc) IssueToken(UserProfileRow user, string fullName, string? kioskId = null, int? branchId = null)
         {
             bool isKiosk = string.Equals(user.RoleName?.Trim(), "KIOSK", StringComparison.OrdinalIgnoreCase);
 
@@ -138,6 +266,18 @@ namespace OmniKiosk.Config.Api.Controllers.v1
                 new("MachineType", isKiosk ? "Kiosk" : "Staff"),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            // Only present for a kiosk login (KioskLogin above) - baked
+            // into the signed token itself, not just returned in the login
+            // response body, so anything downstream that reads the token
+            // can trust these values without a separate lookup or having
+            // to trust whatever the kiosk app claims about itself. This is
+            // what replaces the old hardcoded "K1" KioskId - callers should
+            // read it from here, not carry their own copy.
+            if (!string.IsNullOrWhiteSpace(kioskId))
+                claims.Add(new Claim("KioskId", kioskId));
+            if (branchId.HasValue)
+                claims.Add(new Claim("BranchId", branchId.Value.ToString()));
 
             var secretKey = _config["Jwt:SecretKey"]
                 ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.");
@@ -159,19 +299,27 @@ namespace OmniKiosk.Config.Api.Controllers.v1
             return (new JwtSecurityTokenHandler().WriteToken(token), expires);
         }
 
-        private static async Task WriteAuditLog(SqlConnection con, string module, string detail, string userAccount, string ip)
+        private static async Task WriteAuditLog(SqlConnection con, string module, string detail, string userAccount, string ip, string? machineFingerprint = null)
         {
             try
             {
                 await con.ExecuteAsync(@"
                     INSERT INTO Ksk_AuditLogs (Timestamp, Module, ActionDetail, UserAccount, IPAddress, MachineFingerprint)
-                    VALUES (GETUTCDATE(), @module, @detail, @userAccount, @ip, NULL)",
-                    new { module, detail, userAccount, ip });
+                    VALUES (GETUTCDATE(), @module, @detail, @userAccount, @ip, @machineFingerprint)",
+                    new { module, detail, userAccount, ip, machineFingerprint });
             }
             catch
             {
                 // Audit logging must never be the reason a login request fails.
             }
+        }
+
+        private class TerminalRow
+        {
+            public string KioskId { get; set; } = "";
+            public string BranchId { get; set; } = "";   // VARCHAR(20) in the real schema, parsed to int by the caller
+            public string OperatorUserId { get; set; } = "";
+            public string Status { get; set; } = "";
         }
 
         private class UserProfileRow

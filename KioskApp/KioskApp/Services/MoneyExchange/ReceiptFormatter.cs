@@ -13,7 +13,6 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         public const string AddressLine2 = "Kuala Lumpur, Malaysia";
         public const string TelNo = "xxxxxxxxxx";
         public const string FaxNo = "xxxxxxxxxx";
-        public const string DefaultKioskId = "K1";
 
         public static string BuildHeader(string transactionType)
         {
@@ -76,7 +75,7 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
             return new string('X', idNo.Length - 4) + idNo.Substring(idNo.Length - 4);
         }
 
-        public static string BuildReceiptNo(long? transactionId, string kioskId = DefaultKioskId)
+        public static string BuildReceiptNo(long? transactionId, string kioskId)
         {
             return transactionId.HasValue
                 ? $"OR-{kioskId}-{transactionId.Value:D8}"

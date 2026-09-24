@@ -171,6 +171,22 @@
         </Setter>
     </Style>
 
+    <!-- Added - was defined in ThemeLight.xaml/ThemeDark.xaml but never
+         ported here, even though LightTheme.xaml (this file) is the one
+         App.xaml actually loads (Themes/LightTheme.xaml, not
+         Themes/ThemeLight.xaml - two similarly-named but different files).
+         Same resource keys as ModernTextBox above, all confirmed already
+         working in this file. -->
+    <Style x:Key="ModernComboBox" TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource InputBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeNormal}"/>
+        <Setter Property="Padding" Value="16,12"/>
+    </Style>
+
     <!-- Shared card surface. RenderTransform + the two EventTriggers below give
          every card built from this style the same brief, cheap press feedback -
          a ScaleTransform animation costs nothing on kiosk-grade hardware, unlike

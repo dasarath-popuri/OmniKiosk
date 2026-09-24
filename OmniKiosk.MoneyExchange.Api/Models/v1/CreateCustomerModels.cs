@@ -16,6 +16,13 @@ namespace OmniKiosk.MoneyExchange.Api.Models.v1
         // raw bytes server-side before going into SenderMaster.Picture1
         // (varbinary(max)), not stored as base64 text.
         public string? Picture1Base64 { get; set; }
+
+        // Full document image (passport only currently - MyKad's chip
+        // reader has no optical scan capability, see
+        // EkycFaceMatchClient.VerifyPassportAuthenticityAsync remarks).
+        // Same base64-over-the-wire treatment as Picture1Base64 above,
+        // decoded server-side into SenderMaster.IdDocumentImage.
+        public string? IdDocumentImageBase64 { get; set; }
     }
 
     public class CreateCustomerResponse

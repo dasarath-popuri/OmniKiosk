@@ -10,6 +10,18 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         public double RateToMyr { get; set; }
         public double MyrAmount { get; set; }
 
+        // Declared at CurrencySelectionStep, BEFORE any cash is physically
+        // inserted - used only for the early limit pre-checks (per-
+        // transaction at declaration time, full daily/monthly once SenderId
+        // is known in CustomerDetailsStep). Deliberately separate from
+        // FromAmount/MyrAmount above, which get overwritten with the REAL
+        // accumulated totals as CashInStep actually runs - a customer's
+        // final inserted amount can differ from what they declared here,
+        // and CashInStep's own checks (built separately) are what actually
+        // govern the real transaction.
+        public double IntendedFromAmount { get; set; }
+        public double IntendedMyrAmount { get; set; }
+
         // Customer
         public CustomerProfile? Customer { get; set; }
 
@@ -24,6 +36,20 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         // KSK_CommitScreening (at completion, once a real Mc_TransMaster.TxnID
         // exists) - the same identifier ties the two together.
         public string? ScreeningTransGuid { get; set; }
+
+        // Full-journey audit trail (Ksk_KioskJourneyEvents) - one per flow
+        // instance, generated alongside ScreeningTransGuid above. Separate
+        // identifier because journey events exist independently of whether
+        // screening (or any transaction at all) ever happens.
+        public Guid SessionId { get; set; } = Guid.NewGuid();
+
+        // eKYC - one JourneyId reused across OkayID, OkayDoc, OkayFace,
+        // OkayLive, and Scorecard for the whole flow, per Innov8tif's own
+        // guidance ("the JourneyId should be used for the rest of one eKYC
+        // flow"). Set once by whichever step runs first for a new customer
+        // (normally CustomerDetailsStep's document read); every later step
+        // must check this before creating its own.
+        public string? EkycJourneyId { get; set; }
 
         // Authoritative source is now CustomersController.CheckCustomer
         // against SenderMaster (set in CustomerDetailsStep), not the local

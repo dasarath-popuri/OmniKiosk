@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using OmniKiosk.Wpf.Controls;
 using OmniKiosk.Wpf.Sdk.Printer;
 using OmniKiosk.Wpf.Services.MoneyExchange;
@@ -24,6 +25,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private double _totalForeign = 0;
         private double _pendingEscrowValue = 0;
+        private List<int> _acceptedDenominations = new();
         private int _maxMyrAvailable = 0;
         private int _noteSequence = 0;
 
@@ -33,7 +35,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _ctl = ctl;
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             TitleText.Text = L10n.T("Mx_CashIn", "Insert Cash");
             SubtitleText.Text = L10n.T("Mx_CashInSubtitle", "Please insert your notes into the acceptor below.");
@@ -44,6 +46,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             TxtStatus.Text = L10n.T("Mx_MachineReady", "Machine is ready and accepting notes…");
             SlotHintText.Text = L10n.T("Mx_SlotHint", "Insert one note at a time. Wait for confirmation before inserting the next.");
             NoteDetectedLabel.Text = L10n.T("Mx_NoteDetected", "Note Detected");
+            TxtEscrowDisclaimer.Text = L10n.T("Mx_EscrowDisclaimer",
+                "IMPORTANT: Once accepted, this note cannot be returned. Please check the amount carefully before choosing Accept or Return Note.");
             BtnEscrowReturn.Content = L10n.T("Mx_ReturnNote", "Return Note");
             BtnEscrowAccept.Content = L10n.T("Mx_AcceptNote", "Accept Note");
             DoneTitle.Text = L10n.T("Mx_AcceptanceStopped", "Acceptance Stopped");
@@ -69,6 +73,57 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 return;
             }
 
+            // Upfront compliance-limit gate, BEFORE any cash is accepted -
+            // checks whether this customer has ALREADY exhausted their
+            // daily/monthly limit from prior transactions today, using
+            // ProposedMyrAmount=0 (i.e. "is there any room at all left").
+            // Better to tell them now than let them insert cash only to be
+            // cut off partway through - see Svc_OnStacked for the second,
+            // incremental check as cash actually comes in.
+            if (!await CheckComplianceLimitsAsync(0))
+                return; // hard-stop dialog already shown and ExitRequested fired inside the helper
+
+            // Accepted-denominations display, from Ksk_BanknoteDenominations
+            // (KSK_GetDenominations) - the real, existing table for this,
+            // not something new. Same source that already drives note
+            // display/dispensing logic elsewhere. Shown as a row of small
+            // chips rather than a sentence - reads at a glance, and the
+            // panel is hidden entirely when the fetch returns nothing,
+            // rather than showing an empty label with no chips under it.
+            var denoms = await _api.GetDenominationsAsync(_ctl.State.FromCurrency);
+            _acceptedDenominations = denoms.Select(d => d.DenominationValue).ToList();
+
+            AcceptedDenomsChipsPanel.Children.Clear();
+            if (_acceptedDenominations.Count > 0)
+            {
+                AcceptedDenomsLabel.Text = string.Format(L10n.T("Mx_AcceptedDenomsLabel", "Accepted {0} notes"), _ctl.State.FromCurrency);
+                foreach (var value in _acceptedDenominations)
+                {
+                    var chip = new Border
+                    {
+                        Background = (Brush)Application.Current.Resources["BackgroundBrush"],
+                        BorderBrush = (Brush)Application.Current.Resources["BorderBrush"],
+                        BorderThickness = new Thickness(1),
+                        CornerRadius = new CornerRadius(20),
+                        Padding = new Thickness(16, 8, 16, 8),
+                        Margin = new Thickness(4)
+                    };
+                    chip.Child = new TextBlock
+                    {
+                        Text = value.ToString(),
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = (Brush)Application.Current.Resources["TextPrimaryBrush"]
+                    };
+                    AcceptedDenomsChipsPanel.Children.Add(chip);
+                }
+                AcceptedDenomsPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                AcceptedDenomsPanel.Visibility = Visibility.Collapsed;
+            }
+
             _svc.OnLog += Svc_OnLog;
             _svc.OnStatus += Svc_OnStatus;
             _svc.OnError += Svc_OnError;
@@ -78,6 +133,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _svc.OnRejected += Svc_OnRejected;
 
             try { _svc.EnableAcceptance(true); } catch { }
+
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepEntered", "CashIn");
         }
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
@@ -93,15 +150,95 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _svc.OnRejected -= Svc_OnRejected;
         }
 
+        // Compliance limit check - KSK_CheckMoneyExchangeLimits via
+        // MoneyExchangeApiClient.CheckLimitsAsync. Returns true if the
+        // transaction may proceed. On a genuine breach, or if the check
+        // itself couldn't be completed at all, shows the hard-stop dialog
+        // and fires ExitRequested (not BackRequested - this follows the
+        // CUSTOMER, not the kiosk, so retrying elsewhere wouldn't help,
+        // unlike the "out of cash" case above which is kiosk-specific).
+        private async Task<bool> CheckComplianceLimitsAsync(decimal proposedMyrAmount)
+        {
+            if (_ctl.State.SenderId == null)
+            {
+                // Shouldn't happen by the time CashInStep loads - SenderId
+                // is resolved in CustomerDetailsStep before this step is
+                // ever reached. Treated the same as an unreachable check:
+                // cannot verify, so does not proceed. Logged loudly since
+                // this points at a real bug elsewhere if it ever fires.
+                KioskLocalLogger.LogError("CashIn", "CRITICAL: CheckComplianceLimitsAsync called with no SenderId set - blocking as a precaution.");
+                ShowLimitHardStop(L10n.T("Mx_LimitCheckFailedBody", "We couldn't verify transaction limits for this customer. Please proceed to the counter for assistance."));
+                return false;
+            }
+
+            try
+            {
+                var kioskId = await KioskAuthService.GetKioskIdAsync();
+                var result = await _api.CheckLimitsAsync(_ctl.State.SenderId.Value, kioskId, proposedMyrAmount);
+
+                if (result.IsWithinLimits) return true;
+
+                string reason = result.BreachedLimit switch
+                {
+                    "PerTransaction" => L10n.T("Mx_LimitPerTxnBody", "This amount exceeds the maximum allowed for a single transaction. Please visit your nearest branch to complete this exchange."),
+                    "Daily" => L10n.T("Mx_LimitDailyBody", "You have reached your daily exchange limit. Please visit your nearest branch, or try again tomorrow."),
+                    "Rolling30Day" => L10n.T("Mx_LimitMonthlyBody", "You have reached your monthly exchange limit. Please visit your nearest branch to continue."),
+                    _ => L10n.T("Mx_LimitGenericBody", "This transaction exceeds an applicable limit. Please visit your nearest branch to complete this exchange.")
+                };
+                ShowLimitHardStop(reason);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Unreachable/failed compliance check - fail CLOSED, the
+                // opposite direction from the "out of cash" hardware check
+                // above. See CheckLimitsAsync's own remarks for why: this
+                // protects a regulatory control, not just customer
+                // convenience, so an unverifiable check must not silently
+                // let the transaction through.
+                KioskLocalLogger.LogError("CashIn", "Compliance limit check failed (blocking as a precaution): " + ex.Message);
+                ShowLimitHardStop(L10n.T("Mx_LimitCheckFailedBody", "We couldn't verify transaction limits for this customer. Please proceed to the counter for assistance."));
+                return false;
+            }
+        }
+
+        private void ShowLimitHardStop(string body)
+        {
+            try { _svc.EnableAcceptance(false); } catch { }
+            CustomDialog.ShowError(L10n.T("Mx_LimitExceededTitle", "Unable to Proceed at This Kiosk"), body);
+            ExitRequested?.Invoke(this, EventArgs.Empty);
+        }
+
         private void Svc_OnLog(string s) => System.Diagnostics.Debug.WriteLine("[CashIn] " + s);
         private void Svc_OnStatus(string s) => Dispatcher.Invoke(() => TxtStatus.Text = s);
         private void Svc_OnError(string s) => KioskLocalLogger.LogError("CashIn", s);
 
         private void Svc_OnRejected(string reason) => Dispatcher.Invoke(() =>
         {
-            CustomDialog.ShowWarning(
-                L10n.T("Mx_NoteRejectedTitle", "Note Rejected"),
-                L10n.T("Mx_NoteRejectedBody", "The machine could not accept that note. Please flatten the note and try again, or try a different note.") + $" ({reason})");
+            // "Unrecognized note" and "Note type is currently disabled" are
+            // the two hardware reasons (MoneyReceiverService's reject-code
+            // table) that specifically mean "this denomination isn't one
+            // we take here", as opposed to a torn/skewed/doubled note
+            // (which is a physical handling problem, not a denomination
+            // problem). Only these two get the accepted-denominations
+            // message; everything else keeps the generic retry message.
+            bool isDenominationIssue = reason.Contains("Unrecognized note", StringComparison.OrdinalIgnoreCase)
+                || reason.Contains("currently disabled", StringComparison.OrdinalIgnoreCase);
+
+            if (isDenominationIssue && _acceptedDenominations.Count > 0)
+            {
+                CustomDialog.ShowWarning(
+                    L10n.T("Mx_NoteNotAccepted", "Note Not Accepted"),
+                    string.Format(
+                        L10n.T("Mx_NoteNotAcceptedBody", "This kiosk does not accept that {0} note.\n\nAccepted {0} notes: {1}"),
+                        _ctl.State.FromCurrency, string.Join(", ", _acceptedDenominations)));
+            }
+            else
+            {
+                CustomDialog.ShowWarning(
+                    L10n.T("Mx_NoteRejectedTitle", "Note Rejected"),
+                    L10n.T("Mx_NoteRejectedBody", "The machine could not accept that note. Please flatten the note and try again, or try a different note.") + $" ({reason})");
+            }
         });
 
         private void Svc_OnEscrow(EscrowInfo info) => Dispatcher.Invoke(() =>
@@ -160,6 +297,16 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     L10n.T("Mx_LimitReachedTitle", "Limit Reached"),
                     string.Format(L10n.T("Mx_LimitReachedBody", "The machine only has RM {0} available. You cannot insert more notes. Please finish."), _maxMyrAvailable));
             }
+
+            // Incremental compliance check, using the CURRENT accumulated
+            // total - the note is already physically accepted by this
+            // point (same as the hardware-availability check above), so
+            // this can only stop FURTHER notes, not the one that just
+            // pushed the total over. Fire-and-forget like SaveNoteAcceptedAsync
+            // above - the result (disable acceptance + hard-stop dialog)
+            // arrives a moment later, which is an acceptable trade-off
+            // given the note is already committed either way.
+            _ = CheckComplianceLimitsAsync((decimal)_ctl.State.MyrAmount);
         });
 
         private async Task SaveNoteAcceptedAsync(double acceptedValue)
@@ -176,7 +323,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     var kioskUserId = await KioskAuthService.GetKioskUserIdAsync();
                     var (newId, generatedReceiptNo) = await _api.CreateTransactionAsync(new CreateTransactionApiRequest
                     {
-                        KioskId = "K1", // TODO: still a placeholder - separate from the CreatedBy/BranchId fixes
+                        KioskId = await KioskAuthService.GetKioskIdAsync(),
                         BranchId = await KioskAuthService.GetKioskBranchIdAsync(),
                         CustomerRef = _ctl.State.SenderId, // now resolved by CustomerDetailsStep's SenderMaster check
                         ScreeningTransGuid = _ctl.State.ScreeningTransGuid, // generated at flow start, committed at completion
@@ -213,24 +360,19 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void Svc_OnReturned(EscrowInfo info) => Dispatcher.Invoke(() =>
         {
-            if (_pendingEscrowValue > 0)
-            {
-                double returnedValue = _pendingEscrowValue;
-                _totalForeign -= _pendingEscrowValue;
-                if (_totalForeign < 0) _totalForeign = 0;
-
-                _pendingEscrowValue = 0;
-                UpdateConversionUI();
-                BtnNext.IsEnabled = _totalForeign > 0;
-
-                if (_ctl.State.TransactionId.HasValue)
-                {
-                    _noteSequence++;
-                    var txnId = _ctl.State.TransactionId.Value;
-                    var seq = _noteSequence;
-                    _ = SaveNoteReturnedAsync(txnId, seq, returnedValue);
-                }
-            }
+            // The running total and database record are now handled
+            // synchronously in EscrowReturn_Click below, at the moment the
+            // customer's decision is made - not here. This handler used to
+            // be the ONLY place _totalForeign got decremented and the
+            // "Returned" note got logged, but it depends on a hardware
+            // confirmation event that isn't guaranteed to fire. If it
+            // didn't, _totalForeign stayed permanently inflated by a note
+            // that had already left the machine, and _pendingEscrowValue
+            // would then be silently overwritten by the next note's escrow
+            // event - losing the return record entirely. This is now a
+            // pure confirmation/logging signal and must not touch
+            // _totalForeign or _pendingEscrowValue again.
+            KioskLocalLogger.LogInfo("CashIn", "Hardware confirmed note return.");
         });
 
         private async Task SaveNoteReturnedAsync(long transactionId, int sequenceNo, double returnedValue)
@@ -254,6 +396,31 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private void EscrowReturn_Click(object sender, RoutedEventArgs e)
         {
             EscrowOverlay.Visibility = Visibility.Collapsed;
+
+            // Decrement the running total and log the returned note HERE,
+            // synchronously with the customer's decision - not waiting for
+            // the hardware's own asynchronous return-confirmation event
+            // (Svc_OnReturned), which is not guaranteed to fire. See that
+            // handler's comment for the bug this fixes.
+            if (_pendingEscrowValue > 0)
+            {
+                double returnedValue = _pendingEscrowValue;
+                _totalForeign -= returnedValue;
+                if (_totalForeign < 0) _totalForeign = 0;
+
+                _pendingEscrowValue = 0;
+                UpdateConversionUI();
+                BtnNext.IsEnabled = _totalForeign > 0;
+
+                if (_ctl.State.TransactionId.HasValue)
+                {
+                    _noteSequence++;
+                    var txnId = _ctl.State.TransactionId.Value;
+                    var seq = _noteSequence;
+                    _ = SaveNoteReturnedAsync(txnId, seq, returnedValue);
+                }
+            }
+
             try { _svc.EscrowReturn(); } catch { }
         }
 
@@ -298,6 +465,10 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 catch (Exception ex) { KioskLocalLogger.LogError("CashIn", "Failed to mark transaction cancelled: " + ex.Message); }
             }
 
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepAbandoned", "CashIn",
+                outcome: "Failure", details: $"Cancelled by customer after inserting {_totalForeign:0.00} {_ctl.State.FromCurrency}",
+                transactionId: _ctl.State.TransactionId);
+
             await Task.Delay(300);
             ExitRequested?.Invoke(this, EventArgs.Empty);
         }
@@ -313,7 +484,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 // accepted, which means ReceiptNo was already set by
                 // SaveNoteAcceptedAsync - falls back to the transaction ID
                 // only in the unexpected case it's somehow still empty.
-                var receiptNo = !string.IsNullOrWhiteSpace(s.ReceiptNo) ? s.ReceiptNo : ReceiptFormatter.BuildReceiptNo(s.TransactionId);
+                var receiptNo = !string.IsNullOrWhiteSpace(s.ReceiptNo) ? s.ReceiptNo : ReceiptFormatter.BuildReceiptNo(s.TransactionId, KioskAuthService.CachedKioskIdOrNull ?? "UNKNOWN");
 
                 var r = new StringBuilder();
                 r.Append(ReceiptFormatter.BuildHeader("CASH"));
@@ -379,6 +550,10 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             // the transaction gets marked Completed once dispensing actually
             // succeeds in FinalReceiptStep, not here. This step only
             // confirms cash-in is done, not that MYR has been handed over yet.
+
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepCompleted", "CashIn",
+                outcome: "Success", details: $"Inserted {_ctl.State.FromAmount:0.00} {_ctl.State.FromCurrency} -> RM {_ctl.State.MyrAmount:0.00}",
+                transactionId: _ctl.State.TransactionId);
 
             await Task.Delay(1500);
             NextRequested?.Invoke(this, EventArgs.Empty);

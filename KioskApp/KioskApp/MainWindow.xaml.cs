@@ -2,6 +2,7 @@
 using OmniKiosk.Wpf.Views.Remittance;
 using OmniKiosk.Wpf.Views.SDKTest;
 using OmniKiosk.Wpf.Views.MoneyExchange;
+using OmniKiosk.Wpf.Services;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Globalization;
@@ -26,6 +27,7 @@ namespace OmniKiosk.Wpf
         private bool _isDarkMode = false;
         private string _currentLanguage = "en";
         private readonly Stack<UserControl> _sdkNav = new();
+        private readonly MenuApiClient _menuClient = new();
 
         // Make these properties public so they can be accessed from other pages
         public Grid HomeScreen1 => (Grid)FindName("HomeScreen");
@@ -48,8 +50,42 @@ namespace OmniKiosk.Wpf
             // Theme loading logic can be added here if needed
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Kiosk identity check happens FIRST, before any hardware init
+            // or UI beyond the bare window - a machine that isn't
+            // registered shouldn't get as far as showing the home screen
+            // at all, even briefly.
+            try
+            {
+                await KioskAuthService.GetTokenAsync();
+            }
+            catch (KioskNotRegisteredException ex)
+            {
+                HomeScreen.Visibility = Visibility.Collapsed;
+                TapCatcher.Visibility = Visibility.Collapsed;
+                NotRegisteredMacText.Text = ex.Message;
+                NotRegisteredScreen.Visibility = Visibility.Visible;
+                return; // deliberately does not proceed to hardware init or video below
+            }
+            catch (KioskMaintenanceException ex)
+            {
+                HomeScreen.Visibility = Visibility.Collapsed;
+                TapCatcher.Visibility = Visibility.Collapsed;
+                MaintenanceMessageText.Text = ex.ServerMessage;
+                MaintenanceScreen.Visibility = Visibility.Visible;
+                return;
+            }
+            catch (Exception ex)
+            {
+                // Any OTHER failure (network down, server error, etc.) is
+                // NOT the same as "not registered" - logged, but does not
+                // block the kiosk from at least attempting to start up.
+                // Individual features that actually need the token will
+                // surface their own errors when they try to use it.
+                KioskLocalLogger.LogError("Startup", "Kiosk auth check failed at startup (non-blocking): " + ex.Message);
+            }
+
             _ = OmniKiosk.Wpf.Services.GlobalHardwareManager.InitializeAllAsync();
             try
             {
@@ -99,6 +135,7 @@ namespace OmniKiosk.Wpf
             {
                 WebViewScreen.Visibility = Visibility.Collapsed;
                 FadeIn(MenuScreen);
+                _ = ApplyMenuCardFlagsAsync();
                 try { WebView.CoreWebView2.Navigate("about:blank"); } catch { }
             }
             else if (MenuScreen.Visibility == Visibility.Visible)
@@ -147,6 +184,7 @@ namespace OmniKiosk.Wpf
 
                 LanguageSelectionScreen.Visibility = Visibility.Collapsed;
                 FadeIn(MenuScreen);
+                _ = ApplyMenuCardFlagsAsync();
             }
             catch (Exception ex)
             {
@@ -167,6 +205,12 @@ namespace OmniKiosk.Wpf
 
         private void OpenRemittance_Click(object sender, RoutedEventArgs e)
         {
+            if (!OmniKiosk.Wpf.Services.GlobalHardwareManager.AllCriticalSdksReady)
+            {
+                ShowSdkMaintenance();
+                return;
+            }
+
             // Pause video when opening remittance
             PauseBackgroundVideo();
 
@@ -292,6 +336,72 @@ namespace OmniKiosk.Wpf
             CloseSdkHostToMenu();
         }
 
+        // Item 10 - flag-driven menu. Every customer-facing card's
+        // visibility comes from its own DB row (Ksk_ServiceMenuFlags) -
+        // nothing is hidden by hardcoding at the code level, per
+        // instruction. Test SDKs is a developer tool with no row at all,
+        // deliberately outside this system, always visible.
+        //
+        // Card widths are adjusted based on how many end up visible, so a
+        // handful of cards don't sit lost in a layout built for six - a
+        // small, deliberately simple heuristic (fixed widths per visible
+        // count), not a general-purpose responsive layout system.
+        private async Task ApplyMenuCardFlagsAsync()
+        {
+            var enabled = await _menuClient.GetEnabledServicesAsync();
+
+            // Fail-open: if the call failed (empty list back), show every
+            // known card rather than leaving the customer with an empty,
+            // unusable menu screen over a Config.Api hiccup.
+            bool failOpen = enabled.Count == 0;
+
+            var cardsByServiceCode = new (string ServiceCode, Border Card)[]
+            {
+                ("Remittance",    CardRemittance),
+                ("MoneyExchange", CardMoneyExchange),
+                ("QueueXchange",  CardQueueX),
+                ("OmniBrowse",    CardOmni),
+                ("RatesToday",    CardRates),
+            };
+
+            int visibleCount = 0;
+            foreach (var (serviceCode, card) in cardsByServiceCode)
+            {
+                bool show = failOpen || enabled.Exists(s => s.ServiceCode == serviceCode);
+                card.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+                if (show) visibleCount++;
+            }
+
+            double width = visibleCount switch
+            {
+                1 => 460,
+                2 => 420,
+                _ => 380
+            };
+
+            foreach (var (_, card) in cardsByServiceCode)
+            {
+                if (card.Visibility == Visibility.Visible)
+                    card.Width = width;
+            }
+        }
+
+        // Checked at menu-click time (Money Exchange / Remittance), not
+        // just at boot - a hardware component that initialized fine at
+        // startup can still fail later (cable unplugged, device reset).
+        // Reuses MaintenanceScreen rather than a dismissable dialog, since
+        // a kiosk missing a critical SDK genuinely cannot complete a
+        // transaction right now.
+        private void ShowSdkMaintenance()
+        {
+            HomeScreen.Visibility = Visibility.Collapsed;
+            MenuScreen.Visibility = Visibility.Collapsed;
+            TapCatcher.Visibility = Visibility.Collapsed;
+            MaintenanceMessageText.Text =
+                "One or more required systems are not responding. Please contact support.";
+            MaintenanceScreen.Visibility = Visibility.Visible;
+        }
+
         private void CloseSdkHostToMenu()
         {
             SdkHostScreen.Visibility = Visibility.Collapsed;
@@ -400,35 +510,41 @@ namespace OmniKiosk.Wpf
             ShowWebPage("http://121.122.30.121:6789/Rateboard");
         }
 
-        
-private void OpenMoneyExchange_Click(object sender, MouseButtonEventArgs e)
-{
-    PauseBackgroundVideo();
 
-    HomeScreen.Visibility = Visibility.Collapsed;
-    MenuScreen.Visibility = Visibility.Collapsed;
-    LanguageSelectionScreen.Visibility = Visibility.Collapsed;
-    WebViewScreen.Visibility = Visibility.Collapsed;
-    SdkHostScreen.Visibility = Visibility.Collapsed;
+        private void OpenMoneyExchange_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (!OmniKiosk.Wpf.Services.GlobalHardwareManager.AllCriticalSdksReady)
+            {
+                ShowSdkMaintenance();
+                return;
+            }
 
-    MoneyExchangeHostScreen.Visibility = Visibility.Visible;
-    MoneyExchangeHostContent.Content = null;
+            PauseBackgroundVideo();
 
-    var flow = new MoneyExchangeFlowView(_currentLanguage);
-    flow.BackRequested += (_, __) => CloseMoneyExchangeHostToMenu();
-    MoneyExchangeHostContent.Content = flow;
-}
+            HomeScreen.Visibility = Visibility.Collapsed;
+            MenuScreen.Visibility = Visibility.Collapsed;
+            LanguageSelectionScreen.Visibility = Visibility.Collapsed;
+            WebViewScreen.Visibility = Visibility.Collapsed;
+            SdkHostScreen.Visibility = Visibility.Collapsed;
 
-private void CloseMoneyExchangeHostToMenu()
-{
-    MoneyExchangeHostScreen.Visibility = Visibility.Collapsed;
-    MoneyExchangeHostContent.Content = null;
+            MoneyExchangeHostScreen.Visibility = Visibility.Visible;
+            MoneyExchangeHostContent.Content = null;
 
-    MenuScreen.Visibility = Visibility.Visible;
-    ResumeBackgroundVideo();
-}
+            var flow = new MoneyExchangeFlowView(_currentLanguage);
+            flow.BackRequested += (_, __) => CloseMoneyExchangeHostToMenu();
+            MoneyExchangeHostContent.Content = flow;
+        }
 
-private async void ShowWebPage(string url)
+        private void CloseMoneyExchangeHostToMenu()
+        {
+            MoneyExchangeHostScreen.Visibility = Visibility.Collapsed;
+            MoneyExchangeHostContent.Content = null;
+
+            MenuScreen.Visibility = Visibility.Visible;
+            ResumeBackgroundVideo();
+        }
+
+        private async void ShowWebPage(string url)
         {
             MenuScreen.Visibility = Visibility.Collapsed;
             WebViewScreen.Visibility = Visibility.Visible;

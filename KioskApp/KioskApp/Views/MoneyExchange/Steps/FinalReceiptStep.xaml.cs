@@ -36,6 +36,32 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // ID/passport retrieval gate - there is no physical sensor on
+            // this hardware to detect whether the document was actually
+            // taken back (confirmed earlier - the document readers have no
+            // "document removed" signal), so this is a software-only
+            // acknowledgment gate, not a real interlock. Shown before
+            // anything else on this screen, including the pre-dispense
+            // availability check, since cash should not even be attempted
+            // until this is confirmed.
+            bool idRetrieved = CustomDialog.ShowQuestion(
+                L10n.T("Mx_RetrieveIdTitle", "Please Take Your ID / Passport"),
+                L10n.T("Mx_RetrieveIdBody", "Before we dispense your cash, please make sure you have taken back your IC or passport from the reader.\n\nHave you retrieved your document?"),
+                L10n.T("Mx_RetrieveIdYes", "Yes, I Have It"),
+                L10n.T("Mx_RetrieveIdNo", "Not Yet"));
+
+            while (!idRetrieved)
+            {
+                // Does not proceed until confirmed - re-shows the same
+                // prompt rather than silently continuing, since there is
+                // no hardware fallback to fall back on here.
+                idRetrieved = CustomDialog.ShowQuestion(
+                    L10n.T("Mx_RetrieveIdTitle", "Please Take Your ID / Passport"),
+                    L10n.T("Mx_RetrieveIdBody", "Before we dispense your cash, please make sure you have taken back your IC or passport from the reader.\n\nHave you retrieved your document?"),
+                    L10n.T("Mx_RetrieveIdYes", "Yes, I Have It"),
+                    L10n.T("Mx_RetrieveIdNo", "Not Yet"));
+            }
+
             TitleText.Text = L10n.T("Mx_Complete", "Transaction Complete");
             SubtitleText.Text = L10n.T("Mx_CollectCashSubtitle", "Please collect your cash from the dispenser below.");
             TotalDispensedLabel.Text = L10n.T("Mx_TotalDispensed", "TOTAL DISPENSED");
@@ -47,6 +73,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             BtnDone.Content = L10n.T("Mx_CompleteTransaction", "Complete Transaction");
 
             LoadTransactionData();
+
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepEntered", "FinalReceipt",
+                transactionId: _ctl.State.TransactionId);
 
             // Cross-check against the DB-configured denominations before
             // dispensing - the dispenser hardware is hardcoded to exactly 4
@@ -82,6 +111,37 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             if (c1 > 0 || c2 > 0 || c3 > 0 || c4 > 0)
             {
+                // Pre-dispense availability check, now blocking - KioskId
+                // is the real, server-resolved identifier as of this
+                // change (KioskAuthService.GetKioskIdAsync, resolved from
+                // Ksk_Terminals by this machine's MAC address), not the
+                // "K1" placeholder that made this check unsafe to trust
+                // before. A genuine "insufficient" result here now stops
+                // the dispense attempt rather than just being logged.
+                try
+                {
+                    var kioskId = await KioskAuthService.GetKioskIdAsync();
+                    var availability = await _api.GetDenominationBreakdownAsync(kioskId, (decimal)_ctl.State.MyrAmount);
+                    if (!availability.CanDispenseFully)
+                    {
+                        _dispenseSuccessful = false;
+                        _dispenseErrorMsg = L10n.T("Mx_InsufficientCash", "Insufficient cash available at this kiosk");
+                        ShowDispenserNotice();
+                        await CompleteTransactionSafeAsync("DispenseFailed");
+                        PrintReceipt();
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Availability check itself being unreachable is still
+                    // treated as "proceed anyway" - the actual hardware
+                    // dispense call below has its own failure handling, and
+                    // an unreachable check should degrade to "try", not
+                    // "assume the worst and always block".
+                    KioskLocalLogger.LogError("FinalReceipt", "Denomination availability check failed, proceeding without it: " + ex.Message);
+                }
+
                 if (!_dispenserSvc.IsConnected)
                 {
                     string foundPort = await _dispenserSvc.AutoDetectDispenserPortAsync();
@@ -92,6 +152,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                         _dispenseErrorMsg = L10n.T("Mx_HardwareOffline", "Hardware Offline (Check USB Cable/Power)");
                         ShowDispenserNotice();
                         await CompleteTransactionSafeAsync("DispenseFailed");
+                        PrintReceipt();
+                        _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepFailed", "FinalReceipt",
+                            outcome: "Error", details: "Dispenser hardware offline", transactionId: _ctl.State.TransactionId);
                         return;
                     }
                 }
@@ -102,6 +165,10 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 {
                     _dispenseSuccessful = true;
                     await CompleteTransactionSafeAsync("Completed");
+                    await RecordDispensedNotesAsync(c1, c2, c3, c4);
+                    PrintReceipt();
+                    _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepCompleted", "FinalReceipt",
+                        outcome: "Success", transactionId: _ctl.State.TransactionId);
                 }
                 else
                 {
@@ -109,12 +176,72 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     _dispenseErrorMsg = response.Message;
                     ShowDispenserNotice();
                     await CompleteTransactionSafeAsync("DispenseFailed");
+                    PrintReceipt();
+                    _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepFailed", "FinalReceipt",
+                        outcome: "Failure", details: "Dispense failed: " + _dispenseErrorMsg, transactionId: _ctl.State.TransactionId);
                 }
             }
             else
             {
                 _dispenseSuccessful = true;
                 await CompleteTransactionSafeAsync("Completed");
+                PrintReceipt();
+                _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepCompleted", "FinalReceipt",
+                    outcome: "Success", details: "No cash to dispense (zero-value transaction)", transactionId: _ctl.State.TransactionId);
+            }
+        }
+
+        // Reuses the exact same RecordNoteAsync / KSK_RecordTransactionNote
+        // path CashInStep already calls for accepted notes - same table
+        // (Ksk_TransactionNotes), same one-row-per-physical-note
+        // convention (confirmed from real data: a transaction's notes are
+        // stored as multiple individual rows, not one row with a count).
+        // Outcome="Dispensed", CurrencyCode="MYR" for the dispense side.
+        //
+        // Deliberately NOT called from the DispenseFailed branch above -
+        // if the dispenser reported failure, how many notes (if any)
+        // actually came out isn't known, so recording a full breakdown as
+        // "Dispensed" would be recording something that may not have
+        // happened. That's a separate, harder reconciliation problem, not
+        // something to guess at here.
+        private async Task RecordDispensedNotesAsync(int count1, int count10, int count50, int count100)
+        {
+            if (!_ctl.State.TransactionId.HasValue)
+            {
+                KioskLocalLogger.LogError("FinalReceipt", "RecordDispensedNotesAsync called with no TransactionId set - nothing recorded.");
+                return;
+            }
+
+            long transactionId = _ctl.State.TransactionId.Value;
+            int sequenceNo = 1;
+
+            var denominationCounts = new (int Value, int Count)[]
+            {
+                (100, count100),
+                (50,  count50),
+                (10,  count10),
+                (1,   count1),
+            };
+
+            foreach (var (value, count) in denominationCounts)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    try
+                    {
+                        await _api.RecordNoteAsync(transactionId, sequenceNo, "MYR", (decimal)value, "Dispensed");
+                        sequenceNo++;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Cash has already physically dispensed by this point -
+                        // same posture as CompleteTransactionSafeAsync: a
+                        // failed API call here must never be shown to the
+                        // customer or block the flow, only logged.
+                        KioskLocalLogger.LogError("FinalReceipt",
+                            $"Failed to record dispensed note #{sequenceNo} (RM{value}) for transaction {transactionId}: {ex.Message}");
+                    }
+                }
             }
         }
 
@@ -193,14 +320,16 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             Row1.Visibility = count1 > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void PrintReceipt_Click(object sender, RoutedEventArgs e)
+        private void PrintReceipt_Click(object sender, RoutedEventArgs e) => PrintReceipt();
+
+        private void PrintReceipt()
         {
             try
             {
                 var s = _ctl.State;
                 var custName = s.Customer?.FullName ?? "Walk-in Customer";
                 var maskedDoc = ReceiptFormatter.MaskDocumentNo(s.Customer?.IdNo);
-                var receiptNo = !string.IsNullOrWhiteSpace(s.ReceiptNo) ? s.ReceiptNo : ReceiptFormatter.BuildReceiptNo(s.TransactionId);
+                var receiptNo = !string.IsNullOrWhiteSpace(s.ReceiptNo) ? s.ReceiptNo : ReceiptFormatter.BuildReceiptNo(s.TransactionId, KioskAuthService.CachedKioskIdOrNull ?? "UNKNOWN");
 
                 var r = new StringBuilder();
 
@@ -277,6 +406,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 CustomDialog.ShowError(L10n.T("Mx_PrintErrorTitle", "Print Error"), ex.Message);
             }
         }
-        private void Done_Click(object sender, RoutedEventArgs e) => ExitRequested?.Invoke(this, EventArgs.Empty);
+        private void Done_Click(object sender, RoutedEventArgs e)
+        {
+            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "SessionEnd", "FinalReceipt",
+                outcome: _dispenseSuccessful ? "Success" : "Failure", transactionId: _ctl.State.TransactionId);
+            ExitRequested?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

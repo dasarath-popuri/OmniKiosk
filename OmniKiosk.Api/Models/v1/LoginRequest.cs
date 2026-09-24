@@ -7,4 +7,9 @@
         public string LoginId { get; set; }
         public string Password { get; set; }
     }
+
+    public class KioskLoginRequest
+    {
+        public string MacAddress { get; set; } = "";
+    }
 }
