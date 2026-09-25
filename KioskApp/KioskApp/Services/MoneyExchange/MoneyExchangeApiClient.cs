@@ -294,19 +294,60 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         // pushes the final running totals to the transaction record.
         // KSK_MirrorToMcTransaction reads these same columns later, so
         // skipping this call means the Mc_ mirror runs against 0 values.
-        public async Task UpdateTransactionAmountsAsync(long transactionId, decimal fromAmount, decimal myrAmount, decimal cashInsertedMyr, CancellationToken ct = default)
+        //public async Task UpdateTransactionAmountsAsync(long transactionId, decimal fromAmount, decimal myrAmount, decimal cashInsertedMyr, CancellationToken ct = default)
+        //{
+        //    var body = new { FromAmount = fromAmount, MyrAmount = myrAmount, CashInsertedMyr = cashInsertedMyr };
+        //    var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, $"api/v1/Transactions/{transactionId}/amounts") { Content = JsonContent.Create(body) }, ct);
+        //    response.EnsureSuccessStatusCode();
+        //}
+
+        //public async Task CompleteTransactionAsync(long transactionId, string status, CancellationToken ct = default)
+        //{
+        //    var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, $"api/v1/Transactions/{transactionId}/complete") { Content = JsonContent.Create(new { Status = status }) }, ct);
+        //    response.EnsureSuccessStatusCode();
+        //}
+        public async Task UpdateTransactionAmountsAsync(
+    long transactionId,
+    decimal fromAmount,
+    decimal myrAmount,
+    decimal cashInsertedMyr,
+    CancellationToken ct = default)
         {
-            var body = new { FromAmount = fromAmount, MyrAmount = myrAmount, CashInsertedMyr = cashInsertedMyr };
-            var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, $"api/v1/Transactions/{transactionId}/amounts") { Content = JsonContent.Create(body) }, ct);
+            var body = new
+            {
+                FromAmount = fromAmount,
+                MyrAmount = myrAmount,
+                CashInsertedMyr = cashInsertedMyr
+            };
+
+            var response = await SendAsync(
+                () => new HttpRequestMessage(
+                    HttpMethod.Post,
+                    $"api/v1/Transactions/{transactionId}/amounts")
+                {
+                    Content = JsonContent.Create(body)
+                },
+                ct);
+
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task CompleteTransactionAsync(long transactionId, string status, CancellationToken ct = default)
+        public async Task CompleteTransactionAsync(
+            long transactionId,
+            string status,
+            CancellationToken ct = default)
         {
-            var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, $"api/v1/Transactions/{transactionId}/complete") { Content = JsonContent.Create(new { Status = status }) }, ct);
+            var response = await SendAsync(
+                () => new HttpRequestMessage(
+                    HttpMethod.Post,
+                    $"api/v1/Transactions/{transactionId}/complete")
+                {
+                    Content = JsonContent.Create(new { Status = status })
+                },
+                ct);
+
             response.EnsureSuccessStatusCode();
         }
-
         public async Task RecordNoteAsync(long transactionId, int sequenceNo, string currencyCode, decimal denominationValue, string outcome, CancellationToken ct = default)
         {
             var body = new { SequenceNo = sequenceNo, CurrencyCode = currencyCode, DenominationValue = denominationValue, Outcome = outcome };

@@ -67,7 +67,10 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
         // which also triggers the Mc_ mirror and screening commit automatically
         // when Status = Completed.
         [HttpPut("{transactionId}/complete")]
-        public async Task<IActionResult> CompleteTransaction(long transactionId, [FromBody] CompleteTransactionRequest request)
+        [HttpPost("{transactionId}/complete")]
+        public async Task<IActionResult> CompleteTransaction(
+            long transactionId,
+            [FromBody] CompleteTransactionRequest request)
         {
             using var con = new SqlConnection(_connectionString);
 
@@ -94,7 +97,10 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
         // rows - without this call, the transaction row (and everything
         // mirrored from it) stays at the 0 values it was created with.
         [HttpPut("{transactionId}/amounts")]
-        public async Task<IActionResult> UpdateAmounts(long transactionId, [FromBody] UpdateAmountsRequest request)
+        [HttpPost("{transactionId}/amounts")]
+        public async Task<IActionResult> UpdateAmounts(
+            long transactionId,
+            [FromBody] UpdateAmountsRequest request)
         {
             using var con = new SqlConnection(_connectionString);
 

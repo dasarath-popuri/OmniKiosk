@@ -271,52 +271,119 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                             }
                         }
 
+                        //bool needsRetry = false;
+                        //string retryReason = "";
+
+                        //if (isNewCustomer && cust2 != null && !string.IsNullOrWhiteSpace(cust2.IdDocumentImageBase64)
+                        //    && string.IsNullOrWhiteSpace(_ctl.State.EkycJourneyId))
+                        //{
+                        //    var journey = _ekyc.CreateJourneyIdAsync(cust2.IdNo).GetAwaiter().GetResult();
+                        //    if (journey.ok && !string.IsNullOrWhiteSpace(journey.journeyId))
+                        //    {
+                        //        _ctl.State.EkycJourneyId = journey.journeyId;
+
+                        //        var idResult = _ekyc.VerifyDocumentAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
+                        //        if (!idResult.ok)
+                        //        {
+                        //            KioskLocalLogger.LogError("CustomerDetails", "OkayID call failed: " + idResult.error);
+                        //            needsRetry = true;
+                        //            retryReason = idResult.error ?? "OkayID unreachable";
+                        //        }
+
+                        //        if (!needsRetry)
+                        //        {
+                        //            var authResult = isPassport
+                        //                ? _ekyc.VerifyPassportAuthenticityAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult()
+                        //                : _ekyc.VerifyMyKadAuthenticityAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
+
+                        //            if (authResult.CallSucceeded && !authResult.AllChecksPassed)
+                        //            {
+                        //                // A genuine finding, not an error - logged
+                        //                // only, Scorecard (in FaceVerificationStep)
+                        //                // is what actually decides, unchanged.
+                        //                var failedList = string.Join(", ", authResult.FailedChecks.Select(f => $"{f.Check}={f.Result}"));
+                        //                KioskLocalLogger.LogError("CustomerDetails", $"OkayDoc reported failed checks for {cust2.IdNo} (logged only, Scorecard decides): {failedList}");
+                        //            }
+                        //            else if (!authResult.CallSucceeded)
+                        //            {
+                        //                KioskLocalLogger.LogError("CustomerDetails", "OkayDoc call failed: " + authResult.ErrorMessage);
+                        //                needsRetry = true;
+                        //                retryReason = authResult.ErrorMessage ?? "OkayDoc unreachable";
+                        //            }
+                        //        }
+                        //    }
+                        //    else
+                        //    {
+                        //        KioskLocalLogger.LogError("CustomerDetails", "Could not create eKYC journey: " + journey.error);
+                        //        needsRetry = true;
+                        //        retryReason = journey.error ?? "Could not start verification";
+                        //    }
+                        //}
                         bool needsRetry = false;
                         string retryReason = "";
 
-                        if (isNewCustomer && cust2 != null && !string.IsNullOrWhiteSpace(cust2.IdDocumentImageBase64)
-                            && string.IsNullOrWhiteSpace(_ctl.State.EkycJourneyId))
+                        if (isNewCustomer && cust2 != null && !string.IsNullOrWhiteSpace(cust2.IdDocumentImageBase64))
                         {
-                            var journey = _ekyc.CreateJourneyIdAsync(cust2.IdNo).GetAwaiter().GetResult();
-                            if (journey.ok && !string.IsNullOrWhiteSpace(journey.journeyId))
+                            string? journeyId = _ctl.State.EkycJourneyId;
+
+                            if (string.IsNullOrWhiteSpace(journeyId))
                             {
-                                _ctl.State.EkycJourneyId = journey.journeyId;
+                                var journey = _ekyc.CreateJourneyIdAsync(cust2.IdNo).GetAwaiter().GetResult();
 
-                                var idResult = _ekyc.VerifyDocumentAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
-                                if (!idResult.ok)
+                                if (!journey.ok || string.IsNullOrWhiteSpace(journey.journeyId))
                                 {
-                                    KioskLocalLogger.LogError("CustomerDetails", "OkayID call failed: " + idResult.error);
+                                    KioskLocalLogger.LogError(
+                                        "CustomerDetails",
+                                        "Could not create eKYC journey: " + journey.error);
+
                                     needsRetry = true;
-                                    retryReason = idResult.error ?? "OkayID unreachable";
+                                    retryReason = journey.error ?? "Could not start verification";
                                 }
-
-                                if (!needsRetry)
+                                else
                                 {
-                                    var authResult = isPassport
-                                        ? _ekyc.VerifyPassportAuthenticityAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult()
-                                        : _ekyc.VerifyMyKadAuthenticityAsync(journey.journeyId!, cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
-
-                                    if (authResult.CallSucceeded && !authResult.AllChecksPassed)
-                                    {
-                                        // A genuine finding, not an error - logged
-                                        // only, Scorecard (in FaceVerificationStep)
-                                        // is what actually decides, unchanged.
-                                        var failedList = string.Join(", ", authResult.FailedChecks.Select(f => $"{f.Check}={f.Result}"));
-                                        KioskLocalLogger.LogError("CustomerDetails", $"OkayDoc reported failed checks for {cust2.IdNo} (logged only, Scorecard decides): {failedList}");
-                                    }
-                                    else if (!authResult.CallSucceeded)
-                                    {
-                                        KioskLocalLogger.LogError("CustomerDetails", "OkayDoc call failed: " + authResult.ErrorMessage);
-                                        needsRetry = true;
-                                        retryReason = authResult.ErrorMessage ?? "OkayDoc unreachable";
-                                    }
+                                    journeyId = journey.journeyId;
+                                    _ctl.State.EkycJourneyId = journeyId;
                                 }
                             }
-                            else
+
+                            if (!needsRetry && !string.IsNullOrWhiteSpace(journeyId))
                             {
-                                KioskLocalLogger.LogError("CustomerDetails", "Could not create eKYC journey: " + journey.error);
-                                needsRetry = true;
-                                retryReason = journey.error ?? "Could not start verification";
+                                Dispatcher.Invoke(() =>
+                                {
+                                    StatusText.Text = L10n.T(
+                                        "Mx_VerifyingDocument",
+                                        "Checking document details...");
+                                });
+
+                                var idResult = _ekyc.VerifyDocumentAsync(
+                                    journeyId!,
+                                    cust2.IdDocumentImageBase64).GetAwaiter().GetResult();
+
+                                if (!idResult.ok)
+                                {
+                                    KioskLocalLogger.LogError(
+                                        "CustomerDetails",
+                                        "NotificationEngine OkayID failed: " + idResult.error);
+
+                                    needsRetry = true;
+                                    retryReason = idResult.error ?? "Document verification unavailable";
+                                }
+                                else
+                                {
+                                    KioskLocalLogger.LogInfo(
+                                        "CustomerDetails",
+                                        $"OkayID completed successfully. JourneyId={journeyId}, DocumentType={idResult.documentType ?? "unknown"}");
+
+                                    // IMPORTANT:
+                                    // Do NOT call VerifyPassportAuthenticityAsync or
+                                    // VerifyMyKadAuthenticityAsync here.
+                                    //
+                                    // The existing production NotificationEngine document flow
+                                    // already owns the appropriate OkayDoc processing. The kiosk
+                                    // only starts the journey and invokes the existing OkayID
+                                    // wrapper. Final document/face outcome is decided by Scorecard
+                                    // after OkayFace.
+                                }
                             }
                         }
 
@@ -364,7 +431,16 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                         StopPassportLoop(); break;
                     }
                 }
-                catch { Thread.Sleep(500); }
+                //catch { Thread.Sleep(500); }
+                catch (Exception ex)
+                {
+                    KioskLocalLogger.LogError(
+                        "CustomerDetails",
+                        "Document scan/eKYC loop error: " +
+                        ex.GetType().Name + ": " + ex.Message);
+
+                    Thread.Sleep(500);
+                }
             }
         }
 

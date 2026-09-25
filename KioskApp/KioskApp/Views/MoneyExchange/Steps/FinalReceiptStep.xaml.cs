@@ -213,8 +213,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
 
             long transactionId = _ctl.State.TransactionId.Value;
-            int sequenceNo = 1;
-
+            //int sequenceNo = 1;
+            int sequenceNo =
+                _ctl.State.LastTransactionNoteSequence + 1;
             var denominationCounts = new (int Value, int Count)[]
             {
                 (100, count100),
@@ -222,27 +223,57 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 (10,  count10),
                 (1,   count1),
             };
-
             foreach (var (value, count) in denominationCounts)
             {
                 for (int i = 0; i < count; i++)
                 {
+                    int currentSequence = sequenceNo++;
+
                     try
                     {
-                        await _api.RecordNoteAsync(transactionId, sequenceNo, "MYR", (decimal)value, "Dispensed");
-                        sequenceNo++;
+                        await _api.RecordNoteAsync(
+                            transactionId,
+                            currentSequence,
+                            "MYR",
+                            value,
+                            "Dispensed");
+
+                        _ctl.State.LastTransactionNoteSequence =
+                            currentSequence;
                     }
                     catch (Exception ex)
                     {
-                        // Cash has already physically dispensed by this point -
-                        // same posture as CompleteTransactionSafeAsync: a
-                        // failed API call here must never be shown to the
-                        // customer or block the flow, only logged.
-                        KioskLocalLogger.LogError("FinalReceipt",
-                            $"Failed to record dispensed note #{sequenceNo} (RM{value}) for transaction {transactionId}: {ex.Message}");
+                        // Never reuse a failed sequence number for another physical note.
+                        _ctl.State.LastTransactionNoteSequence =
+                            currentSequence;
+
+                        KioskLocalLogger.LogError(
+                            "FinalReceipt",
+                            $"Failed to record dispensed note #{currentSequence} " +
+                            $"(RM{value}) for transaction {transactionId}: {ex.Message}");
                     }
                 }
             }
+            //foreach (var (value, count) in denominationCounts)
+            //{
+            //    for (int i = 0; i < count; i++)
+            //    {
+            //        try
+            //        {
+            //            await _api.RecordNoteAsync(transactionId, sequenceNo, "MYR", (decimal)value, "Dispensed");
+            //            sequenceNo++;
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            // Cash has already physically dispensed by this point -
+            //            // same posture as CompleteTransactionSafeAsync: a
+            //            // failed API call here must never be shown to the
+            //            // customer or block the flow, only logged.
+            //            KioskLocalLogger.LogError("FinalReceipt",
+            //                $"Failed to record dispensed note #{sequenceNo} (RM{value}) for transaction {transactionId}: {ex.Message}");
+            //        }
+            //    }
+            //}
         }
 
         // Cash has already physically moved (dispensed or not) by the time

@@ -105,6 +105,13 @@ namespace OmniKiosk.Wpf.Services.Ekyc
         public bool cambodia { get; set; } = false;
     }
 
+    //public class CentralizeOkayIdResponse
+    //{
+    //    public string? status { get; set; }
+    //    public string? message { get; set; }
+    //    public string? documentType { get; set; }
+    //    public List<OkayIdResultWrapper>? result { get; set; }
+    //}
     public class CentralizeOkayIdResponse
     {
         public string? status { get; set; }
@@ -113,6 +120,13 @@ namespace OmniKiosk.Wpf.Services.Ekyc
         public List<OkayIdResultWrapper>? result { get; set; }
     }
 
+    public class CentralizeOkayIdEnvelope
+    {
+        public string? response_message { get; set; }
+        public bool success { get; set; }
+        public string? response_message1 { get; set; }
+        public CentralizeOkayIdResponse? centralizeOkayIDresponse { get; set; }
+    }
     public class OkayIdResultWrapper
     {
         public OkayIdVerifiedFields? ListVerifiedFields { get; set; }
@@ -123,13 +137,19 @@ namespace OmniKiosk.Wpf.Services.Ekyc
         public List<OkayIdFieldMap>? pFieldMaps { get; set; }
     }
 
+    //public class OkayIdFieldMap
+    //{
+    //    public int FieldType { get; set; }
+    //    public string? Field_Visual { get; set; }
+    //    public string? Field_MRZ { get; set; }
+    //}
     public class OkayIdFieldMap
     {
         public int FieldType { get; set; }
+        public int wFieldType { get; set; }
         public string? Field_Visual { get; set; }
         public string? Field_MRZ { get; set; }
     }
-
     // ============================================================
     // OkayDoc (Passport variant only - MyKad's chip reader has no optical
     // scan capability, see VerifyPassportAuthenticityAsync remarks below).
@@ -256,12 +276,16 @@ namespace OmniKiosk.Wpf.Services.Ekyc
     // also treated as not passing.
     // ============================================================
 
-    public class GetScorecardRequest : GenericEkycRequest
-    {
-        public ScorecardInner eKYCrequest { get; set; } = new();
-    }
+    //public class GetScorecardRequest : GenericEkycRequest
+    //{
+    //    public ScorecardInner eKYCrequest { get; set; } = new();
+    //}
 
-    public class ScorecardInner
+    //public class ScorecardInner
+    //{
+    //    public string journeyId { get; set; } = "";
+    //}
+    public class GetScorecardRequest : GenericEkycRequest
     {
         public string journeyId { get; set; } = "";
     }
@@ -286,7 +310,14 @@ namespace OmniKiosk.Wpf.Services.Ekyc
         public string? message { get; set; }
         public List<ScorecardDocumentResult>? scorecardResultList { get; set; }
     }
-
+    public class GetScorecardEnvelope
+    {
+        public string? response_message { get; set; }
+        public bool success { get; set; }
+        public string? response_message1 { get; set; }
+        public GetScorecardResponse? getscorecardresultResponse { get; set; }
+        public JsonElement? resultconfig { get; set; }
+    }
     public sealed class ScorecardOutcome
     {
         public bool CallSucceeded { get; set; }
@@ -318,6 +349,8 @@ namespace OmniKiosk.Wpf.Services.Ekyc
 
     public sealed class EkycFaceMatchClient
     {
+        private const double Innov8tifFaceMatchThreshold = 75.0;
+        private const double Innov8tifLivenessProbabilityThreshold = 0.5;
         private static readonly HttpClient _http = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(25)
@@ -495,11 +528,13 @@ namespace OmniKiosk.Wpf.Services.Ekyc
         // per Innov8tif's Malaysia field-type reference).
         // ============================================================
         public async Task<(bool ok, Dictionary<int, string> extractedFields, string? documentType, string? error)>
-            VerifyDocumentAsync(string journeyId, string frontImageBase64, string? backImageBase64 = null, CancellationToken ct = default)
+    VerifyDocumentAsync(string journeyId, string frontImageBase64, string? backImageBase64 = null, CancellationToken ct = default)
         {
             var empty = new Dictionary<int, string>();
+
             var (token, tokenError) = await EnsureBearerTokenAsync(ct);
-            if (token == null) return (false, empty, null, tokenError);
+            if (token == null)
+                return (false, empty, null, tokenError);
 
             var req = new CentralizeOkayIdRequest
             {
@@ -511,18 +546,22 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                     journeyId = journeyId,
                     base64ImageString = frontImageBase64,
                     backImage = backImageBase64,
+                    imageFormat = "JPG",
                     docTypeEnabled = true,
                     imageEnabled = false,
-                    faceImageEnabled = false
+                    faceImageEnabled = false,
+                    cambodia = false
                 }
             };
+
             var json = JsonSerializer.Serialize(req);
             var attempts = new List<string>();
             bool retried = false;
 
             foreach (var (label, baseUrl) in BaseUrls)
             {
-                if (string.IsNullOrWhiteSpace(baseUrl)) continue;
+                if (string.IsNullOrWhiteSpace(baseUrl))
+                    continue;
 
                 try
                 {
@@ -533,46 +572,465 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                     {
                         retried = true;
                         InvalidateToken();
+
                         var (freshToken, freshErr) = await EnsureBearerTokenAsync(ct);
-                        if (freshToken == null) { attempts.Add($"{label} ({baseUrl}): {freshErr}"); continue; }
+
+                        if (freshToken == null)
+                        {
+                            attempts.Add($"{label}: {freshErr}");
+                            continue;
+                        }
+
                         token = freshToken;
                         (status, body) = await SendAuthedAsync(url, json, token, ct);
                     }
 
                     if (status != HttpStatusCode.OK)
                     {
-                        attempts.Add($"{label} ({baseUrl}): HTTP {(int)status}");
+                        attempts.Add($"{label}: HTTP {(int)status}");
                         continue;
                     }
 
-                    var parsed = JsonSerializer.Deserialize<CentralizeOkayIdResponse>(body);
-                    if (parsed?.status != "success")
+                    var options = new JsonSerializerOptions
                     {
-                        attempts.Add($"{label} ({baseUrl}): {parsed?.message ?? "OkayID call did not report success"}");
+                        PropertyNameCaseInsensitive = true
+                    };
+
+                    var envelope = JsonSerializer.Deserialize<CentralizeOkayIdEnvelope>(body, options);
+
+                    if (envelope == null)
+                    {
+                        attempts.Add($"{label}: Empty or invalid OkayID response");
+                        continue;
+                    }
+
+                    if (!envelope.success)
+                    {
+                        string error =
+                            envelope.response_message1 ??
+                            envelope.response_message ??
+                            "OkayID verification failed";
+
+                        KioskLocalLogger.LogError(
+                            "eKYC",
+                            $"OkayID failed from {label}. Journey={journeyId}. Response={TruncateForLog(body)}");
+
+                        attempts.Add($"{label}: {error}");
+                        continue;
+                    }
+
+                    var okayId = envelope.centralizeOkayIDresponse;
+
+                    if (okayId == null)
+                    {
+                        attempts.Add($"{label}: OkayID response body was missing");
+                        continue;
+                    }
+
+                    if (!string.Equals(okayId.status, "success", StringComparison.OrdinalIgnoreCase))
+                    {
+                        attempts.Add($"{label}: {okayId.message ?? "OkayID did not report success"}");
                         continue;
                     }
 
                     var fields = new Dictionary<int, string>();
-                    var maps = parsed.result?.FirstOrDefault()?.ListVerifiedFields?.pFieldMaps;
+                    var maps = okayId.result?
+                        .FirstOrDefault()?
+                        .ListVerifiedFields?
+                        .pFieldMaps;
+
                     if (maps != null)
                     {
-                        foreach (var m in maps)
+                        foreach (var map in maps)
                         {
-                            if (m.Field_Visual != null)
-                                fields[m.FieldType] = m.Field_Visual;
+                            if (string.IsNullOrWhiteSpace(map.Field_Visual))
+                                continue;
+
+                            int key = map.FieldType != 0
+                                ? map.FieldType
+                                : map.wFieldType;
+
+                            if (key != 0)
+                                fields[key] = map.Field_Visual;
                         }
                     }
 
-                    return (true, fields, parsed.documentType, null);
+                    KioskLocalLogger.LogInfo(
+                        "eKYC",
+                        $"OkayID succeeded. Journey={journeyId}, DocumentType={okayId.documentType ?? "unknown"}");
+
+                    return (true, fields, okayId.documentType, null);
                 }
                 catch (Exception ex)
                 {
-                    attempts.Add($"{label} ({baseUrl}): {ex.Message}");
+                    KioskLocalLogger.LogError(
+                        "eKYC",
+                        $"OkayID exception from {label}: {ex.GetType().Name}: {ex.Message}");
+
+                    attempts.Add($"{label}: {ex.Message}");
                 }
             }
 
             return (false, empty, null, string.Join(" | ", attempts));
         }
+        //    public async Task<(bool ok, Dictionary<int, string> extractedFields, string? documentType, string? error)>
+        //VerifyDocumentAsync(string journeyId, string frontImageBase64, string? backImageBase64 = null, CancellationToken ct = default)
+        //    {
+        //        var empty = new Dictionary<int, string>();
+        //        var (token, tokenError) = await EnsureBearerTokenAsync(ct);
+
+        //        if (token == null)
+        //            return (false, empty, null, tokenError);
+
+        //        var req = new CentralizeOkayIdRequest
+        //        {
+        //            mobile_number = "KIOSK",
+        //            ip_address = GetLocalIp(),
+        //            sender_id = null,
+        //            eKYCrequest = new OkayIdInner
+        //            {
+        //                journeyId = journeyId,
+        //                base64ImageString = frontImageBase64,
+        //                backImage = backImageBase64,
+        //                docTypeEnabled = true,
+        //                imageEnabled = false,
+        //                faceImageEnabled = false
+        //            }
+        //        };
+
+        //        var json = JsonSerializer.Serialize(req);
+        //        var attempts = new List<string>();
+        //        bool retried = false;
+
+        //        foreach (var (label, baseUrl) in BaseUrls)
+        //        {
+        //            if (string.IsNullOrWhiteSpace(baseUrl))
+        //                continue;
+
+        //            try
+        //            {
+        //                var url = baseUrl.TrimEnd('/') + "/api/eKYC/eKYC_CentralizeOkayID_request";
+        //                var (status, body) = await SendAuthedAsync(url, json, token, ct);
+
+        //                if (status == HttpStatusCode.Unauthorized && !retried)
+        //                {
+        //                    retried = true;
+        //                    InvalidateToken();
+
+        //                    var (freshToken, freshErr) = await EnsureBearerTokenAsync(ct);
+
+        //                    if (freshToken == null)
+        //                    {
+        //                        attempts.Add($"{label} ({baseUrl}): {freshErr}");
+        //                        continue;
+        //                    }
+
+        //                    token = freshToken;
+        //                    (status, body) = await SendAuthedAsync(url, json, token, ct);
+        //                }
+
+        //                if (status != HttpStatusCode.OK)
+        //                {
+        //                    attempts.Add($"{label} ({baseUrl}): HTTP {(int)status}");
+        //                    continue;
+        //                }
+
+        //                if (!TryParseOkayIdResponse(body, out var parsed, out var parseError))
+        //                {
+        //                    System.Diagnostics.Debug.WriteLine(
+        //                        $"[eKYC] OkayID unexpected response from {label}: {TruncateForLog(body)}");
+
+        //                    attempts.Add($"{label} ({baseUrl}): {parseError}");
+        //                    continue;
+        //                }
+
+        //                var fields = new Dictionary<int, string>();
+        //                var maps = parsed!.result?.FirstOrDefault()?.ListVerifiedFields?.pFieldMaps;
+
+        //                if (maps != null)
+        //                {
+        //                    foreach (var map in maps)
+        //                    {
+        //                        if (!string.IsNullOrWhiteSpace(map.Field_Visual))
+        //                            fields[map.FieldType] = map.Field_Visual!;
+        //                    }
+        //                }
+
+        //                return (true, fields, parsed.documentType, null);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                attempts.Add($"{label} ({baseUrl}): {ex.Message}");
+        //            }
+        //        }
+
+        //        return (false, empty, null, string.Join(" | ", attempts));
+        //    }
+        private static bool TryParseOkayIdResponse(
+    string body,
+    out CentralizeOkayIdResponse? response,
+    out string error)
+        {
+            response = null;
+            error = "OkayID response could not be interpreted.";
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                error = "OkayID returned an empty response.";
+                return false;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+
+                if (TryFindOkayIdObject(document.RootElement, out var okayIdElement))
+                {
+                    response = JsonSerializer.Deserialize<CentralizeOkayIdResponse>(
+                        okayIdElement.GetRawText(),
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (response != null &&
+                        string.Equals(response.status, "success", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    error = response?.message ?? "OkayID did not report success.";
+                    return false;
+                }
+
+                string? wrapperMessage =
+                    FindStringProperty(document.RootElement, "response_message1") ??
+                    FindStringProperty(document.RootElement, "response_message") ??
+                    FindStringProperty(document.RootElement, "message");
+
+                error = !string.IsNullOrWhiteSpace(wrapperMessage)
+                    ? wrapperMessage
+                    : "OkayID response did not contain a successful result.";
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                error = "Unable to parse OkayID response: " + ex.Message;
+                return false;
+            }
+        }
+
+        private static bool TryFindOkayIdObject(JsonElement element, out JsonElement result)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                string? status = GetStringProperty(element, "status");
+
+                bool looksLikeOkayId =
+                    HasProperty(element, "result") ||
+                    HasProperty(element, "documentType");
+
+                if (looksLikeOkayId &&
+                    string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = element.Clone();
+                    return true;
+                }
+
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (TryFindOkayIdObject(property.Value, out result))
+                        return true;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (TryFindOkayIdObject(item, out result))
+                        return true;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.String)
+            {
+                string? text = element.GetString();
+
+                if (!string.IsNullOrWhiteSpace(text) &&
+                    text.TrimStart().StartsWith("{"))
+                {
+                    try
+                    {
+                        using var nested = JsonDocument.Parse(text);
+
+                        if (TryFindOkayIdObject(nested.RootElement, out result))
+                            return true;
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            result = default;
+            return false;
+        }
+
+        private static bool HasProperty(JsonElement element, string propertyName)
+        {
+            if (element.ValueKind != JsonValueKind.Object)
+                return false;
+
+            foreach (var property in element.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string? GetStringProperty(JsonElement element, string propertyName)
+        {
+            if (element.ValueKind != JsonValueKind.Object)
+                return null;
+
+            foreach (var property in element.EnumerateObject())
+            {
+                if (!string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (property.Value.ValueKind == JsonValueKind.String)
+                    return property.Value.GetString();
+
+                return property.Value.ToString();
+            }
+
+            return null;
+        }
+
+        private static string? FindStringProperty(JsonElement element, string propertyName)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (property.Value.ValueKind == JsonValueKind.String)
+                            return property.Value.GetString();
+
+                        var value = property.Value.ToString();
+
+                        if (!string.IsNullOrWhiteSpace(value))
+                            return value;
+                    }
+
+                    var nested = FindStringProperty(property.Value, propertyName);
+
+                    if (!string.IsNullOrWhiteSpace(nested))
+                        return nested;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    var nested = FindStringProperty(item, propertyName);
+
+                    if (!string.IsNullOrWhiteSpace(nested))
+                        return nested;
+                }
+            }
+
+            return null;
+        }
+
+        private static string TruncateForLog(string? value, int maxLength = 2000)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "";
+
+            return value.Length <= maxLength
+                ? value
+                : value.Substring(0, maxLength) + "...";
+        }
+        //public async Task<(bool ok, Dictionary<int, string> extractedFields, string? documentType, string? error)>
+        //    VerifyDocumentAsync(string journeyId, string frontImageBase64, string? backImageBase64 = null, CancellationToken ct = default)
+        //{
+        //    var empty = new Dictionary<int, string>();
+        //    var (token, tokenError) = await EnsureBearerTokenAsync(ct);
+        //    if (token == null) return (false, empty, null, tokenError);
+
+        //    var req = new CentralizeOkayIdRequest
+        //    {
+        //        mobile_number = "KIOSK",
+        //        ip_address = GetLocalIp(),
+        //        sender_id = null,
+        //        eKYCrequest = new OkayIdInner
+        //        {
+        //            journeyId = journeyId,
+        //            base64ImageString = frontImageBase64,
+        //            backImage = backImageBase64,
+        //            docTypeEnabled = true,
+        //            imageEnabled = false,
+        //            faceImageEnabled = false
+        //        }
+        //    };
+        //    var json = JsonSerializer.Serialize(req);
+        //    var attempts = new List<string>();
+        //    bool retried = false;
+
+        //    foreach (var (label, baseUrl) in BaseUrls)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(baseUrl)) continue;
+
+        //        try
+        //        {
+        //            var url = baseUrl.TrimEnd('/') + "/api/eKYC/eKYC_CentralizeOkayID_request";
+        //            var (status, body) = await SendAuthedAsync(url, json, token, ct);
+
+        //            if (status == HttpStatusCode.Unauthorized && !retried)
+        //            {
+        //                retried = true;
+        //                InvalidateToken();
+        //                var (freshToken, freshErr) = await EnsureBearerTokenAsync(ct);
+        //                if (freshToken == null) { attempts.Add($"{label} ({baseUrl}): {freshErr}"); continue; }
+        //                token = freshToken;
+        //                (status, body) = await SendAuthedAsync(url, json, token, ct);
+        //            }
+
+        //            if (status != HttpStatusCode.OK)
+        //            {
+        //                attempts.Add($"{label} ({baseUrl}): HTTP {(int)status}");
+        //                continue;
+        //            }
+
+        //            var parsed = JsonSerializer.Deserialize<CentralizeOkayIdResponse>(body);
+        //            if (parsed?.status != "success")
+        //            {
+        //                attempts.Add($"{label} ({baseUrl}): {parsed?.message ?? "OkayID call did not report success"}");
+        //                continue;
+        //            }
+
+        //            var fields = new Dictionary<int, string>();
+        //            var maps = parsed.result?.FirstOrDefault()?.ListVerifiedFields?.pFieldMaps;
+        //            if (maps != null)
+        //            {
+        //                foreach (var m in maps)
+        //                {
+        //                    if (m.Field_Visual != null)
+        //                        fields[m.FieldType] = m.Field_Visual;
+        //                }
+        //            }
+
+        //            return (true, fields, parsed.documentType, null);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            attempts.Add($"{label} ({baseUrl}): {ex.Message}");
+        //        }
+        //    }
+
+        //    return (false, empty, null, string.Join(" | ", attempts));
+        //}
 
         // ============================================================
         // VerifyPassportAuthenticityAsync - OkayDoc, Passport variant only.
@@ -866,26 +1324,41 @@ namespace OmniKiosk.Wpf.Services.Ekyc
         // inferred). Called once, after OkayID, OkayDoc, OkayFace and
         // OkayLive have all run against the SAME journeyId.
         // ============================================================
-        public async Task<ScorecardOutcome> GetScorecardResultAsync(string journeyId, CancellationToken ct = default)
+        public async Task<ScorecardOutcome> GetScorecardResultAsync(
+    string journeyId,
+    CancellationToken ct = default)
         {
             var (token, tokenError) = await EnsureBearerTokenAsync(ct);
+
             if (token == null)
-                return new ScorecardOutcome { CallSucceeded = false, Passed = null, ErrorMessage = tokenError };
+            {
+                return new ScorecardOutcome
+                {
+                    CallSucceeded = false,
+                    Passed = null,
+                    ErrorMessage = tokenError
+                };
+            }
 
             var req = new GetScorecardRequest
             {
                 mobile_number = "KIOSK",
                 ip_address = GetLocalIp(),
                 sender_id = null,
-                eKYCrequest = new ScorecardInner { journeyId = journeyId }
+
+                // IMPORTANT:
+                // NotificationEngine expects journeyId at the ROOT.
+                journeyId = journeyId
             };
+
             var json = JsonSerializer.Serialize(req);
             var attempts = new List<string>();
             bool retried = false;
 
             foreach (var (label, baseUrl) in BaseUrls)
             {
-                if (string.IsNullOrWhiteSpace(baseUrl)) continue;
+                if (string.IsNullOrWhiteSpace(baseUrl))
+                    continue;
 
                 try
                 {
@@ -896,50 +1369,101 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                     {
                         retried = true;
                         InvalidateToken();
+
                         var (freshToken, freshErr) = await EnsureBearerTokenAsync(ct);
-                        if (freshToken == null) { attempts.Add($"{label} ({baseUrl}): {freshErr}"); continue; }
+
+                        if (freshToken == null)
+                        {
+                            attempts.Add($"{label}: {freshErr}");
+                            continue;
+                        }
+
                         token = freshToken;
                         (status, body) = await SendAuthedAsync(url, json, token, ct);
                     }
 
                     if (status != HttpStatusCode.OK)
                     {
-                        attempts.Add($"{label} ({baseUrl}): HTTP {(int)status}");
+                        attempts.Add($"{label}: HTTP {(int)status}");
                         continue;
                     }
 
-                    var parsed = JsonSerializer.Deserialize<GetScorecardResponse>(body);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
 
-                    if (!string.Equals(parsed?.status, "success", StringComparison.OrdinalIgnoreCase))
+                    var envelope = JsonSerializer.Deserialize<GetScorecardEnvelope>(body, options);
+
+                    if (envelope == null)
+                    {
+                        attempts.Add($"{label}: Invalid Scorecard response");
+                        continue;
+                    }
+
+                    if (!envelope.success)
+                    {
+                        string error =
+                            envelope.response_message1 ??
+                            envelope.response_message ??
+                            "Scorecard request failed";
+
+                        return new ScorecardOutcome
+                        {
+                            CallSucceeded = false,
+                            Passed = null,
+                            ErrorMessage = error,
+                            RawJson = body
+                        };
+                    }
+
+                    var scorecard = envelope.getscorecardresultResponse;
+
+                    if (scorecard == null)
+                    {
+                        return new ScorecardOutcome
+                        {
+                            CallSucceeded = false,
+                            Passed = null,
+                            ErrorMessage = "Scorecard response was missing",
+                            RawJson = body
+                        };
+                    }
+
+                    if (!string.Equals(scorecard.status, "success", StringComparison.OrdinalIgnoreCase))
                     {
                         return new ScorecardOutcome
                         {
                             CallSucceeded = true,
                             Passed = false,
-                            ErrorMessage = parsed?.message ?? "Scorecard status was not success",
+                            ErrorMessage = scorecard.message ?? "Scorecard did not report success",
                             RawJson = body
                         };
                     }
 
-                    if (parsed.scorecardResultList == null || parsed.scorecardResultList.Count == 0)
+                    if (scorecard.scorecardResultList == null ||
+                        scorecard.scorecardResultList.Count == 0)
                     {
                         return new ScorecardOutcome
                         {
                             CallSucceeded = true,
                             Passed = false,
-                            ErrorMessage = "scorecardResultList missing or empty",
+                            ErrorMessage = "Scorecard result was empty",
                             RawJson = body
                         };
                     }
 
-                    var docResults = parsed.scorecardResultList
-                        .Select(d => (DocType: d.docType ?? "unknown", ScorecardStatus: d.scorecardStatus ?? "unknown"))
+                    var results = scorecard.scorecardResultList
+                        .Select(x => (
+                            DocType: x.docType ?? "unknown",
+                            ScorecardStatus: x.scorecardStatus ?? "unknown"))
                         .ToList();
 
-                    // Every document in the list must be "clear" - if this
-                    // journey covers multiple documents (e.g. MyKad front
-                    // and back), all of them need to be clear, not just one.
-                    bool allClear = docResults.All(d => string.Equals(d.ScorecardStatus, "clear", StringComparison.OrdinalIgnoreCase));
+                    bool allClear = results.All(x =>
+                        string.Equals(
+                            x.ScorecardStatus,
+                            "clear",
+                            StringComparison.OrdinalIgnoreCase));
 
                     return new ScorecardOutcome
                     {
@@ -947,20 +1471,199 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                         Passed = allClear,
                         ErrorMessage = allClear
                             ? null
-                            : "Not every document scored 'clear': " + string.Join(", ", docResults.Select(d => $"{d.DocType}={d.ScorecardStatus}")),
+                            : "Scorecard did not pass: " +
+                              string.Join(
+                                  ", ",
+                                  results.Select(x =>
+                                      $"{x.DocType}={x.ScorecardStatus}")),
                         RawJson = body,
-                        DocumentResults = docResults
+                        DocumentResults = results
                     };
                 }
                 catch (Exception ex)
                 {
-                    attempts.Add($"{label} ({baseUrl}): {ex.Message}");
+                    KioskLocalLogger.LogError(
+                        "eKYC",
+                        $"Scorecard exception from {label}: {ex.GetType().Name}: {ex.Message}");
+
+                    attempts.Add($"{label}: {ex.Message}");
                 }
             }
 
-            return new ScorecardOutcome { CallSucceeded = false, Passed = null, ErrorMessage = string.Join(" | ", attempts) };
+            return new ScorecardOutcome
+            {
+                CallSucceeded = false,
+                Passed = null,
+                ErrorMessage = string.Join(" | ", attempts)
+            };
+        }
+        //public async Task<ScorecardOutcome> GetScorecardResultAsync(string journeyId, CancellationToken ct = default)
+        //{
+        //    var (token, tokenError) = await EnsureBearerTokenAsync(ct);
+        //    if (token == null)
+        //        return new ScorecardOutcome { CallSucceeded = false, Passed = null, ErrorMessage = tokenError };
+
+        //    var req = new GetScorecardRequest
+        //    {
+        //        mobile_number = "KIOSK",
+        //        ip_address = GetLocalIp(),
+        //        sender_id = null,
+        //        eKYCrequest = new ScorecardInner { journeyId = journeyId }
+        //    };
+        //    var json = JsonSerializer.Serialize(req);
+        //    var attempts = new List<string>();
+        //    bool retried = false;
+
+        //    foreach (var (label, baseUrl) in BaseUrls)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(baseUrl)) continue;
+
+        //        try
+        //        {
+        //            var url = baseUrl.TrimEnd('/') + "/api/eKYC/Getscorecard_result";
+        //            var (status, body) = await SendAuthedAsync(url, json, token, ct);
+
+        //            if (status == HttpStatusCode.Unauthorized && !retried)
+        //            {
+        //                retried = true;
+        //                InvalidateToken();
+        //                var (freshToken, freshErr) = await EnsureBearerTokenAsync(ct);
+        //                if (freshToken == null) { attempts.Add($"{label} ({baseUrl}): {freshErr}"); continue; }
+        //                token = freshToken;
+        //                (status, body) = await SendAuthedAsync(url, json, token, ct);
+        //            }
+
+        //            if (status != HttpStatusCode.OK)
+        //            {
+        //                attempts.Add($"{label} ({baseUrl}): HTTP {(int)status}");
+        //                continue;
+        //            }
+
+        //            //var parsed = JsonSerializer.Deserialize<GetScorecardResponse>(body);
+        //            var parsed = ParseScorecardResponse(body);
+
+        //            if (!string.Equals(parsed?.status, "success", StringComparison.OrdinalIgnoreCase))
+        //            {
+        //                return new ScorecardOutcome
+        //                {
+        //                    CallSucceeded = true,
+        //                    Passed = false,
+        //                    ErrorMessage = parsed?.message ?? "Scorecard status was not success",
+        //                    RawJson = body
+        //                };
+        //            }
+
+        //            if (parsed.scorecardResultList == null || parsed.scorecardResultList.Count == 0)
+        //            {
+        //                return new ScorecardOutcome
+        //                {
+        //                    CallSucceeded = true,
+        //                    Passed = false,
+        //                    ErrorMessage = "scorecardResultList missing or empty",
+        //                    RawJson = body
+        //                };
+        //            }
+
+        //            var docResults = parsed.scorecardResultList
+        //                .Select(d => (DocType: d.docType ?? "unknown", ScorecardStatus: d.scorecardStatus ?? "unknown"))
+        //                .ToList();
+
+        //            // Every document in the list must be "clear" - if this
+        //            // journey covers multiple documents (e.g. MyKad front
+        //            // and back), all of them need to be clear, not just one.
+        //            bool allClear = docResults.All(d => string.Equals(d.ScorecardStatus, "clear", StringComparison.OrdinalIgnoreCase));
+
+        //            return new ScorecardOutcome
+        //            {
+        //                CallSucceeded = true,
+        //                Passed = allClear,
+        //                ErrorMessage = allClear
+        //                    ? null
+        //                    : "Not every document scored 'clear': " + string.Join(", ", docResults.Select(d => $"{d.DocType}={d.ScorecardStatus}")),
+        //                RawJson = body,
+        //                DocumentResults = docResults
+        //            };
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            attempts.Add($"{label} ({baseUrl}): {ex.Message}");
+        //        }
+        //    }
+
+        //    return new ScorecardOutcome { CallSucceeded = false, Passed = null, ErrorMessage = string.Join(" | ", attempts) };
+        //}
+        private static GetScorecardResponse? ParseScorecardResponse(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+                return null;
+
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+
+                if (TryFindScorecardObject(document.RootElement, out var result))
+                {
+                    return JsonSerializer.Deserialize<GetScorecardResponse>(
+                        result.GetRawText(),
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+            }
+            catch
+            {
+            }
+
+            return null;
         }
 
+        private static bool TryFindScorecardObject(JsonElement element, out JsonElement result)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                bool hasScorecardList = HasProperty(element, "scorecardResultList");
+
+                if (hasScorecardList)
+                {
+                    result = element.Clone();
+                    return true;
+                }
+
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (TryFindScorecardObject(property.Value, out result))
+                        return true;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (TryFindScorecardObject(item, out result))
+                        return true;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.String)
+            {
+                string? text = element.GetString();
+
+                if (!string.IsNullOrWhiteSpace(text) &&
+                    text.TrimStart().StartsWith("{"))
+                {
+                    try
+                    {
+                        using var nested = JsonDocument.Parse(text);
+
+                        if (TryFindScorecardObject(nested.RootElement, out result))
+                            return true;
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            result = default;
+            return false;
+        }
         public async Task<FaceMatchOutcome> MatchFaceAsync(
             string journeyId, string idCardImageBase64, string liveImageBase64, CancellationToken ct = default)
         {
@@ -1018,23 +1721,79 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                         attempts.Add($"{label} ({baseUrl}): {parsed?.response_message1 ?? inner?.message ?? "request rejected"}");
                         continue;
                     }
+                    double confidence = inner.result_idcard?.confidence ?? 0;
+                    double livenessProbability = inner.imageBestLiveness?.probability ?? 0;
+                    decimal livenessQuality = inner.imageBestLiveness?.quality ?? 0;
 
-                    double? confidence = inner.result_idcard?.confidence;
                     string? code = inner.messageCode ?? inner.message;
                     FriendlyMessages.TryGetValue(code ?? "", out var friendly);
+
+                    bool apiProcessedSuccessfully =
+                        string.Equals(inner.status, "success", StringComparison.OrdinalIgnoreCase);
+
+                    bool facePassed =
+                        confidence >= Innov8tifFaceMatchThreshold;
+
+                    bool livenessPassed =
+                        livenessProbability >= Innov8tifLivenessProbabilityThreshold;
+
+                    bool matched =
+                        apiProcessedSuccessfully &&
+                        facePassed &&
+                        livenessPassed;
+
+                    if (apiProcessedSuccessfully && !matched && string.IsNullOrWhiteSpace(friendly))
+                    {
+                        if (!facePassed && !livenessPassed)
+                        {
+                            friendly =
+                                $"Face match and liveness did not meet the required verification levels. " +
+                                $"Face: {confidence:0.#}% (required {Innov8tifFaceMatchThreshold:0}%). " +
+                                $"Liveness: {livenessProbability:0.00} (required {Innov8tifLivenessProbabilityThreshold:0.0}).";
+                        }
+                        else if (!facePassed)
+                        {
+                            friendly =
+                                $"Face match was {confidence:0.#}%. " +
+                                $"At least {Innov8tifFaceMatchThreshold:0}% is required.";
+                        }
+                        else if (!livenessPassed)
+                        {
+                            friendly =
+                                $"Liveness verification was {livenessProbability:0.00}. " +
+                                $"At least {Innov8tifLivenessProbabilityThreshold:0.0} is required.";
+                        }
+                    }
 
                     return new FaceMatchOutcome
                     {
                         CallSucceeded = true,
-                        Matched = string.Equals(inner.status, "success", StringComparison.OrdinalIgnoreCase),
+                        Matched = matched,
                         ScorePercent = confidence,
-                        LivenessProbability = inner.imageBestLiveness?.probability,
-                        LivenessQuality = inner.imageBestLiveness?.quality,
+                        LivenessProbability = livenessProbability,
+                        LivenessQuality = livenessQuality,
                         Status = inner.status,
                         MessageCode = code,
                         ErrorMessage = inner.message,
                         FriendlyMessage = friendly
                     };
+
+                    //double? confidence = inner.result_idcard?.confidence;
+                    //string? code = inner.messageCode ?? inner.message;
+                    //FriendlyMessages.TryGetValue(code ?? "", out var friendly);
+
+                    //return new FaceMatchOutcome
+                    //{
+                    //    CallSucceeded = true,
+                    //    Matched = string.Equals(inner.status, "success", StringComparison.OrdinalIgnoreCase),
+                    //    ScorePercent = confidence,
+                    //    LivenessProbability = inner.imageBestLiveness?.probability,
+                    //    LivenessQuality = inner.imageBestLiveness?.quality,
+                    //    Status = inner.status,
+                    //    MessageCode = code,
+                    //    ErrorMessage = inner.message,
+                    //    FriendlyMessage = friendly
+                    //};
                 }
                 catch (Exception ex)
                 {

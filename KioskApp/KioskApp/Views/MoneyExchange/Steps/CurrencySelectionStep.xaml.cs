@@ -1,7 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,6 +15,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
     {
         private readonly MoneyExchangeFlowController _ctl;
         private readonly MoneyExchangeApiClient _api = new();
+
         public event EventHandler? NextRequested;
         public event EventHandler? BackRequested;
         public event EventHandler? ExitRequested;
@@ -23,6 +23,18 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private CurrencyDisplayOption? _selected;
         private decimal? _selectedForeignAmount;
         private decimal _roundedMyrAmount;
+
+        private static readonly Dictionary<string, decimal[]> PresetAmountsByCurrency = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["USD"] = new decimal[] { 50, 100, 200, 500 },
+            ["SGD"] = new decimal[] { 50, 100, 200, 500 },
+            ["EUR"] = new decimal[] { 50, 100, 200, 500 },
+            ["GBP"] = new decimal[] { 50, 100, 200, 500 },
+            ["AUD"] = new decimal[] { 50, 100, 200, 500 },
+            ["CNY"] = new decimal[] { 200, 500, 1000, 2000 },
+            ["JPY"] = new decimal[] { 5000, 10000, 20000, 50000 },
+            ["IDR"] = new decimal[] { 500000, 1000000, 2000000, 5000000 }
+        };
 
         public CurrencySelectionStep(MoneyExchangeFlowController ctl)
         {
@@ -35,8 +47,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             TitleText.Text = L10n.T("Mx_SelectCurrency", "Select currency");
             SubtitleText.Text = L10n.T("Mx_SelectCurrencySubtitle", "Choose the foreign currency you'd like to exchange for Malaysian Ringgit");
             BtnBack.Content = L10n.T("Mx_Back", "Back");
-            BtnNext.Content = L10n.T("Mx_Next", "Next");
-            BtnOtherAmount.Content = L10n.T("Mx_OtherAmount", "Or enter a custom amount...");
+            BtnNext.Content = L10n.T("Mx_Next", "Continue");
+            BtnOtherAmount.Content = L10n.T("Mx_OtherAmount", "Enter another amount");
 
             await LoadCurrenciesAsync();
         }
@@ -44,6 +56,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private async System.Threading.Tasks.Task LoadCurrenciesAsync()
         {
             LstCurrencies.Visibility = Visibility.Collapsed;
+            AmountEntryPanel.Visibility = Visibility.Collapsed;
             ErrorPanel.Visibility = Visibility.Collapsed;
             LoadingPanel.Visibility = Visibility.Visible;
 
@@ -59,7 +72,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     FlagUri = FlagUri(c.FlagCountryCode ?? c.CurrencyCode.ToLowerInvariant())
                 }).ToList();
 
-                foreach (var c in currencies) c.RateDisplay = $"1 = RM {c.RateToMyr:0.00##}";
+                foreach (var c in currencies)
+                    c.RateDisplay = $"1 = RM {c.RateToMyr:0.00##}";
 
                 LstCurrencies.ItemsSource = currencies;
                 LoadingPanel.Visibility = Visibility.Collapsed;
@@ -67,105 +81,129 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Failed to load currencies: " + ex.Message);
+                KioskLocalLogger.LogError("CurrencySelection", "Failed to load currencies: " + ex.Message);
                 LoadingPanel.Visibility = Visibility.Collapsed;
                 ErrorPanel.Visibility = Visibility.Visible;
             }
         }
 
-        private async void BtnRetryLoad_Click(object sender, RoutedEventArgs e) => await LoadCurrenciesAsync();
+        private async void BtnRetryLoad_Click(object sender, RoutedEventArgs e)
+        {
+            await LoadCurrenciesAsync();
+        }
 
-        // Restored exactly to your original local SVG pack URI implementation
-        private static Uri FlagUri(string isoCode) => new($"pack://application:,,,/Assets/Flags/{isoCode}.svg");
+        private static Uri FlagUri(string isoCode)
+        {
+            return new Uri($"pack://application:,,,/Assets/Flags/{isoCode}.svg");
+        }
 
         private void CurrencyCard_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is not Border card || card.Tag is not CurrencyDisplayOption option) return;
+            if (sender is not Border card || card.Tag is not CurrencyDisplayOption option)
+                return;
 
             _selected = option;
             _selectedForeignAmount = null;
+            _roundedMyrAmount = 0;
+
             SelectedAmountPanel.Visibility = Visibility.Collapsed;
-
-            foreach (var item in LstCurrencies.Items)
-            {
-                if (LstCurrencies.ItemContainerGenerator.ContainerFromItem(item) is ContentPresenter presenter)
-                {
-                    if (VisualTreeHelperFindBorder(presenter) is Border b)
-                    {
-                        bool isThis = ReferenceEquals(item, option);
-                        b.BorderBrush = isThis
-                            ? (Brush)Application.Current.Resources["PrimaryBrush"]
-                            : (Brush)Application.Current.Resources["BorderBrush"];
-                        b.BorderThickness = new Thickness(isThis ? 2.5 : 1);
-                        b.Background = isThis
-                            ? (Brush)Application.Current.Resources["PrimarySurfaceBrush"]
-                            : (Brush)Application.Current.Resources["CardBrush"];
-                    }
-                }
-            }
-
-            AmountEntryLabel.Text = L10n.T("Mx_HowMuchToExchange", "How much would you like to exchange?");
-            AmountEntryPanel.Visibility = Visibility.Visible;
             AmountLimitWarningPanel.Visibility = Visibility.Collapsed;
             BtnNext.IsEnabled = false;
 
-            BuildPresetAmountButtons(option);
-        }
+            foreach (var item in LstCurrencies.Items)
+            {
+                if (LstCurrencies.ItemContainerGenerator.ContainerFromItem(item) is not ContentPresenter presenter)
+                    continue;
 
-        private static readonly Dictionary<string, decimal[]> PresetAmountsByCurrency = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["USD"] = new decimal[] { 50, 100, 200, 500 },
-            ["SGD"] = new decimal[] { 50, 100, 200, 500 },
-            ["EUR"] = new decimal[] { 50, 100, 200, 500 },
-            ["GBP"] = new decimal[] { 50, 100, 200, 500 },
-            ["AUD"] = new decimal[] { 50, 100, 200, 500 },
-            ["CNY"] = new decimal[] { 200, 500, 1000, 2000 },
-            ["JPY"] = new decimal[] { 5000, 10000, 20000, 50000 },
-            ["IDR"] = new decimal[] { 500000, 1000000, 2000000, 5000000 },
-        };
+                var border = VisualTreeHelperFindBorder(presenter);
+                if (border == null)
+                    continue;
+
+                bool selected = ReferenceEquals(item, option);
+                border.BorderBrush = (Brush)Application.Current.Resources[selected ? "PrimaryBrush" : "BorderBrush"];
+                border.BorderThickness = new Thickness(selected ? 2.5 : 1);
+                border.Background = (Brush)Application.Current.Resources[selected ? "PrimarySurfaceBrush" : "CardBrush"];
+            }
+
+            SelectedCurrencyText.Text = $"{option.Code}  •  {option.CountryName}";
+            SelectedRateText.Text = $"1 {option.Code} = RM {option.RateToMyr:0.00##}";
+            AmountEntryLabel.Text = L10n.T("Mx_HowMuchToExchange", "How much would you like to exchange?");
+
+            BuildPresetAmountButtons(option);
+            AmountEntryPanel.Visibility = Visibility.Visible;
+            AmountEntryPanel.BringIntoView();
+        }
 
         private void BuildPresetAmountButtons(CurrencyDisplayOption option)
         {
             PresetAmountsGrid.Children.Clear();
 
-            decimal[] presets = PresetAmountsByCurrency.TryGetValue(option.Code, out var known)
+            var presets = PresetAmountsByCurrency.TryGetValue(option.Code, out var known)
                 ? known
                 : ComputeFallbackPresets((decimal)option.RateToMyr);
 
             foreach (var amount in presets)
             {
-                string amountFormat = (amount % 1 == 0) ? "0" : "0.####";
+                var payout = MoneyExchangeAmountCalculator.GetPayableMyr(amount, (decimal)option.RateToMyr);
+                var amountFormat = amount % 1 == 0 ? "0" : "0.##";
 
-                var btn = new Button
+                var content = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
+                content.Children.Add(new TextBlock
                 {
-                    Content = $"{option.Code} {amount.ToString(amountFormat)}",
+                    Text = $"{option.Code} {amount.ToString(amountFormat)}",
+                    FontSize = 23,
+                    FontWeight = FontWeights.Black,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
+                content.Children.Add(new TextBlock
+                {
+                    Text = $"≈ RM {payout:0}",
+                    FontSize = 15,
+                    Foreground = (Brush)Application.Current.Resources["TextSecondaryBrush"],
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 4, 0, 0)
+                });
+
+                var button = new Button
+                {
+                    Content = content,
                     Style = (Style)FindResource("AmountPresetButton"),
-                    FontSize = 20,
-                    FontWeight = FontWeights.Bold,
                     Tag = amount
                 };
-                btn.Click += PresetAmount_Click;
-                PresetAmountsGrid.Children.Add(btn);
+
+                button.Click += PresetAmount_Click;
+                PresetAmountsGrid.Children.Add(button);
             }
         }
 
         private static decimal[] ComputeFallbackPresets(decimal rateToMyr)
         {
-            if (rateToMyr <= 0) return new decimal[] { 50, 100, 200, 500 };
+            if (rateToMyr <= 0)
+                return new decimal[] { 50, 100, 200, 500 };
 
             decimal targetForeign = 100m / rateToMyr;
             decimal magnitude = 1;
-            while (magnitude * 10 <= targetForeign) magnitude *= 10;
-            while (magnitude > targetForeign && magnitude > 0.01m) magnitude /= 10;
 
-            decimal[] niceMultiples = { 1m, 2m, 5m };
+            while (magnitude * 10 <= targetForeign)
+                magnitude *= 10;
+
+            while (magnitude > targetForeign && magnitude > 0.01m)
+                magnitude /= 10;
+
+            decimal[] multiples = { 1m, 2m, 5m };
             decimal bestBase = magnitude;
             decimal bestDiff = decimal.MaxValue;
-            foreach (var mult in niceMultiples)
+
+            foreach (var multiplier in multiples)
             {
-                var candidate = magnitude * mult;
+                var candidate = magnitude * multiplier;
                 var diff = Math.Abs(candidate - targetForeign);
-                if (diff < bestDiff) { bestDiff = diff; bestBase = candidate; }
+
+                if (diff < bestDiff)
+                {
+                    bestDiff = diff;
+                    bestBase = candidate;
+                }
             }
 
             return new[] { bestBase, bestBase * 2, bestBase * 5, bestBase * 10 };
@@ -173,13 +211,14 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void PresetAmount_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button b && b.Tag is decimal amount)
+            if (sender is Button button && button.Tag is decimal amount)
                 SetSelectedAmount(amount);
         }
 
         private void BtnOtherAmount_Click(object sender, RoutedEventArgs e)
         {
-            if (_selected == null) return;
+            if (_selected == null)
+                return;
 
             var result = CustomAmountDialog.Show(
                 L10n.T("Mx_EnterAmountTitle", "Enter Amount"),
@@ -192,21 +231,23 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void SetSelectedAmount(decimal foreignAmount)
         {
-            if (_selected == null || foreignAmount <= 0) return;
+            if (_selected == null || foreignAmount <= 0)
+                return;
 
             _selectedForeignAmount = foreignAmount;
-            decimal rawMyr = foreignAmount * (decimal)_selected.RateToMyr;
-            _roundedMyrAmount = Math.Round(rawMyr, 0, MidpointRounding.AwayFromZero);
 
-            string format = (foreignAmount % 1 == 0) ? "0" : "0.##";
+            decimal exactMyr = MoneyExchangeAmountCalculator.GetExactMyr(foreignAmount, (decimal)_selected.RateToMyr);
+            _roundedMyrAmount = MoneyExchangeAmountCalculator.GetPayableMyr(foreignAmount, (decimal)_selected.RateToMyr);
+
+            string format = foreignAmount % 1 == 0 ? "0" : "0.##";
             SelectedForeignAmountText.Text = $"{_selected.Code} {foreignAmount.ToString(format)}";
+            RoundedMyrText.Text = $"RM {_roundedMyrAmount:0}";
 
-            bool wasRounded = rawMyr != _roundedMyrAmount;
-            if (wasRounded)
+            if (exactMyr != _roundedMyrAmount)
             {
-                RawMyrText.Text = $"RM {rawMyr:0.00}";
+                RawMyrText.Text = $"Exact conversion: RM {exactMyr:0.00}";
                 RawMyrText.Visibility = Visibility.Visible;
-                RoundingNoteText.Text = L10n.T("Mx_RoundingNote", "Rounded to nearest Ringgit for cash dispensing.");
+                RoundingNoteText.Text = L10n.T("Mx_RoundingNote", "Rounded to the nearest whole Ringgit for cash dispensing.");
                 RoundingNotePanel.Visibility = Visibility.Visible;
             }
             else
@@ -215,26 +256,33 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 RoundingNotePanel.Visibility = Visibility.Collapsed;
             }
 
-            RoundedMyrText.Text = string.Format(L10n.T("Mx_YoullReceive", "Receive RM {0:0.00}"), _roundedMyrAmount);
-
             SelectedAmountPanel.Visibility = Visibility.Visible;
             AmountLimitWarningPanel.Visibility = Visibility.Collapsed;
             BtnNext.IsEnabled = true;
+            SelectedAmountPanel.BringIntoView();
         }
 
         private static Border? VisualTreeHelperFindBorder(DependencyObject root)
         {
-            if (root is Border b) return b;
+            if (root is Border border)
+                return border;
+
             int count = VisualTreeHelper.GetChildrenCount(root);
+
             for (int i = 0; i < count; i++)
             {
                 var found = VisualTreeHelperFindBorder(VisualTreeHelper.GetChild(root, i));
-                if (found != null) return found;
+                if (found != null)
+                    return found;
             }
+
             return null;
         }
 
-        private void Back_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            BackRequested?.Invoke(this, EventArgs.Empty);
+        }
 
         private async void Next_Click(object sender, RoutedEventArgs e)
         {
@@ -257,23 +305,35 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     AmountLimitWarningText.Text = string.Format(
                         L10n.T("Mx_PerTxnLimitWarning", "This exceeds the maximum of RM {0:0.00} per transaction. Please choose a smaller amount, or visit your nearest branch for a larger exchange."),
                         result.PerTxnLimit);
+
                     AmountLimitWarningPanel.Visibility = Visibility.Visible;
                     BtnNext.IsEnabled = true;
+                    AmountLimitWarningPanel.BringIntoView();
                     return;
                 }
             }
             catch (Exception ex)
             {
-                KioskLocalLogger.LogError("CurrencySelection", "Per-transaction limit check failed (blocking as a precaution): " + ex.Message);
+                KioskLocalLogger.LogError("CurrencySelection", "Per-transaction limit check failed: " + ex.Message);
+
                 CustomDialog.ShowError(
                     L10n.T("Mx_LimitExceededTitle", "Unable to Proceed at This Kiosk"),
                     L10n.T("Mx_LimitCheckFailedBody", "We couldn't verify transaction limits. Please proceed to the counter for assistance."));
+
                 ExitRequested?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
             _ctl.State.FromCurrency = _selected.Code;
             _ctl.State.RateToMyr = _selected.RateToMyr;
+
+            // Customer's selected target.
+            _ctl.State.IntendedFromAmount = (double)foreignAmount;
+            _ctl.State.IntendedMyrAmount = (double)myrAmount;
+
+            // Keep target here temporarily because CustomerDetailsStep uses
+            // these values for its existing-customer limit pre-check.
+            // CashInStep resets them to zero and then stores only real stacked cash.
             _ctl.State.FromAmount = (double)foreignAmount;
             _ctl.State.MyrAmount = (double)myrAmount;
 

@@ -34,7 +34,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private bool _opened;
         private bool _stopping;
         private bool _handledThisSession;
+        private const int PreviewFps = 10;
+        private static readonly long PreviewIntervalTicks =
+            TimeSpan.TicksPerSecond / PreviewFps;
 
+        private long _lastPreviewTicks;
         // ================================================================
         // PREVIEW (JPEG-pull)
         //
@@ -47,8 +51,12 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // queueing it up behind other UI work.
         // ================================================================
 
-        private readonly byte[] _previewBuffer = new byte[200 * 1024];
-        private int _previewBusy;
+        // Preview is intentionally throttled so WPF cannot starve the native
+        // Eyecool detection/liveness pipeline. The provider sample proves
+        // JPEG-pull works on this kiosk; we keep the same architecture but
+        // cap display work to a customer-smooth rate.
+        //private long _lastPreviewDispatchMs;
+        private long _previewFrameNumber;
 
         // ================================================================
         // eKYC
@@ -72,7 +80,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private const int CALLBACK_EVENT_TIMEOUT = 102;
 
-        private const int CALLBACK_EVENT_MOTIVE = 7;
+        //private const int CALLBACK_EVENT_MOTIVE = 7;
 
         // ================================================================
         // IMAGE
@@ -277,6 +285,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
 
             _opened = false;
+            Interlocked.Exchange(ref _lastPreviewTicks, 0);
         }
 
         // ================================================================
@@ -318,11 +327,22 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // RETRY
         // ================================================================
 
-        private async void Retry_Click(
-            object sender,
-            RoutedEventArgs e)
+        //private async void Retry_Click(
+        //    object sender,
+        //    RoutedEventArgs e)
+        //{
+        //    await StartDetectAsync();
+        //}
+        private async void Retry_Click(object sender, RoutedEventArgs e)
         {
-            await StartDetectAsync();
+            WelcomePopup.IsOpen = false;
+            FailPopup.IsOpen = false;
+            _handledThisSession = false;
+
+            if (!_opened)
+                await StartCameraAndDetectAsync();
+            else
+                await StartDetectAsync();
         }
 
         // ================================================================
@@ -349,7 +369,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 Visibility.Collapsed;
 
             _stopping = false;
-
+            Interlocked.Exchange(ref _lastPreviewTicks, 0);
+            Interlocked.Exchange(ref _previewFrameNumber, 0);
+            VisImage.Source = null;
             try
             {
                 // --------------------------------------------------------
@@ -427,6 +449,25 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     File.ReadAllText(
                         paramsPath);
 
+                string sdkOverridePath = Path.Combine(
+    AppDomain.CurrentDomain.BaseDirectory,
+    "xmlParams.txt");
+
+                if (File.Exists(sdkOverridePath))
+                {
+                    KioskLocalLogger.LogError(
+                        "FaceVerification",
+                        "Eyecool xmlParams.txt override detected at: " + sdkOverridePath);
+
+                    // Eyecool gives xmlParams.txt precedence over ECF_Open parameters.
+                    // Keep an existing override synchronized with our approved kiosk XML.
+                    File.Copy(paramsPath, sdkOverridePath, true);
+
+                    KioskLocalLogger.LogInfo(
+                        "FaceVerification",
+                        "Eyecool xmlParams.txt synchronized with CameraConfig/xmlSamples_IR_ON.txt.");
+                }
+
                 // --------------------------------------------------------
                 // OPEN
                 // --------------------------------------------------------
@@ -444,6 +485,12 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 }
 
                 _opened = true;
+
+                // Give the dual VIS/NIR camera a short stabilization window
+                // before starting the heavier liveness pipeline. The vendor
+                // JpegPull sample naturally gets this pause because Open and
+                // Start are separate button actions.
+                await Task.Delay(500);
 
                 // --------------------------------------------------------
                 // START ASYNCHRONOUS LIVENESS
@@ -486,6 +533,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             try
             {
+                LogCameraPerformance("Before ECF_StartDetectAsyn");
+
                 int ret =
                     EcFaceCamSdkHelper
                         .ECF_StartDetectAsyn();
@@ -549,28 +598,51 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             // ------------------------------------------------------------
             // MOTION BLUR
             // ------------------------------------------------------------
+            //if (eventId == CALLBACK_EVENT_MOTIVE)
+            //{
+            //    long now = Environment.TickCount64;
 
-            if (eventId ==
-                CALLBACK_EVENT_MOTIVE)
-            {
-                Dispatcher.BeginInvoke(
-                    new Action(() =>
-                    {
-                        if (!IsLoaded ||
-                            _stopping)
-                        {
-                            return;
-                        }
+            //    if (now - Interlocked.Read(ref _lastMotionHintTicks) < 800)
+            //        return;
 
-                        HintText.Text =
-                            L10n.T(
-                                "Mx_KeepStill",
-                                "Please keep your face steady.");
-                    }),
-                    DispatcherPriority.Background);
+            //    Interlocked.Exchange(ref _lastMotionHintTicks, now);
 
-                return;
-            }
+            //    Dispatcher.BeginInvoke(
+            //        new Action(() =>
+            //        {
+            //            if (!IsLoaded || _stopping)
+            //                return;
+
+            //            HintText.Text = L10n.T(
+            //                "Mx_KeepStill",
+            //                "Please keep your face steady.");
+            //        }),
+            //        DispatcherPriority.Background);
+
+            //    return;
+            //}
+
+            //if (eventId ==
+            //    CALLBACK_EVENT_MOTIVE)
+            //{
+            //    Dispatcher.BeginInvoke(
+            //        new Action(() =>
+            //        {
+            //            if (!IsLoaded ||
+            //                _stopping)
+            //            {
+            //                return;
+            //            }
+
+            //            HintText.Text =
+            //                L10n.T(
+            //                    "Mx_KeepStill",
+            //                    "Please keep your face steady.");
+            //        }),
+            //        DispatcherPriority.Background);
+
+            //    return;
+            //}
 
             // ------------------------------------------------------------
             // SUCCESS
@@ -579,6 +651,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             if (eventId ==
                 CALLBACK_EVENT_SUCC)
             {
+                LogCameraPerformance("Eyecool SUCCESS");
                 if (_handledThisSession)
                     return;
 
@@ -605,31 +678,52 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
                     return;
                 }
-
                 Dispatcher.BeginInvoke(
-                    new Action(() =>
-                    {
-                        if (!IsLoaded ||
-                            _stopping)
-                        {
-                            return;
-                        }
+    new Action(async () =>
+    {
+        if (!IsLoaded || _stopping)
+            return;
 
-                        StatusText.Text =
-                            L10n.T(
-                                "Mx_CaptureSuccess",
-                                "Capture success ✅");
+        StatusText.Text = L10n.T(
+            "Mx_CaptureSuccess",
+            "Capture success ✅");
 
-                        _ctl.State.LiveFaceImageBase64 =
-                            Convert.ToBase64String(
-                                faceJpg);
+        _ctl.State.LiveFaceImageBase64 =
+            Convert.ToBase64String(faceJpg);
 
-                        _ = HandleCaptureAsync(
-                            faceJpg);
-                    }),
-                    DispatcherPriority.Background);
+        // Eyecool has finished its job.
+        // Close it BEFORE TaiSDK or Innov8tif processing starts.
+        StopCamera();
+
+        await HandleCaptureAsync(faceJpg);
+    }),
+    DispatcherPriority.Normal);
 
                 return;
+                //Dispatcher.BeginInvoke(
+                //    new Action(() =>
+                //    {
+                //        if (!IsLoaded ||
+                //            _stopping)
+                //        {
+                //            return;
+                //        }
+
+                //        StatusText.Text =
+                //            L10n.T(
+                //                "Mx_CaptureSuccess",
+                //                "Capture success ✅");
+
+                //        _ctl.State.LiveFaceImageBase64 =
+                //            Convert.ToBase64String(
+                //                faceJpg);
+
+                //        _ = HandleCaptureAsync(
+                //            faceJpg);
+                //    }),
+                //    DispatcherPriority.Background);
+
+                //return;
             }
 
             // ------------------------------------------------------------
@@ -639,6 +733,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             if (eventId ==
                 CALLBACK_EVENT_FAIL)
             {
+                LogCameraPerformance("Eyecool FAIL");
                 _handledThisSession = false;
 
                 Dispatcher.BeginInvoke(
@@ -705,74 +800,85 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // pixel data during EndInit(), so the buffer is safe to overwrite
         // on the next frame the moment EndInit() returns.
         // ================================================================
-
         private void HandlePreviewFrame()
         {
-            // Drop this frame if the previous one hasn't finished
-            // decoding/dispatching yet, rather than queueing up behind it.
-            if (Interlocked.CompareExchange(
-                    ref _previewBusy,
-                    1,
-                    0) != 0)
-            {
+            //if (_stopping || !_opened)
+            //    return;
+
+            //// The kiosk has substantially more UI/hardware work than the
+            //// vendor test application. Limit preview rendering to ~15 FPS
+            //// so JPEG preview work cannot compete aggressively with VIS/NIR
+            //// liveness detection. Detection callbacks are never throttled.
+            //long now = Environment.TickCount64;
+            //long last = Interlocked.Read(ref _lastPreviewDispatchMs);
+            //if (now - last < 66)
+            //    return;
+
+            //if (Interlocked.CompareExchange(ref _lastPreviewDispatchMs, now, last) != last)
+            //    return;
+
+            if (_stopping || !_opened)
                 return;
-            }
+
+            long now = DateTime.UtcNow.Ticks;
+            long last = Interlocked.Read(ref _lastPreviewTicks);
+
+            if (now - last < PreviewIntervalTicks)
+                return;
+
+            Interlocked.Exchange(ref _lastPreviewTicks, now);
 
             try
             {
-                int dataLen = 0;
+                byte[] jpeg = new byte[200 * 1024];
+                int[] dataLen = new int[1];
 
-                int ret =
-                    EcFaceCamSdkHelper
-                        .ECF_CopyFrameWithAlpha(
-                            IMAGE_TYPE_VIS,
-                            _previewBuffer,
-                            ref dataLen,
-                            null);
+                int ret = EcFaceCamSdkHelper.ECF_CopyFrameWithAlphaProvider(
+                    IMAGE_TYPE_VIS, jpeg, dataLen, null);
 
-                if (ret != 0 ||
-                    dataLen <= 0 ||
-                    dataLen > _previewBuffer.Length)
-                {
+                if (ret != 0 || dataLen[0] <= 0 || dataLen[0] > jpeg.Length)
                     return;
-                }
 
-                var frame = new BitmapImage();
-
-                frame.BeginInit();
-                frame.CacheOption = BitmapCacheOption.OnLoad;
-                frame.StreamSource =
-                    new MemoryStream(
-                        _previewBuffer,
-                        0,
-                        dataLen);
-                frame.EndInit();
-                frame.Freeze();
+                int length = dataLen[0];
+                byte[] frameBytes = new byte[length];
+                Buffer.BlockCopy(jpeg, 0, frameBytes, 0, length);
+                Interlocked.Increment(ref _previewFrameNumber);
 
                 Dispatcher.BeginInvoke(
-                    new Action(() =>
-                    {
-                        if (!IsLoaded ||
-                            _stopping)
-                        {
-                            return;
-                        }
-
-                        VisImage.Source = frame;
-                    }),
-                    DispatcherPriority.Normal);
+                    new Action<byte[]>(ShowPreviewImage),
+                    DispatcherPriority.Background,
+                    frameBytes);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(
-                    "[Eyecool] Preview frame error: " +
-                    ex.Message);
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    "Preview callback error: " + ex.Message);
             }
-            finally
+        }
+
+        private void ShowPreviewImage(byte[] jpeg)
+        {
+            if (!IsLoaded || _stopping || jpeg == null || jpeg.Length == 0)
+                return;
+
+            try
             {
-                Interlocked.Exchange(
-                    ref _previewBusy,
-                    0);
+                using var stream = new MemoryStream(jpeg, false);
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                image.StreamSource = stream;
+                image.EndInit();
+                image.Freeze();
+                VisImage.Source = image;
+            }
+            catch (Exception ex)
+            {
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    "Preview render error: " + ex.Message);
             }
         }
 
@@ -788,53 +894,33 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         {
             try
             {
-                int dataLen = 0;
+                // Match the provider JpegPull sample exactly: use a fixed
+                // output buffer and an int[1] length pointer. Avoid the old
+                // null-buffer size-query pattern, which the vendor sample
+                // does not use.
+                byte[] buffer = new byte[200 * 1024];
+                int[] dataLen = new int[1];
 
-                int firstRet =
-                    EcFaceCamSdkHelper
-                        .ECF_GetImageData(
-                            IMAGE_TYPE_CROP_VIS,
-                            null,
-                            ref dataLen);
+                int ret = EcFaceCamSdkHelper.ECF_GetImageDataProvider(
+                    IMAGE_TYPE_CROP_VIS, buffer, dataLen);
 
-                if (firstRet != 0 ||
-                    dataLen <= 0)
+                if (ret != 0 || dataLen[0] <= 0 || dataLen[0] > buffer.Length)
                 {
+                    KioskLocalLogger.LogError(
+                        "FaceVerification",
+                        $"ECF_GetImageData failed. ret={ret}, len={dataLen[0]}");
                     return null;
                 }
 
-                byte[] buffer =
-                    new byte[dataLen];
-
-                int secondRet =
-                    EcFaceCamSdkHelper
-                        .ECF_GetImageData(
-                            IMAGE_TYPE_CROP_VIS,
-                            buffer,
-                            ref dataLen);
-
-                if (secondRet != 0 ||
-                    dataLen <= 0)
-                {
-                    return null;
-                }
-
-                if (buffer.Length != dataLen)
-                {
-                    Array.Resize(
-                        ref buffer,
-                        dataLen);
-                }
-
-                return buffer;
+                byte[] result = new byte[dataLen[0]];
+                Buffer.BlockCopy(buffer, 0, result, 0, dataLen[0]);
+                return result;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(
-                    "[Eyecool] GetImageData error:");
-
-                Console.WriteLine(ex);
-
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    "Get captured face error: " + ex.Message);
                 return null;
             }
         }
@@ -923,10 +1009,13 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             Models.MoneyExchange.CustomerProfile cust,
             byte[] faceJpg)
         {
-            var engine =
-                GlobalHardwareManager
-                    .FaceEngine?
-                    .Current;
+            //var engine =
+            //    GlobalHardwareManager
+            //        .FaceEngine?
+            //        .Current;
+            var engine = GlobalHardwareManager
+    .GetOrCreateFaceEngine()
+    .Current;
 
             if (engine == null ||
                 !engine.Info.IsAvailable)
@@ -1086,222 +1175,442 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // ================================================================
         // NEW CUSTOMER / eKYC
         // ================================================================
-
         private async Task HandleNewCustomerEkycAsync(
-            Models.MoneyExchange.CustomerProfile cust,
-            byte[] faceJpg)
+    Models.MoneyExchange.CustomerProfile cust,
+    byte[] faceJpg)
         {
-            string? journeyId = null;
+            string? journeyId = _ctl.State.EkycJourneyId;
 
-            if (_journeyTask != null)
+            if (string.IsNullOrWhiteSpace(journeyId) && _journeyTask != null)
             {
-                var journey =
-                    await _journeyTask;
+                var journey = await _journeyTask;
 
-                if (journey.ok)
+                if (journey.ok && !string.IsNullOrWhiteSpace(journey.journeyId))
                 {
-                    journeyId =
-                        journey.journeyId;
+                    journeyId = journey.journeyId;
+                    _ctl.State.EkycJourneyId = journeyId;
                 }
                 else
                 {
-                    Console.WriteLine(
-                        "eKYC journey creation failed: " +
-                        journey.error);
+                    KioskLocalLogger.LogError(
+                        "FaceVerification",
+                        "Background eKYC journey creation failed: " + journey.error);
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(
-                    journeyId))
+            if (string.IsNullOrWhiteSpace(journeyId))
             {
-                var journey =
-                    await _ekyc.CreateJourneyIdAsync(
-                        cust.IdNo);
+                var journey = await _ekyc.CreateJourneyIdAsync(cust.IdNo);
 
-                if (!journey.ok ||
-                    string.IsNullOrWhiteSpace(
-                        journey.journeyId))
+                if (!journey.ok || string.IsNullOrWhiteSpace(journey.journeyId))
                 {
                     ShowSkipOption(
                         "❌ " +
-                        L10n.T(
-                            "Mx_EkycUnavailable",
-                            "eKYC service unavailable: ")
-                        +
-                        (journey.error ??
-                         "could not create journey"));
+                        L10n.T("Mx_EkycUnavailable", "eKYC service unavailable: ") +
+                        (journey.error ?? "could not create journey"));
 
                     return;
                 }
 
-                journeyId =
-                    journey.journeyId;
-
-                // Save it back for Scorecard (called further below) and in
-                // case anything else in this flow still needs it - this is
-                // the MyKad path, where no earlier step had a document
-                // image to create a journey from yet.
+                journeyId = journey.journeyId;
                 _ctl.State.EkycJourneyId = journeyId;
             }
 
-            StatusText.Text =
-                L10n.T(
-                    "Mx_VerifyingEkyc",
-                    "Verifying with eKYC service…");
+            if (string.IsNullOrWhiteSpace(cust.FaceImageBase64))
+            {
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    "New customer has no document portrait for OkayFace comparison.");
 
-            HintText.Text =
-                L10n.T(
-                    "Mx_TakesFewSeconds",
-                    "This can take a few seconds");
+                CustomDialog.ShowError(
+                    L10n.T("Mx_VerificationFailed", "Verification Failed"),
+                    "The document photo could not be prepared for face verification. Please rescan the document.");
 
-            string liveBase64 =
-                Convert.ToBase64String(
-                    faceJpg);
+                ExitRequested?.Invoke(this, EventArgs.Empty);
+                return;
+            }
 
-            var outcome =
-                await _ekyc.MatchFaceAsync(
-                    journeyId!,
-                    cust.FaceImageBase64,
-                    liveBase64);
+            StatusText.Text = L10n.T(
+                "Mx_VerifyingEkyc",
+                "Checking face and liveness...");
+
+            HintText.Text = L10n.T(
+                "Mx_TakesFewSeconds",
+                "Please keep looking directly at the camera");
+
+            string liveBase64 = Convert.ToBase64String(faceJpg);
+
+            var outcome = await _ekyc.MatchFaceAsync(
+                journeyId!,
+                cust.FaceImageBase64,
+                liveBase64);
 
             if (!outcome.CallSucceeded)
             {
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    $"OkayFace call failed for journey {journeyId}: {outcome.ErrorMessage}");
+
                 ShowSkipOption(
                     "❌ " +
-                    L10n.T(
-                        "Mx_EkycServiceError",
-                        "eKYC service error: ")
-                    +
+                    L10n.T("Mx_EkycServiceError", "eKYC service error: ") +
                     outcome.ErrorMessage);
 
                 return;
             }
 
-            string scoreLabel =
-                outcome.ScorePercent.HasValue
-                    ? $"{outcome.ScorePercent.Value:0.#}%"
-                    : "n/a";
+            string scoreLabel = outcome.ScorePercent.HasValue
+                ? $"{outcome.ScorePercent.Value:0.#}%"
+                : "n/a";
 
-            if (outcome.Matched)
+            string liveLabel = outcome.LivenessProbability.HasValue
+                ? $"{outcome.LivenessProbability.Value:0.00}"
+                : "n/a";
+
+            if (!outcome.Matched)
             {
-                var engine =
-                    GlobalHardwareManager
-                        .FaceEngine?
-                        .Current;
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    $"Face/liveness verification failed. Journey={journeyId}, " +
+                    $"Face={scoreLabel}, Liveness={liveLabel}, Status={outcome.Status}, " +
+                    $"MessageCode={outcome.MessageCode}");
 
-                if (engine != null &&
-                    engine.Info.IsAvailable)
+                StatusText.Text = outcome.FriendlyMessage != null
+                    ? $"{L10n.T("Mx_Mismatch", "Verification failed ❌")} — {outcome.FriendlyMessage}"
+                    : $"{L10n.T("Mx_Mismatch", "Verification failed ❌")} — Face {scoreLabel}, Liveness {liveLabel}";
+
+                _ctl.State.FaceVerified = false;
+                FailPopup.IsOpen = true;
+                return;
+            }
+
+            StatusText.Text =
+                $"{L10n.T("Mx_Matched", "Face matched ✅")} " +
+                $"({scoreLabel})";
+
+            // Face image has already been captured.
+            // Stop the native camera before the scorecard network call.
+            StopCamera();
+
+            StatusText.Text = L10n.T(
+                "Mx_CheckingScorecard",
+                "Finalizing identity verification...");
+
+            HintText.Text = L10n.T(
+                "Mx_TakesFewSeconds",
+                "Please wait while we complete the final checks");
+
+            var scorecard = await _ekyc.GetScorecardResultAsync(journeyId!);
+
+            if (!scorecard.CallSucceeded)
+            {
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    $"Scorecard service failed for journey {journeyId}: {scorecard.ErrorMessage}");
+
+                ShowSkipOption(
+                    "❌ " +
+                    L10n.T(
+                        "Mx_ScorecardUnavailable",
+                        "Verification service unavailable: ") +
+                    scorecard.ErrorMessage);
+
+                return;
+            }
+
+            if (scorecard.Passed != true)
+            {
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    $"Scorecard rejected journey {journeyId}: " +
+                    $"{scorecard.ErrorMessage}. RawJson: {scorecard.RawJson}");
+
+                _ctl.State.FaceVerified = false;
+
+                CustomDialog.ShowError(
+                    L10n.T(
+                        "Mx_ScorecardFailedTitle",
+                        "Unable to Verify This Customer"),
+                    L10n.T(
+                        "Mx_ScorecardFailedBody",
+                        "We couldn't complete identity verification for this transaction. Please proceed to the counter for assistance."));
+
+                ExitRequested?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            // =============================================================
+            // ONLY SAVE REUSABLE BIOMETRIC AFTER THE ENTIRE eKYC PASSES
+            // =============================================================
+
+            try
+            {
+                //var engine = GlobalHardwareManager.FaceEngine?.Current;
+                var engine = GlobalHardwareManager
+    .GetOrCreateFaceEngine()
+    .Current;
+
+                if (engine != null && engine.Info.IsAvailable)
                 {
-                    var localFeature =
-                        await Task.Run(() =>
+                    var localFeature = await Task.Run(() =>
+                    {
+                        if (engine.TryExtractFeature(faceJpg, out var feature, out _) &&
+                            feature != null)
                         {
-                            if (engine.TryExtractFeature(
-                                    faceJpg,
-                                    out var feature,
-                                    out _) &&
-                                feature != null)
-                            {
-                                return feature;
-                            }
+                            return feature;
+                        }
 
-                            return null;
-                        });
+                        return null;
+                    });
 
                     if (localFeature != null)
                     {
                         _ctl.SaveFace(
-                            Convert.ToBase64String(
-                                localFeature),
+                            Convert.ToBase64String(localFeature),
                             liveBase64);
                     }
+                    else
+                    {
+                        KioskLocalLogger.LogError(
+                            "FaceVerification",
+                            "eKYC passed but local biometric feature extraction returned no feature.");
+                    }
                 }
-
-                StatusText.Text =
-                    $"{L10n.T("Mx_Matched", "Matched ✅")} " +
-                    $"(score {scoreLabel})";
-
-                // Camera's job is done the moment the match succeeds - the
-                // face image needed has already been captured and used.
-                // Stopping it HERE, before Scorecard, not after - the
-                // Scorecard call is a network round-trip that can take
-                // several seconds, and the camera SDK was previously left
-                // fully running through that entire wait (StopCamera was
-                // only ever called from UserControl_Unloaded). Holding a
-                // native camera SDK active and idle through an unrelated
-                // slow network call is exactly the kind of window a
-                // threading/native-interop crash can surface in - this is
-                // the most likely explanation for the app crash reported
-                // after "Verifying document" ran for a few seconds. No
-                // reason to keep hardware busy for something it has no
-                // further part in.
-                StopCamera();
-
-                // Scorecard is now the FINAL gate, per instruction - not
-                // OkayFace's own match result in isolation. Called once,
-                // here, after OkayID, OkayDoc (both already run in
-                // CustomerDetailsStep) and OkayFace/OkayLive (just above)
-                // have all completed against the same journeyId.
-                StatusText.Text =
-                    L10n.T(
-                        "Mx_CheckingScorecard",
-                        "Finalizing verification…");
-
-                var scorecard =
-                    await _ekyc.GetScorecardResultAsync(journeyId!);
-
-                if (!scorecard.CallSucceeded)
-                {
-                    ShowSkipOption(
-                        "❌ " +
-                        L10n.T(
-                            "Mx_ScorecardUnavailable",
-                            "Verification service unavailable: ")
-                        + scorecard.ErrorMessage);
-                    return;
-                }
-
-                if (scorecard.Passed != true)
-                {
-                    // Fail-safe: Passed is false OR null (could not be
-                    // determined) - either way this does not proceed. See
-                    // the HONESTY FLAG comment on ScorecardOutcome in
-                    // EkycFaceMatchClient.cs for why an ambiguous result is
-                    // treated the same as an explicit reject.
-                    KioskLocalLogger.LogError(
-                        "FaceVerification",
-                        $"Scorecard did not pass for journey {journeyId}: {scorecard.ErrorMessage}. RawJson: {scorecard.RawJson}");
-
-                    _ctl.State.FaceVerified = false;
-
-                    CustomDialog.ShowError(
-                        L10n.T("Mx_ScorecardFailedTitle", "Unable to Verify This Customer"),
-                        L10n.T("Mx_ScorecardFailedBody", "We couldn't complete verification for this transaction. Please proceed to the counter for assistance."));
-
-                    ExitRequested?.Invoke(this, EventArgs.Empty);
-                    return;
-                }
-
-                _ctl.State.FaceVerified =
-                    true;
-
-                await ShowWelcomeAndNext();
             }
-            else
+            catch (Exception ex)
             {
-                StatusText.Text =
-                    outcome.FriendlyMessage != null
-                        ? $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} — " +
-                          outcome.FriendlyMessage
-                        : $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} " +
-                          $"(score {scoreLabel})";
-
-                _ctl.State.FaceVerified =
-                    false;
-
-                FailPopup.IsOpen =
-                    true;
+                // The central eKYC has already passed.
+                // A local cache failure must not invalidate the verified customer.
+                KioskLocalLogger.LogError(
+                    "FaceVerification",
+                    "eKYC passed but local biometric cache save failed: " +
+                    ex.GetType().Name + ": " + ex.Message);
             }
+
+            _ctl.State.FaceVerified = true;
+
+            KioskLocalLogger.LogInfo(
+                "FaceVerification",
+                $"New-customer eKYC passed. Journey={journeyId}, Face={scoreLabel}, Liveness={liveLabel}");
+
+            await ShowWelcomeAndNext();
         }
+
+        //private async Task HandleNewCustomerEkycAsync(
+        //    Models.MoneyExchange.CustomerProfile cust,
+        //    byte[] faceJpg)
+        //{
+        //    string? journeyId = null;
+
+        //    if (_journeyTask != null)
+        //    {
+        //        var journey =
+        //            await _journeyTask;
+
+        //        if (journey.ok)
+        //        {
+        //            journeyId =
+        //                journey.journeyId;
+        //        }
+        //        else
+        //        {
+        //            Console.WriteLine(
+        //                "eKYC journey creation failed: " +
+        //                journey.error);
+        //        }
+        //    }
+
+        //    if (string.IsNullOrWhiteSpace(
+        //            journeyId))
+        //    {
+        //        var journey =
+        //            await _ekyc.CreateJourneyIdAsync(
+        //                cust.IdNo);
+
+        //        if (!journey.ok ||
+        //            string.IsNullOrWhiteSpace(
+        //                journey.journeyId))
+        //        {
+        //            ShowSkipOption(
+        //                "❌ " +
+        //                L10n.T(
+        //                    "Mx_EkycUnavailable",
+        //                    "eKYC service unavailable: ")
+        //                +
+        //                (journey.error ??
+        //                 "could not create journey"));
+
+        //            return;
+        //        }
+
+        //        journeyId =
+        //            journey.journeyId;
+
+        //        // Save it back for Scorecard (called further below) and in
+        //        // case anything else in this flow still needs it - this is
+        //        // the MyKad path, where no earlier step had a document
+        //        // image to create a journey from yet.
+        //        _ctl.State.EkycJourneyId = journeyId;
+        //    }
+
+        //    StatusText.Text =
+        //        L10n.T(
+        //            "Mx_VerifyingEkyc",
+        //            "Verifying with eKYC service…");
+
+        //    HintText.Text =
+        //        L10n.T(
+        //            "Mx_TakesFewSeconds",
+        //            "This can take a few seconds");
+
+        //    string liveBase64 =
+        //        Convert.ToBase64String(
+        //            faceJpg);
+
+        //    var outcome =
+        //        await _ekyc.MatchFaceAsync(
+        //            journeyId!,
+        //            cust.FaceImageBase64,
+        //            liveBase64);
+
+        //    if (!outcome.CallSucceeded)
+        //    {
+        //        ShowSkipOption(
+        //            "❌ " +
+        //            L10n.T(
+        //                "Mx_EkycServiceError",
+        //                "eKYC service error: ")
+        //            +
+        //            outcome.ErrorMessage);
+
+        //        return;
+        //    }
+
+        //    string scoreLabel =
+        //        outcome.ScorePercent.HasValue
+        //            ? $"{outcome.ScorePercent.Value:0.#}%"
+        //            : "n/a";
+
+        //    if (outcome.Matched)
+        //    {
+        //        var engine =
+        //            GlobalHardwareManager
+        //                .FaceEngine?
+        //                .Current;
+
+        //        if (engine != null &&
+        //            engine.Info.IsAvailable)
+        //        {
+        //            var localFeature =
+        //                await Task.Run(() =>
+        //                {
+        //                    if (engine.TryExtractFeature(
+        //                            faceJpg,
+        //                            out var feature,
+        //                            out _) &&
+        //                        feature != null)
+        //                    {
+        //                        return feature;
+        //                    }
+
+        //                    return null;
+        //                });
+
+        //            if (localFeature != null)
+        //            {
+        //                _ctl.SaveFace(
+        //                    Convert.ToBase64String(
+        //                        localFeature),
+        //                    liveBase64);
+        //            }
+        //        }
+
+        //        StatusText.Text =
+        //            $"{L10n.T("Mx_Matched", "Matched ✅")} " +
+        //            $"(score {scoreLabel})";
+
+        //        // Camera's job is done the moment the match succeeds - the
+        //        // face image needed has already been captured and used.
+        //        // Stopping it HERE, before Scorecard, not after - the
+        //        // Scorecard call is a network round-trip that can take
+        //        // several seconds, and the camera SDK was previously left
+        //        // fully running through that entire wait (StopCamera was
+        //        // only ever called from UserControl_Unloaded). Holding a
+        //        // native camera SDK active and idle through an unrelated
+        //        // slow network call is exactly the kind of window a
+        //        // threading/native-interop crash can surface in - this is
+        //        // the most likely explanation for the app crash reported
+        //        // after "Verifying document" ran for a few seconds. No
+        //        // reason to keep hardware busy for something it has no
+        //        // further part in.
+        //        StopCamera();
+
+        //        // Scorecard is now the FINAL gate, per instruction - not
+        //        // OkayFace's own match result in isolation. Called once,
+        //        // here, after OkayID, OkayDoc (both already run in
+        //        // CustomerDetailsStep) and OkayFace/OkayLive (just above)
+        //        // have all completed against the same journeyId.
+        //        StatusText.Text =
+        //            L10n.T(
+        //                "Mx_CheckingScorecard",
+        //                "Finalizing verification…");
+
+        //        var scorecard =
+        //            await _ekyc.GetScorecardResultAsync(journeyId!);
+
+        //        if (!scorecard.CallSucceeded)
+        //        {
+        //            ShowSkipOption(
+        //                "❌ " +
+        //                L10n.T(
+        //                    "Mx_ScorecardUnavailable",
+        //                    "Verification service unavailable: ")
+        //                + scorecard.ErrorMessage);
+        //            return;
+        //        }
+
+        //        if (scorecard.Passed != true)
+        //        {
+        //            // Fail-safe: Passed is false OR null (could not be
+        //            // determined) - either way this does not proceed. See
+        //            // the HONESTY FLAG comment on ScorecardOutcome in
+        //            // EkycFaceMatchClient.cs for why an ambiguous result is
+        //            // treated the same as an explicit reject.
+        //            KioskLocalLogger.LogError(
+        //                "FaceVerification",
+        //                $"Scorecard did not pass for journey {journeyId}: {scorecard.ErrorMessage}. RawJson: {scorecard.RawJson}");
+
+        //            _ctl.State.FaceVerified = false;
+
+        //            CustomDialog.ShowError(
+        //                L10n.T("Mx_ScorecardFailedTitle", "Unable to Verify This Customer"),
+        //                L10n.T("Mx_ScorecardFailedBody", "We couldn't complete verification for this transaction. Please proceed to the counter for assistance."));
+
+        //            ExitRequested?.Invoke(this, EventArgs.Empty);
+        //            return;
+        //        }
+
+        //        _ctl.State.FaceVerified =
+        //            true;
+
+        //        await ShowWelcomeAndNext();
+        //    }
+        //    else
+        //    {
+        //        StatusText.Text =
+        //            outcome.FriendlyMessage != null
+        //                ? $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} — " +
+        //                  outcome.FriendlyMessage
+        //                : $"{L10n.T("Mx_Mismatch", "Mismatch ❌")} " +
+        //                  $"(score {scoreLabel})";
+
+        //        _ctl.State.FaceVerified =
+        //            false;
+
+        //        FailPopup.IsOpen =
+        //            true;
+        //    }
+        //}
 
         // ================================================================
         // SUCCESS
@@ -1341,7 +1650,33 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // ================================================================
         // LOCAL MATCH RESULT
         // ================================================================
+        private void LogCameraPerformance(string stage)
+        {
+            try
+            {
+                using var process = System.Diagnostics.Process.GetCurrentProcess();
 
+                long workingMb = process.WorkingSet64 / 1024 / 1024;
+                long privateMb = process.PrivateMemorySize64 / 1024 / 1024;
+
+                var gcInfo = GC.GetGCMemoryInfo();
+                long availableMb = gcInfo.TotalAvailableMemoryBytes / 1024 / 1024;
+
+                KioskLocalLogger.LogInfo(
+                    "FacePerformance",
+                    $"{stage} | " +
+                    $"WorkingSet={workingMb}MB | " +
+                    $"Private={privateMb}MB | " +
+                    $"GC Available={availableMb}MB | " +
+                    $"Threads={process.Threads.Count}");
+            }
+            catch (Exception ex)
+            {
+                KioskLocalLogger.LogError(
+                    "FacePerformance",
+                    "Performance logging failed: " + ex.Message);
+            }
+        }
         private sealed class LocalMatchResult
         {
             public bool Success { get; }

@@ -31,12 +31,27 @@ namespace OmniKiosk.Wpf.Services
             private set;
         }
 
-        public static FaceEngineManager FaceEngine
+        //public static FaceEngineManager FaceEngine
+        //{
+        //    get;
+        //    private set;
+        //}
+        public static FaceEngineManager? FaceEngine
         {
             get;
             private set;
         }
 
+        private static readonly object _faceEngineLock = new();
+
+        public static FaceEngineManager GetOrCreateFaceEngine()
+        {
+            lock (_faceEngineLock)
+            {
+                FaceEngine ??= new FaceEngineManager();
+                return FaceEngine;
+            }
+        }
         public static BixolonPrinterService Printer
         {
             get;
@@ -115,8 +130,8 @@ namespace OmniKiosk.Wpf.Services
             // FACE ENGINE
             // ========================================================
 
-            FaceEngine =
-                new FaceEngineManager();
+            //FaceEngine =
+            //    new FaceEngineManager();
 
             // ========================================================
             // PRINTER
@@ -277,7 +292,9 @@ namespace OmniKiosk.Wpf.Services
 
             try
             {
+                //FaceEngine?.Dispose();
                 FaceEngine?.Dispose();
+                FaceEngine = null;
             }
             catch
             {

@@ -80,5 +80,6 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
         public System.Collections.ObjectModel.ObservableCollection<OmniKiosk.Wpf.Views.MoneyExchange.Steps.TransactionItem> Transactions { get; set; } = new();
         public string? LiveFaceImageBase64 { get; set; } // To store the live face for the final receipt
 
+        public int LastTransactionNoteSequence { get; set; }
     }
 }
