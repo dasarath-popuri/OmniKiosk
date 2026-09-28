@@ -1,10 +1,11 @@
 ﻿using OmniKiosk.Wpf.Config;
+using OmniKiosk.Wpf.Sdk.Dispenser;
 using OmniKiosk.Wpf.Sdk.Face;
 using OmniKiosk.Wpf.Sdk.IC;
 using OmniKiosk.Wpf.Sdk.Passport;
-using OmniKiosk.Wpf.Services.MoneyReceiver;
 using OmniKiosk.Wpf.Sdk.Printer;
-using OmniKiosk.Wpf.Sdk.Dispenser;
+using OmniKiosk.Wpf.Services.MoneyReceiver;
+using OmniKiosk.Wpf.Services.Xyreon;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -63,7 +64,17 @@ namespace OmniKiosk.Wpf.Services
             get;
             private set;
         }
+        public static XyreonIoService? XyreonIo
+        {
+            get;
+            private set;
+        }
 
+        public static bool XyreonReady
+        {
+            get;
+            private set;
+        }
         public static bool IsInitialized
         {
             get;
@@ -265,6 +276,53 @@ namespace OmniKiosk.Wpf.Services
                     ex.Message);
             }
 
+            // ========================================================
+            // XYREON I/O - GUIDANCE LIGHTS
+            // ========================================================
+
+            XyreonIo =
+                new XyreonIoService();
+
+            XyreonIo.Log += msg =>
+                KioskLocalLogger.LogInfo(
+                    "XYREON",
+                    msg);
+
+            XyreonIo.Error += msg =>
+                KioskLocalLogger.LogError(
+                    "XYREON",
+                    msg);
+
+            try
+            {
+                XyreonReady =
+                    await XyreonIo.AutoConnectAsync();
+
+                if (XyreonReady)
+                {
+                    // Clear only lights controlled by this application.
+                    // DO5 siren and all unknown outputs are preserved.
+                    await XyreonIo.TurnOffKnownLightsAsync();
+
+                    Console.WriteLine(
+                        $"[XYREON] Connected on {XyreonIo.PortName}");
+                }
+                else
+                {
+                    Console.WriteLine(
+                        "[XYREON] COMMAND port not available.");
+                }
+            }
+            catch (Exception ex)
+            {
+                XyreonReady = false;
+
+                KioskLocalLogger.LogError(
+                    "XYREON",
+                    "Initialization failed: " +
+                    ex.Message);
+            }
+
             IsInitialized = true;
         }
 
@@ -325,7 +383,16 @@ namespace OmniKiosk.Wpf.Services
                     "[Eyecool] shutdown exception:");
                 Console.WriteLine(ex);
             }
+            try
+            {
+                XyreonIo?.Dispose();
+            }
+            catch
+            {
+            }
 
+            XyreonIo = null;
+            XyreonReady = false;
             EyecoolReady = false;
             IsInitialized = false;
         }

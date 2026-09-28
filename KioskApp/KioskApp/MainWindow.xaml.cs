@@ -320,12 +320,24 @@ namespace OmniKiosk.Wpf
                 SdkTarget.MoneyDispenser => CreateDispenserView(),
                 SdkTarget.MoneyReceiver => CreateReceiverView(),
                 SdkTarget.Printer => CreatePrinterView(),
+                SdkTarget.XyreonIo =>
+    CreateXyreonIoView(),
                 _ => new NotImplementedView(target.ToString())
             };
 
             SdkHostContent.Content = next;
         }
+        private UserControl CreateXyreonIoView()
+        {
+            var view =
+                new XyreonIoSdkTestView();
 
+            view.BackRequested +=
+                (_, __) =>
+                    SdkBack();
+
+            return view;
+        }
         private void SdkBack()
         {
             if (_sdkNav.Count > 0)

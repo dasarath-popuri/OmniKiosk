@@ -34,7 +34,15 @@ namespace OmniKiosk.Wpf.Views.SDKTest
         private void TestPrinter_Click(object sender, System.Windows.RoutedEventArgs e)
             => NavigateRequested?.Invoke(this, new SdkNavigationEventArgs(SdkTarget.Printer));
 
-        
+        private void TestXyreon_Click(
+    object sender,
+    System.Windows.RoutedEventArgs e)
+        {
+            NavigateRequested?.Invoke(
+                this,
+                new SdkNavigationEventArgs(
+                    SdkTarget.XyreonIo));
+        }
     }
 
     public enum SdkTarget
@@ -44,9 +52,9 @@ namespace OmniKiosk.Wpf.Views.SDKTest
         Face,
         MoneyDispenser,
         MoneyReceiver,
-        Printer
+        Printer,
+        XyreonIo
     }
-
     public class SdkNavigationEventArgs : EventArgs
     {
         public SdkTarget Target { get; }

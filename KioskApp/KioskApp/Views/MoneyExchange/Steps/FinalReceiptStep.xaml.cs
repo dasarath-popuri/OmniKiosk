@@ -1,16 +1,17 @@
+using OmniKiosk.Wpf.Controls;
+using OmniKiosk.Wpf.Sdk.Dispenser;
+using OmniKiosk.Wpf.Sdk.Printer;
+using OmniKiosk.Wpf.Services;
+using OmniKiosk.Wpf.Services.MoneyExchange;
+using OmniKiosk.Wpf.Services.Xyreon;
 using System;
+using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.IO;
 using System.Windows.Media.Imaging;
-using OmniKiosk.Wpf.Controls;
-using OmniKiosk.Wpf.Services.MoneyExchange;
-using OmniKiosk.Wpf.Sdk.Printer;
-using OmniKiosk.Wpf.Sdk.Dispenser;
-using OmniKiosk.Wpf.Services;
-using System.Threading.Tasks;
-using System.Linq;
 
 namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 {
@@ -32,6 +33,41 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         {
             InitializeComponent();
             _ctl = ctl;
+        }
+        private void SetDispenserLight(
+    bool enabled)
+        {
+            var io =
+                GlobalHardwareManager.XyreonIo;
+
+            if (io == null)
+                return;
+
+            _ = io.SetOutputAsync(
+                KioskOutput.CashDispenserGreenLight,
+                enabled);
+        }
+
+        private void SetReceiptPrinterLight(
+            bool enabled)
+        {
+            var io =
+                GlobalHardwareManager.XyreonIo;
+
+            if (io == null)
+                return;
+
+            _ = io.SetOutputAsync(
+                KioskOutput.ReceiptPrinterGreenLight,
+                enabled);
+        }
+
+        private void UserControl_Unloaded(
+            object sender,
+            RoutedEventArgs e)
+        {
+            SetDispenserLight(false);
+            SetReceiptPrinterLight(false);
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -111,6 +147,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             if (c1 > 0 || c2 > 0 || c3 > 0 || c4 > 0)
             {
+                SetDispenserLight(true);
                 // Pre-dispense availability check, now blocking - KioskId
                 // is the real, server-resolved identifier as of this
                 // change (KioskAuthService.GetKioskIdAsync, resolved from
@@ -126,6 +163,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     {
                         _dispenseSuccessful = false;
                         _dispenseErrorMsg = L10n.T("Mx_InsufficientCash", "Insufficient cash available at this kiosk");
+                        SetDispenserLight(false);
                         ShowDispenserNotice();
                         await CompleteTransactionSafeAsync("DispenseFailed");
                         PrintReceipt();
@@ -150,6 +188,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     {
                         _dispenseSuccessful = false;
                         _dispenseErrorMsg = L10n.T("Mx_HardwareOffline", "Hardware Offline (Check USB Cable/Power)");
+                        SetDispenserLight(false);
                         ShowDispenserNotice();
                         await CompleteTransactionSafeAsync("DispenseFailed");
                         PrintReceipt();
@@ -186,6 +225,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 {
                     _dispenseSuccessful = false;
                     _dispenseErrorMsg = response.Message;
+                    SetDispenserLight(false);
                     ShowDispenserNotice();
                     await CompleteTransactionSafeAsync("DispenseFailed");
                     PrintReceipt();
@@ -367,6 +407,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void PrintReceipt()
         {
+            SetReceiptPrinterLight(true);
             try
             {
                 var s = _ctl.State;
@@ -442,18 +483,45 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 }
 
                 if (_printerSvc == null || !_printerSvc.PrintReceipt(r.ToString()))
+                {
+                    SetReceiptPrinterLight(false);
                     CustomDialog.ShowError(L10n.T("Mx_PrintErrorTitle", "Print Error"), L10n.T("Mx_PrintErrorBody", "Failed to print. Check if the printer has paper and is connected."));
+                }
             }
             catch (Exception ex)
             {
+                SetReceiptPrinterLight(false);
                 CustomDialog.ShowError(L10n.T("Mx_PrintErrorTitle", "Print Error"), ex.Message);
             }
         }
-        private void Done_Click(object sender, RoutedEventArgs e)
+        //private void Done_Click(object sender, RoutedEventArgs e)
+        //{
+        //    _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "SessionEnd", "FinalReceipt",
+        //        outcome: _dispenseSuccessful ? "Success" : "Failure", transactionId: _ctl.State.TransactionId);
+        //    ExitRequested?.Invoke(this, EventArgs.Empty);
+        //}
+        private void Done_Click(
+    object sender,
+    RoutedEventArgs e)
         {
-            _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "SessionEnd", "FinalReceipt",
-                outcome: _dispenseSuccessful ? "Success" : "Failure", transactionId: _ctl.State.TransactionId);
-            ExitRequested?.Invoke(this, EventArgs.Empty);
+            SetDispenserLight(false);
+            SetReceiptPrinterLight(false);
+
+            _ = _api.LogJourneyEventAsync(
+                _ctl.State.SessionId,
+                "MoneyExchange",
+                "SessionEnd",
+                "FinalReceipt",
+                outcome:
+                    _dispenseSuccessful
+                        ? "Success"
+                        : "Failure",
+                transactionId:
+                    _ctl.State.TransactionId);
+
+            ExitRequested?.Invoke(
+                this,
+                EventArgs.Empty);
         }
     }
 }

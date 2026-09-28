@@ -1,3 +1,9 @@
+using OmniKiosk.Wpf.Controls;
+using OmniKiosk.Wpf.Sdk.Printer;
+using OmniKiosk.Wpf.Services;
+using OmniKiosk.Wpf.Services.MoneyExchange;
+using OmniKiosk.Wpf.Services.MoneyReceiver;
+using OmniKiosk.Wpf.Services.Xyreon;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +13,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using OmniKiosk.Wpf.Controls;
-using OmniKiosk.Wpf.Sdk.Printer;
-using OmniKiosk.Wpf.Services;
-using OmniKiosk.Wpf.Services.MoneyExchange;
-using OmniKiosk.Wpf.Services.MoneyReceiver;
 
 namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 {
@@ -162,8 +163,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             UpdateConversionUI();
 
-            try { _svc.EnableAcceptance(true); }
-            catch (Exception ex) { KioskLocalLogger.LogError("CashIn", "Failed to enable note acceptance: " + ex.Message); }
+            //try { _svc.EnableAcceptance(true); }
+            //catch (Exception ex) { KioskLocalLogger.LogError("CashIn", "Failed to enable note acceptance: " + ex.Message); }
+            SetCashAcceptance(true);
 
             TxtStatus.Text = "Machine ready. Insert your first note.";
 
@@ -172,8 +174,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
-            try { _svc.EnableAcceptance(false); } catch { }
-
+            //try { _svc.EnableAcceptance(false); } catch { }
+            SetCashAcceptance(false);
             _svc.OnLog -= Svc_OnLog;
             _svc.OnStatus -= Svc_OnStatus;
             _svc.OnError -= Svc_OnError;
@@ -182,7 +184,42 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _svc.OnReturned -= Svc_OnReturned;
             _svc.OnRejected -= Svc_OnRejected;
         }
+        private void SetCashAcceptorLight(
+    bool enabled)
+        {
+            var io =
+                GlobalHardwareManager.XyreonIo;
 
+            if (io == null)
+                return;
+
+            _ = io.SetOutputAsync(
+                KioskOutput.CashAcceptorGreenLight,
+                enabled);
+        }
+
+        private void SetCashAcceptance(
+            bool enabled)
+        {
+            try
+            {
+                _svc.EnableAcceptance(
+                    enabled);
+
+                SetCashAcceptorLight(
+                    enabled);
+            }
+            catch (Exception ex)
+            {
+                // If hardware acceptance could not be changed,
+                // never leave the guidance light claiming it is ready.
+                SetCashAcceptorLight(false);
+
+                KioskLocalLogger.LogError(
+                    "CashIn",
+                    $"EnableAcceptance({enabled}) failed: {ex.Message}");
+            }
+        }
         private async Task LoadAcceptedDenominationsAsync()
         {
             try
@@ -540,7 +577,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             {
                 if (_totalForeign <= 0)
                 {
-                    try { _svc.EnableAcceptance(false); } catch { }
+                    SetCashAcceptance(false);
 
                     CustomDialog.ShowError(
                         "Unable to Continue",
@@ -553,7 +590,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 // Once cash is in the vault, do not abandon the customer.
                 _acceptanceBlocked = true;
 
-                try { _svc.EnableAcceptance(false); } catch { }
+                //try { _svc.EnableAcceptance(false); } catch { }
+                SetCashAcceptance(false);
 
                 TxtStatus.Text = "Please finish with the amount already accepted.";
 
@@ -616,8 +654,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 {
                     _acceptanceBlocked = true;
 
-                    try { _svc.EnableAcceptance(false); }
-                    catch { }
+                    //try { _svc.EnableAcceptance(false); }
+                    //catch { }
+                    SetCashAcceptance(false);
 
                     TxtStatus.Text =
                         "Target reached. Please finish the exchange.";
@@ -871,7 +910,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             if (_totalForeign <= 0)
             {
-                try { _svc.EnableAcceptance(false); } catch { }
+                //try { _svc.EnableAcceptance(false); } catch { }
+                SetCashAcceptance(false);
                 BackRequested?.Invoke(this, EventArgs.Empty);
                 return;
             }
@@ -889,7 +929,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             if (!confirmed)
                 return;
 
-            try { _svc.EnableAcceptance(false); } catch { }
+            //try { _svc.EnableAcceptance(false); } catch { }
+            SetCashAcceptance(false);
 
             PrintCancelSlip();
 
@@ -963,7 +1004,8 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             if (!BtnNext.IsEnabled || _totalForeign <= 0 || _pendingEscrowValue > 0)
                 return;
 
-            try { _svc.EnableAcceptance(false); } catch { }
+            //try { _svc.EnableAcceptance(false); } catch { }
+            SetCashAcceptance(false);
 
             BtnNext.IsEnabled = false;
             DoneOverlay.Visibility = Visibility.Visible;

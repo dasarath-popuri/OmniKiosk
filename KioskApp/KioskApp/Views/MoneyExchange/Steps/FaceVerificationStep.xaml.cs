@@ -2,6 +2,7 @@ using OmniKiosk.Wpf.Controls;
 using OmniKiosk.Wpf.Services;
 using OmniKiosk.Wpf.Services.Ekyc;
 using OmniKiosk.Wpf.Services.MoneyExchange;
+using OmniKiosk.Wpf.Services.Xyreon;
 using System;
 using System.IO;
 using System.Threading;
@@ -192,6 +193,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                             _ctl.State.Customer?.IdNo);
                 }
             }
+            SetCameraSideLights(true);
 
             await StartCameraAndDetectAsync();
         }
@@ -248,6 +250,19 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             StopCamera();
         }
+        private void SetCameraSideLights(
+    bool enabled)
+        {
+            var io =
+                GlobalHardwareManager.XyreonIo;
+
+            if (io == null)
+                return;
+
+            _ = io.SetOutputAsync(
+                KioskOutput.CameraSideLights,
+                enabled);
+        }
 
         // ================================================================
         // CAMERA STOP
@@ -255,6 +270,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
         private void StopCamera()
         {
+            SetCameraSideLights(false);
             if (!_opened)
                 return;
 

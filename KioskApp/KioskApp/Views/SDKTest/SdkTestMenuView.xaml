@@ -177,6 +177,31 @@
                     </Grid>
                 </Border>
 
+                <Border Style="{StaticResource CardStyle}">
+                    <Grid>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                   Text="XYREON I/O"
+                   Style="{StaticResource CardTitleStyle}"/>
+
+                        <TextBlock Grid.Row="1"
+                   Text="Test DI0-DI7, DO0-DO11 and door alarm"
+                   Style="{StaticResource CardSubtitleStyle}"/>
+
+                        <Button Grid.Row="2"
+                Content="TEST"
+                Click="TestXyreon_Click"
+                Style="{StaticResource ActionButtonStyle}"/>
+
+                    </Grid>
+                </Border>
+
             </WrapPanel>
         </ScrollViewer>
 

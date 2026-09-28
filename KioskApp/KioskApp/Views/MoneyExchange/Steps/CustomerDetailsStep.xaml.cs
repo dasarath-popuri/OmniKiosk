@@ -3,9 +3,10 @@ using OmniKiosk.Wpf.Controls;
 using OmniKiosk.Wpf.Models.MoneyExchange;
 using OmniKiosk.Wpf.Sdk.IC;
 using OmniKiosk.Wpf.Sdk.Passport;
+using OmniKiosk.Wpf.Services; // GlobalManager
 using OmniKiosk.Wpf.Services.Ekyc;
 using OmniKiosk.Wpf.Services.MoneyExchange;
-using OmniKiosk.Wpf.Services; // GlobalManager
+using OmniKiosk.Wpf.Services.Xyreon;
 using System;
 using System.Globalization;
 using System.IO;
@@ -131,6 +132,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             (this.Resources["PassportPlaceAnim"] as Storyboard)?.Begin(this, true);
 
             ShowView("Scanning");
+            _ = SetDocumentLightsAsync(
+    passportOn: true,
+    myKadOn: false);
             StartPassportScan();
         }
 
@@ -146,6 +150,9 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             (this.Resources["PassportPlaceAnim"] as Storyboard)?.Begin(this, true);
 
             ShowView("Scanning");
+            _ = SetDocumentLightsAsync(
+    passportOn: true,
+    myKadOn: false);
             StartPassportScan();
         }
 
@@ -553,7 +560,21 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         }
 
         // IMPORTANT: Only cancel the token. DO NOT dispose the global _svc!
-        private void StopPassportLoop() { try { _cts?.Cancel(); } catch { } }
+        //private void StopPassportLoop() { try { _cts?.Cancel(); } catch { } }
+        private void StopPassportLoop()
+        {
+            try
+            {
+                _cts?.Cancel();
+            }
+            catch
+            {
+            }
+
+            _ = SetDocumentLightsAsync(
+                passportOn: false,
+                myKadOn: false);
+        }
 
         private void TxtMobile_TextChanged(object sender, TextChangedEventArgs e) => UpdateNextEnabled();
 
@@ -757,7 +778,24 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
             else BackRequested?.Invoke(this, EventArgs.Empty);
         }
+        private async Task SetDocumentLightsAsync(
+    bool passportOn,
+    bool myKadOn)
+        {
+            var io =
+                GlobalHardwareManager.XyreonIo;
 
+            if (io == null)
+                return;
+
+            await io.SetOutputAsync(
+                KioskOutput.PassportScannerGreenLight,
+                passportOn);
+
+            await io.SetOutputAsync(
+                KioskOutput.MyKadScannerGreenLight,
+                myKadOn);
+        }
         private async void Next_Click(object sender, RoutedEventArgs e)
         {
             // Combine the selected dial code with the entered local number
