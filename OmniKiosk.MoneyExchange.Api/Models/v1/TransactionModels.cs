@@ -118,4 +118,13 @@ namespace OmniKiosk.MoneyExchange.Api.Models.v1
         public bool IsWithinLimit { get; set; }
         public decimal PerTxnLimit { get; set; }
     }
+
+    public class ReduceCashInventoryRequest
+    {
+        public string KioskId { get; set; } = "";
+        public int Count1 { get; set; }
+        public int Count10 { get; set; }
+        public int Count50 { get; set; }
+        public int Count100 { get; set; }
+    }
 }

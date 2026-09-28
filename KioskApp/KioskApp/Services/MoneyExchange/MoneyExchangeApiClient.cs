@@ -198,6 +198,37 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
             return result ?? new ApiDenominationBreakdown();
         }
 
+        // KSK_ReduceCashInventory - called once, right after a successful
+        // hardware dispense (FinalReceiptStep), with the same 4 denomination
+        // counts already used for RecordDispensedNotesAsync. Deliberately
+        // fails soft (never throws) - the cash has already physically left
+        // the machine by the time this runs, so a failure here means
+        // Ksk_CashInventory drifts until the next manual reconciliation,
+        // not that the transaction itself should be treated as failed.
+        public async Task ReduceCashInventoryAsync(string kioskId, int count1, int count10, int count50, int count100, CancellationToken ct = default)
+        {
+            try
+            {
+                var body = new
+                {
+                    KioskId = kioskId,
+                    Count1 = count1,
+                    Count10 = count10,
+                    Count50 = count50,
+                    Count100 = count100
+                };
+                var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, "api/v1/Transactions/reduce-cash-inventory")
+                {
+                    Content = JsonContent.Create(body)
+                }, ct);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                KioskLocalLogger.LogError("MoneyExchangeApiClient", "ReduceCashInventoryAsync failed for KioskId " + kioskId + ": " + ex.Message);
+            }
+        }
+
         // KSK_CheckPerTransactionLimitOnly - ID-agnostic, for use before any
         // customer has been identified (currency selection screen). Fail-
         // closed on any failure, same reasoning as CheckLimitsAsync below -

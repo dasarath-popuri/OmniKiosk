@@ -270,5 +270,45 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
                 return StatusCode(500, new { error = "Could not check the per-transaction limit." });
             }
         }
+
+        // KSK_ReduceCashInventory - called once, right after a successful
+        // hardware dispense (FinalReceiptStep), with the same 4 denomination
+        // counts already used for recording dispensed notes. Closes the gap
+        // where Ksk_CashInventory.BillCount was never decremented after a
+        // dispense, leaving KSK_GetDenominationBreakdown's availability
+        // check comparing against increasingly stale stock figures.
+        [HttpPost("reduce-cash-inventory")]
+        public async Task<IActionResult> ReduceCashInventory([FromBody] ReduceCashInventoryRequest request)
+        {
+            using var con = new SqlConnection(_connectionString);
+
+            var p = new DynamicParameters();
+            p.Add("@KioskId", request.KioskId);
+            p.Add("@Count1", request.Count1);
+            p.Add("@Count10", request.Count10);
+            p.Add("@Count50", request.Count50);
+            p.Add("@Count100", request.Count100);
+
+            try
+            {
+                await con.ExecuteAsync("KSK_ReduceCashInventory", p, commandType: CommandType.StoredProcedure);
+
+                _logger.LogInformation(
+                    "Cash inventory reduced - KioskId {KioskId}: RM1x{C1} RM10x{C10} RM50x{C50} RM100x{C100}",
+                    request.KioskId, request.Count1, request.Count10, request.Count50, request.Count100);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Deliberately not surfaced to the customer - the cash has
+                // already physically dispensed by the time this runs. A
+                // failure here means Ksk_CashInventory drifts from the real
+                // cassette counts until the next manual reconciliation, not
+                // that the transaction itself failed.
+                _logger.LogError(ex, "Failed to reduce cash inventory for KioskId {KioskId} after dispense", request.KioskId);
+                return StatusCode(500, new { error = "Could not update cash inventory." });
+            }
+        }
     }
 }

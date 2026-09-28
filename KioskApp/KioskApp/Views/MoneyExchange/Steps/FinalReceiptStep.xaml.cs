@@ -166,6 +166,18 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     _dispenseSuccessful = true;
                     await CompleteTransactionSafeAsync("Completed");
                     await RecordDispensedNotesAsync(c1, c2, c3, c4);
+
+                    // Closes the gap where Ksk_CashInventory.BillCount never
+                    // reflected notes actually dispensed - see
+                    // KSK_ReduceCashInventory's own header comment. Uses the
+                    // same kioskId already resolved above for the
+                    // availability check, and the exact counts confirmed by
+                    // the hardware (response.Success), not the pre-dispense
+                    // targets - those should be identical at this point, but
+                    // this reflects what the dispenser actually reported.
+                    var kioskIdForInventory = await KioskAuthService.GetKioskIdAsync();
+                    await _api.ReduceCashInventoryAsync(kioskIdForInventory, c1, c2, c3, c4);
+
                     PrintReceipt();
                     _ = _api.LogJourneyEventAsync(_ctl.State.SessionId, "MoneyExchange", "StepCompleted", "FinalReceipt",
                         outcome: "Success", transactionId: _ctl.State.TransactionId);

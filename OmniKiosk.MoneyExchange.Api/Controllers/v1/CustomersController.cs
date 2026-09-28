@@ -99,8 +99,9 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
 
             // Same treatment as Picture1Base64 above - a missing or
             // malformed document image shouldn't fail the whole customer
-            // creation either. Will be null for MyKad customers currently
-            // (no capture mechanism exists for that document type yet).
+            // creation either. Populated for both document types since the
+            // unified reader (TryReadAnyDocument) was introduced - no
+            // longer MyKad-specific gap this note used to describe.
             byte[]? idDocumentImageBytes = null;
             if (!string.IsNullOrWhiteSpace(request.IdDocumentImageBase64))
             {
@@ -125,6 +126,11 @@ namespace OmniKiosk.MoneyExchange.Api.Controllers.v1
             p.Add("@MobileNo", request.MobileNo);
             p.Add("@IdExpiryDate", request.IdExpiryDate);
             p.Add("@Picture1", picture1Bytes, dbType: DbType.Binary);
+            // Written into BOTH SenderMaster.IdDocumentImage and
+            // SenderMaster.Picture2 - handled entirely inside
+            // KSK_CreateNewSender itself (the proc reuses this same
+            // parameter value for both columns), so nothing extra is
+            // threaded through here on the API side.
             p.Add("@IdDocumentImage", idDocumentImageBytes, dbType: DbType.Binary);
             p.Add("@NewSenderId", dbType: DbType.Int32, direction: ParameterDirection.Output);
 

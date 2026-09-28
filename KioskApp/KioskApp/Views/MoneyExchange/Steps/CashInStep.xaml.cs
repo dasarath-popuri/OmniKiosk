@@ -111,6 +111,42 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                 return;
             }
 
+            // Total-available check above catches "no cash at all", but not
+            // "cash exists but the specific denomination mix on hand can't
+            // make THIS exact amount" (e.g. only RM50/RM100 notes left, but
+            // the target is RM34) - that's exactly what
+            // KSK_GetDenominationBreakdown checks, and until now it was only
+            // ever called in FinalReceiptStep, right before dispensing -
+            // meaning a customer could insert their foreign currency here,
+            // have it accepted (and, per the disclaimer above, unreturnable),
+            // and only THEN discover the kiosk can't pay them out. Checking
+            // it here too, before any cash is accepted, closes that gap -
+            // the customer is turned away before inserting anything, rather
+            // than after.
+            try
+            {
+                var kioskIdForCheck = await KioskAuthService.GetKioskIdAsync();
+                var availability = await _api.GetDenominationBreakdownAsync(kioskIdForCheck, _targetMyr);
+                if (!availability.CanDispenseFully)
+                {
+                    CustomDialog.ShowError(
+                        L10n.T("Mx_OutOfCashTitle", "Out of Cash"),
+                        L10n.T("Mx_CannotDispenseExactBody", "Sorry, this kiosk cannot currently dispense the exact amount for this exchange. Please proceed to the counter, or try a different amount."));
+
+                    BackRequested?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Same fail-open posture as the identical check in
+                // FinalReceiptStep - an unreachable check degrades to
+                // "proceed and let the actual pre-dispense check (which
+                // does block) catch it later", not "assume the worst and
+                // turn away a customer over a network hiccup this early".
+                KioskLocalLogger.LogError("CashIn", "Early denomination availability check failed, proceeding without it: " + ex.Message);
+            }
+
             if (!await CheckInitialComplianceAsync())
                 return;
 
