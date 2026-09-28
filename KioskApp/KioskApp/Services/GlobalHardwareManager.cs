@@ -276,53 +276,8 @@ namespace OmniKiosk.Wpf.Services
                     ex.Message);
             }
 
-            // ========================================================
-            // XYREON I/O - GUIDANCE LIGHTS
-            // ========================================================
 
-            XyreonIo =
-                new XyreonIoService();
-
-            XyreonIo.Log += msg =>
-                KioskLocalLogger.LogInfo(
-                    "XYREON",
-                    msg);
-
-            XyreonIo.Error += msg =>
-                KioskLocalLogger.LogError(
-                    "XYREON",
-                    msg);
-
-            try
-            {
-                XyreonReady =
-                    await XyreonIo.AutoConnectAsync();
-
-                if (XyreonReady)
-                {
-                    // Clear only lights controlled by this application.
-                    // DO5 siren and all unknown outputs are preserved.
-                    await XyreonIo.TurnOffKnownLightsAsync();
-
-                    Console.WriteLine(
-                        $"[XYREON] Connected on {XyreonIo.PortName}");
-                }
-                else
-                {
-                    Console.WriteLine(
-                        "[XYREON] COMMAND port not available.");
-                }
-            }
-            catch (Exception ex)
-            {
-                XyreonReady = false;
-
-                KioskLocalLogger.LogError(
-                    "XYREON",
-                    "Initialization failed: " +
-                    ex.Message);
-            }
-
+            await InitializeXyreonAsync();
             IsInitialized = true;
         }
 
@@ -395,6 +350,71 @@ namespace OmniKiosk.Wpf.Services
             XyreonReady = false;
             EyecoolReady = false;
             IsInitialized = false;
+        }
+
+        public static async Task<bool>
+    InitializeXyreonAsync()
+        {
+            if (XyreonIo != null &&
+                XyreonIo.IsConnected)
+            {
+                XyreonReady =
+                    true;
+
+                return true;
+            }
+
+            if (XyreonIo == null)
+            {
+                XyreonIo =
+                    new XyreonIoService();
+
+                XyreonIo.Log += msg =>
+                    KioskLocalLogger.LogInfo(
+                        "XYREON",
+                        msg);
+
+                XyreonIo.Error += msg =>
+                    KioskLocalLogger.LogError(
+                        "XYREON",
+                        msg);
+            }
+
+            try
+            {
+                XyreonReady =
+                    await XyreonIo
+                        .AutoConnectAsync();
+
+                if (!XyreonReady)
+                {
+                    KioskLocalLogger.LogError(
+                        "XYREON",
+                        "XYREON COMMAND port not available.");
+
+                    return false;
+                }
+
+                await XyreonIo
+                    .TurnOffKnownLightsAsync();
+
+                Console.WriteLine(
+                    $"[XYREON] Connected on {XyreonIo.PortName}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                XyreonReady =
+                    false;
+
+                KioskLocalLogger.LogError(
+                    "XYREON",
+                    "Initialization failed: " +
+                    ex.Message);
+
+                return false;
+            }
         }
     }
 }

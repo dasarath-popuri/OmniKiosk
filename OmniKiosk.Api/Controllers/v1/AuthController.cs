@@ -23,6 +23,20 @@ namespace OmniKiosk.Config.Api.Controllers.v1
             _connectionString = _config.GetConnectionString("PhantomRemit")
                 ?? throw new InvalidOperationException("ConnectionStrings:PhantomRemit is not configured.");
         }
+        public sealed class MaintenancePinRequest
+        {
+            public string MacAddress
+            {
+                get;
+                set;
+            } = "";
+
+            public string Pin
+            {
+                get;
+                set;
+            } = "";
+        }
         // Staff AND kiosk logins both go through UserProfile/UserRoles now -
         // no separate table, no separate endpoint. A kiosk terminal is
         // represented as a UserProfile row with RoleName = 'KIOSK'; LoginId
@@ -237,7 +251,183 @@ namespace OmniKiosk.Config.Api.Controllers.v1
                 BranchId = branchIdInt
             });
         }
+        [HttpPost("validate-maintenance-pin")]
+        public async Task<IActionResult>
+    ValidateMaintenancePin(
+        [FromBody]
+        MaintenancePinRequest request)
+        {
+            string ip =
+                HttpContext.Connection
+                    .RemoteIpAddress?
+                    .ToString()
+                ?? "unknown";
 
+            string mac =
+                (request.MacAddress ?? "")
+                .Trim();
+
+            string pin =
+                (request.Pin ?? "")
+                .Trim();
+
+            if (string.IsNullOrWhiteSpace(
+                    mac))
+            {
+                return BadRequest(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "MAC address is required."
+                    });
+            }
+
+            if (pin.Length != 6 ||
+                !pin.All(char.IsDigit))
+            {
+                return BadRequest(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "A valid 6-digit PIN is required."
+                    });
+            }
+
+            using var con =
+                new SqlConnection(
+                    _connectionString);
+
+            var terminal =
+                await con.QuerySingleOrDefaultAsync<TerminalRow>(
+                    @"
+            SELECT
+                KioskId,
+                BranchId,
+                OperatorUserId,
+                Status
+            FROM Ksk_Terminals
+            WHERE MacAddress = @mac",
+                    new
+                    {
+                        mac
+                    });
+
+            if (terminal == null)
+            {
+                await WriteAuditLog(
+                    con,
+                    "DoorSecurity",
+                    "Maintenance PIN rejected - kiosk not registered.",
+                    "SYSTEM",
+                    ip,
+                    mac);
+
+                return Unauthorized(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "This kiosk is not registered."
+                    });
+            }
+
+            string expectedHash =
+                _config[
+                    "KioskMaintenance:AdminPinHash"]
+                ?? "";
+
+            if (string.IsNullOrWhiteSpace(
+                    expectedHash))
+            {
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Maintenance PIN is not configured."
+                    });
+            }
+
+            string actualHash =
+                ComputeHash(
+                    pin);
+
+            bool valid;
+
+            try
+            {
+                byte[] expectedBytes =
+                    Convert.FromHexString(
+                        expectedHash);
+
+                byte[] actualBytes =
+                    Convert.FromHexString(
+                        actualHash);
+
+                valid =
+                    expectedBytes.Length ==
+                    actualBytes.Length &&
+                    CryptographicOperations
+                        .FixedTimeEquals(
+                            expectedBytes,
+                            actualBytes);
+            }
+            catch
+            {
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Maintenance PIN configuration is invalid."
+                    });
+            }
+
+            if (!valid)
+            {
+                await WriteAuditLog(
+                    con,
+                    "DoorSecurity",
+                    $"Invalid maintenance PIN for kiosk {terminal.KioskId}.",
+                    "SYSTEM",
+                    ip,
+                    mac);
+
+                return Unauthorized(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Invalid PIN."
+                    });
+            }
+
+            await WriteAuditLog(
+                con,
+                "DoorSecurity",
+                $"Authorized lower-door access granted for kiosk {terminal.KioskId}.",
+                "SYSTEM",
+                ip,
+                mac);
+
+            return Ok(
+                new
+                {
+                    success = true,
+                    kioskId =
+                        terminal.KioskId,
+
+                    status =
+                        terminal.Status,
+
+                    message =
+                        "Authorized door access granted."
+                });
+        }
         // Matches the existing GetSHAHash(inputString) exactly: SHA-512 of
         // (inputString + salt), salt appended after the input, not before.
         // The salt itself comes from configuration - Security:PasswordSalt -

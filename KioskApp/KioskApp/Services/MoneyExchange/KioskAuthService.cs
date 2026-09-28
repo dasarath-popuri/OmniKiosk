@@ -249,6 +249,89 @@ namespace OmniKiosk.Wpf.Services
             _cachedMacAddress = FormatMac(chosen);
             return _cachedMacAddress;
         }
+        public static async Task<MaintenancePinValidationResult>
+    ValidateMaintenancePinAsync(
+        string pin,
+        CancellationToken ct = default)
+        {
+            if (pin.Length != 6 ||
+                !pin.All(char.IsDigit))
+            {
+                return new MaintenancePinValidationResult
+                {
+                    Success = false,
+
+                    Message =
+                        "Please enter a valid 6-digit PIN."
+                };
+            }
+
+            string mac =
+                GetThisKiosksMacAddress();
+
+            using HttpResponseMessage response =
+                await _http.PostAsJsonAsync(
+                    "api/v1/Auth/validate-maintenance-pin",
+                    new
+                    {
+                        MacAddress =
+                            mac,
+
+                        Pin =
+                            pin
+                    },
+                    ct);
+
+            string responseBody =
+                await response.Content
+                    .ReadAsStringAsync(ct);
+
+            string message =
+                "";
+
+            try
+            {
+                using var document =
+                    JsonDocument.Parse(
+                        responseBody);
+
+                if (document.RootElement
+                    .TryGetProperty(
+                        "message",
+                        out JsonElement messageElement))
+                {
+                    message =
+                        messageElement.GetString()
+                        ?? "";
+                }
+            }
+            catch
+            {
+            }
+
+            return new MaintenancePinValidationResult
+            {
+                Success =
+                    response.IsSuccessStatusCode,
+
+                Message =
+                    message
+            };
+        }
+        public sealed class MaintenancePinValidationResult
+        {
+            public bool Success
+            {
+                get;
+                init;
+            }
+
+            public string Message
+            {
+                get;
+                init;
+            } = "";
+        }
 
         private static bool ContainsAny(string haystack, params string[] needles) =>
             needles.Any(n => haystack.Contains(n, StringComparison.OrdinalIgnoreCase));

@@ -28,6 +28,7 @@ namespace OmniKiosk.Wpf
         private string _currentLanguage = "en";
         private readonly Stack<UserControl> _sdkNav = new();
         private readonly MenuApiClient _menuClient = new();
+        private bool _doorAccessAuthorized;
 
         // Make these properties public so they can be accessed from other pages
         public Grid HomeScreen1 => (Grid)FindName("HomeScreen");
@@ -56,6 +57,49 @@ namespace OmniKiosk.Wpf
             // or UI beyond the bare window - a machine that isn't
             // registered shouldn't get as far as showing the home screen
             // at all, even briefly.
+
+            // =====================================================
+            // GLOBAL LOWER-DOOR SECURITY
+            // =====================================================
+            //
+            // Door monitoring must run regardless of whether
+            // Ksk_Terminals is Active or Maintenance.
+            //
+            // DI0 ON  = door closed
+            // DI0 OFF = door open
+            // DO5     = siren
+            //
+            try
+            {
+                bool xyreonReady =
+                    await GlobalHardwareManager
+                        .InitializeXyreonAsync();
+
+                if (xyreonReady &&
+                    GlobalHardwareManager.XyreonIo != null)
+                {
+                    await GlobalHardwareManager
+                        .XyreonIo
+                        .SetDoorAlarmSuppressedAsync(
+                            false);
+
+                    GlobalHardwareManager
+                        .XyreonIo
+                        .StartDoorAlarmAutomation(
+                            250);
+
+                    KioskLocalLogger.LogInfo(
+                        "DoorSecurity",
+                        "Lower-door alarm armed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                KioskLocalLogger.LogError(
+                    "DoorSecurity",
+                    "Failed to start lower-door security: " +
+                    ex.Message);
+            }
             try
             {
                 await KioskAuthService.GetTokenAsync();
@@ -716,7 +760,120 @@ namespace OmniKiosk.Wpf
         //        MessageBox.Show("Print failed: " + ex.Message);
         //    }
         //}
+        private async void AdminControls_Click(
+    object sender,
+    RoutedEventArgs e)
+        {
+            var io =
+                GlobalHardwareManager
+                    .XyreonIo;
 
+            if (io == null ||
+                !io.IsConnected)
+            {
+                MessageBox.Show(
+                    "Door security controller is not connected.",
+                    "Admin Controls",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
+            // Already authorized?
+            if (_doorAccessAuthorized)
+            {
+                var answer =
+                    MessageBox.Show(
+                        "Authorized door access is currently active.\n\n" +
+                        "Do you want to re-arm the door alarm now?",
+                        "Admin Controls",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                if (answer !=
+                    MessageBoxResult.Yes)
+                {
+                    return;
+                }
+
+                await ReArmDoorAlarmAsync();
+
+                return;
+            }
+
+            var pinDialog =
+                new Views.Admin
+                    .MaintenancePinDialog
+                {
+                    Owner =
+                        this
+                };
+
+            bool? result =
+                pinDialog.ShowDialog();
+
+            if (result != true)
+                return;
+
+            _doorAccessAuthorized =
+                true;
+
+            await io
+                .SetDoorAlarmSuppressedAsync(
+                    true);
+
+            UpdateAdminControlButtons();
+
+            MessageBox.Show(
+                "Authorized door access enabled.\n\n" +
+                "The lower door can now be opened without triggering the siren.\n\n" +
+                "Please re-arm the alarm when maintenance is complete.",
+                "Door Access Authorized",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        private async Task ReArmDoorAlarmAsync()
+        {
+            _doorAccessAuthorized =
+                false;
+
+            var io =
+                GlobalHardwareManager
+                    .XyreonIo;
+
+            if (io != null)
+            {
+                await io
+                    .SetDoorAlarmSuppressedAsync(
+                        false);
+            }
+
+            UpdateAdminControlButtons();
+
+            KioskLocalLogger.LogInfo(
+                "DoorSecurity",
+                "Authorized door access ended. Alarm re-armed.");
+        }
+        private void UpdateAdminControlButtons()
+        {
+            string text =
+                _doorAccessAuthorized
+                    ? "RE-ARM DOOR ALARM"
+                    : "ADMIN CONTROLS";
+
+            if (MaintenanceAdminButton != null)
+            {
+                MaintenanceAdminButton.Content =
+                    text;
+            }
+
+            if (MaintenanceAdminButton != null)
+            {
+                MaintenanceAdminButton.Content =
+                    text;
+            }
+        }
         private async void PrintCurrentPageSilently()
         {
             try

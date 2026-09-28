@@ -101,6 +101,8 @@ namespace OmniKiosk.Wpf.Services.Xyreon
 
         private Task?
             _doorAlarmTask;
+        private volatile bool
+    _doorAlarmSuppressed;
 
         public bool IsConnected =>
             _port?.IsOpen == true;
@@ -115,7 +117,8 @@ namespace OmniKiosk.Wpf.Services.Xyreon
         public bool DoorAlarmAutomationEnabled =>
             _doorAlarmCts != null &&
             !_doorAlarmCts.IsCancellationRequested;
-
+        public bool DoorAlarmSuppressed =>
+    _doorAlarmSuppressed;
         public event Action<string>?
             Log;
 
@@ -710,10 +713,11 @@ namespace OmniKiosk.Wpf.Services.Xyreon
 
                                 if (state != null)
                                 {
-                                    bool
-                                        alarmRequired =
-                                            state
-                                                .IsLowerDoorOpen;
+                                    //bool
+                                    //    alarmRequired =
+                                    //        state
+                                    //            .IsLowerDoorOpen;
+                                    bool alarmRequired =state.IsLowerDoorOpen &&!_doorAlarmSuppressed;
 
                                     if (previousRequiredAlarm !=
                                         alarmRequired)
@@ -761,7 +765,30 @@ namespace OmniKiosk.Wpf.Services.Xyreon
                     },
                     token);
         }
+        public async Task SetDoorAlarmSuppressedAsync(
+    bool suppressed)
+        {
+            ThrowIfDisposed();
 
+            _doorAlarmSuppressed =
+                suppressed;
+
+            Log?.Invoke(
+                suppressed
+                    ? "Authorized door access enabled - alarm suppressed."
+                    : "Authorized door access ended - alarm re-armed.");
+
+            if (suppressed &&
+                IsConnected)
+            {
+                // If someone enters the correct PIN while
+                // the siren is already sounding, stop it
+                // immediately.
+                await SetOutputAsync(
+                    KioskOutput.Siren,
+                    false);
+            }
+        }
         public async Task
             StopDoorAlarmAutomationAsync(
                 bool turnSirenOff = true)
@@ -797,7 +824,8 @@ namespace OmniKiosk.Wpf.Services.Xyreon
 
             _doorAlarmTask =
                 null;
-
+            _doorAlarmSuppressed =
+    false;
             cts.Dispose();
 
             if (turnSirenOff &&
