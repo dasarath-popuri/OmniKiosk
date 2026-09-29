@@ -13,9 +13,23 @@ namespace OmniKiosk.Wpf
             // We are now running 100% native 64-bit serial communication.
         }
 
-        protected override void OnExit(ExitEventArgs e)
+        //protected override void OnExit(ExitEventArgs e)
+        //{
+        //    // (If you have any other global shutdown logic, it goes here)
+        //    base.OnExit(e);
+        //}
+        protected override void OnExit(
+    ExitEventArgs e)
         {
-            // (If you have any other global shutdown logic, it goes here)
+            try
+            {
+                Services.GlobalHardwareManager
+                    .ShutdownXyreon();
+            }
+            catch
+            {
+            }
+
             base.OnExit(e);
         }
     }

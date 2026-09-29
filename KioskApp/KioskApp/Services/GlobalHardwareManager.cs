@@ -284,9 +284,38 @@ namespace OmniKiosk.Wpf.Services
         // ============================================================
         // SHUTDOWN
         // ============================================================
+        public static void ShutdownXyreon()
+        {
+            var io = XyreonIo;
 
+            // Clear global reference first so nothing new can use it.
+            XyreonIo = null;
+            XyreonReady = false;
+
+            if (io == null)
+                return;
+
+            try
+            {
+                Console.WriteLine(
+                    "[XYREON] Shutting down...");
+
+                io.Dispose();
+
+                Console.WriteLine(
+                    "[XYREON] Serial connection released.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[XYREON] Shutdown error: " +
+                    ex.Message);
+            }
+        }
         public static void ShutdownAll()
         {
+            ShutdownXyreon();
+
             try
             {
                 MoneyReceiver?.Dispose();
@@ -338,16 +367,16 @@ namespace OmniKiosk.Wpf.Services
                     "[Eyecool] shutdown exception:");
                 Console.WriteLine(ex);
             }
-            try
-            {
-                XyreonIo?.Dispose();
-            }
-            catch
-            {
-            }
+            //try
+            //{
+            //    XyreonIo?.Dispose();
+            //}
+            //catch
+            //{
+            //}
 
-            XyreonIo = null;
-            XyreonReady = false;
+            //XyreonIo = null;
+            //XyreonReady = false;
             EyecoolReady = false;
             IsInitialized = false;
         }

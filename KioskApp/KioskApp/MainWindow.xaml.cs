@@ -1,10 +1,12 @@
-﻿using OmniKiosk.Wpf.Views;
+﻿using Microsoft.Web.WebView2.Core;
+using OmniKiosk.Wpf.Services;
+using OmniKiosk.Wpf.Views;
+using OmniKiosk.Wpf.Views.MoneyExchange;
 using OmniKiosk.Wpf.Views.Remittance;
 using OmniKiosk.Wpf.Views.SDKTest;
-using OmniKiosk.Wpf.Views.MoneyExchange;
-using OmniKiosk.Wpf.Services;
-using Microsoft.Web.WebView2.Core;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Resources;
@@ -15,7 +17,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Collections.Generic;
 
 
 namespace OmniKiosk.Wpf
@@ -50,7 +51,24 @@ namespace OmniKiosk.Wpf
             _isDarkMode = isDark;
             // Theme loading logic can be added here if needed
         }
+        protected override void OnClosing(
+    CancelEventArgs e)
+        {
+            try
+            {
+                // Release COM7 as early as possible.
+                GlobalHardwareManager
+                    .ShutdownXyreon();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[XYREON] OnClosing error: " +
+                    ex.Message);
+            }
 
+            base.OnClosing(e);
+        }
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Kiosk identity check happens FIRST, before any hardware init
@@ -859,19 +877,21 @@ namespace OmniKiosk.Wpf
         {
             string text =
                 _doorAccessAuthorized
-                    ? "RE-ARM DOOR ALARM"
-                    : "ADMIN CONTROLS";
+                    ? "RE-ARM ALARM"
+                    : "ADMIN";
 
-            if (MaintenanceAdminButton != null)
+            if (HeaderAdminButton != null)
             {
-                MaintenanceAdminButton.Content =
+                HeaderAdminButton.Content =
                     text;
             }
 
             if (MaintenanceAdminButton != null)
             {
                 MaintenanceAdminButton.Content =
-                    text;
+                    _doorAccessAuthorized
+                        ? "RE-ARM DOOR ALARM"
+                        : "ADMIN CONTROLS";
             }
         }
         private async void PrintCurrentPageSilently()

@@ -99,11 +99,40 @@ namespace OmniKiosk.Wpf.Views.SDKTest
             _timer.Start();
         }
 
+        //private void UserControl_Unloaded(
+        //    object sender,
+        //    RoutedEventArgs e)
+        //{
+        //    _timer.Stop();
+        //}
         private void UserControl_Unloaded(
-            object sender,
-            RoutedEventArgs e)
+    object sender,
+    RoutedEventArgs e)
         {
             _timer.Stop();
+
+            var io =
+                GlobalHardwareManager.XyreonIo;
+
+            if (io == null)
+                return;
+
+            // SDK test may temporarily stop automation
+            // so DO5 can be manually tested.
+            //
+            // When leaving the test page, restore global
+            // security unless an authorized PIN override
+            // is currently active.
+            if (!io.DoorAlarmSuppressed &&
+                !io.DoorAlarmAutomationEnabled)
+            {
+                io.StartDoorAlarmAutomation(
+                    250);
+
+                KioskLocalLogger.LogInfo(
+                    "DoorSecurity",
+                    "Door alarm automatically re-armed after leaving XYREON SDK test.");
+            }
         }
 
         private async void Timer_Tick(

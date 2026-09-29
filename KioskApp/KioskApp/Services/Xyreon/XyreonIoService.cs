@@ -1013,25 +1013,78 @@ namespace OmniKiosk.Wpf.Services.Xyreon
             if (_disposed)
                 return;
 
+            _disposed = true;
+
+            Console.WriteLine(
+                "[XYREON] Dispose started.");
+
+            // Stop producing new alarm activity first.
+            var cts = _doorAlarmCts;
+
+            _doorAlarmCts = null;
+
             try
             {
-                StopDoorAlarmAutomationAsync(
-                        turnSirenOff:
-                            true)
-                    .GetAwaiter()
-                    .GetResult();
+                cts?.Cancel();
             }
             catch
             {
             }
 
-            DisconnectInternal();
+            // IMPORTANT:
+            // Release serial port regardless of what the monitoring
+            // task is currently doing.
+            try
+            {
+                DisconnectInternal();
+            }
+            catch
+            {
+            }
 
-            _connectionLock.Dispose();
-            _ioLock.Dispose();
+            try
+            {
+                if (_doorAlarmTask != null)
+                {
+                    _doorAlarmTask
+                        .Wait(
+                            TimeSpan.FromSeconds(2));
+                }
+            }
+            catch
+            {
+            }
 
-            _disposed =
-                true;
+            _doorAlarmTask = null;
+
+            try
+            {
+                cts?.Dispose();
+            }
+            catch
+            {
+            }
+
+            _doorAlarmSuppressed = false;
+
+            try
+            {
+                _connectionLock.Dispose();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                _ioLock.Dispose();
+            }
+            catch
+            {
+            }
+
+            Console.WriteLine(
+                "[XYREON] Dispose completed. Serial port closed.");
         }
     }
 }
