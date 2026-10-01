@@ -42,18 +42,20 @@
              CAMERA PREVIEW
              ======================================================== -->
 
-            <Grid Grid.Row="0"
+            <!--<Grid Grid.Row="0"
               Width="640"
               Height="480"
               HorizontalAlignment="Center"
               VerticalAlignment="Top"
               Background="Black">
 
-                <!-- JPEG-pull display: CALLBACK_EVENT_PREVIEW -> ECF_CopyFrameWithAlpha
+                -->
+            <!-- JPEG-pull display: CALLBACK_EVENT_PREVIEW -> ECF_CopyFrameWithAlpha
                      -> BitmapImage -> this Image.Source. No native HWND hosting -
                      matches the JpegPull_net7 reference project, which ran smoothly
                      on the actual kiosk hardware with SsDuck_model.dat present;
                      ECF_SetDisplayWindowEx (the previous approach here) did not. -->
+            <!--
                 <Image x:Name="VisImage"
                 Width="640"
                 Height="480"
@@ -62,8 +64,61 @@
                 Stretch="Uniform"
                 Focusable="False"/>
 
-            </Grid>
+            </Grid>-->
+            <Grid Grid.Row="0"
+      Width="640"
+      Height="480"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Top"
+      Background="Black"
+      ClipToBounds="True">
 
+                <!-- LIVE CAMERA -->
+                <Image x:Name="VisImage"
+           Width="640"
+           Height="480"
+           HorizontalAlignment="Center"
+           VerticalAlignment="Center"
+           Stretch="Uniform"
+           Focusable="False"/>
+
+                <!-- CAMERA BORDER -->
+                <Border BorderBrush="#80FFFFFF"
+            BorderThickness="2"
+            CornerRadius="18"
+            IsHitTestVisible="False"/>
+
+                <!-- CUSTOMER FACE POSITION GUIDE -->
+                <Ellipse x:Name="FaceGuide"
+             Width="300"
+             Height="360"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center"
+             Stroke="White"
+             StrokeThickness="4"
+             StrokeDashArray="8 5"
+             Fill="#01000000"
+             IsHitTestVisible="False"/>
+
+                <!-- LIVE GUIDANCE -->
+                <Border VerticalAlignment="Bottom"
+            HorizontalAlignment="Center"
+            Margin="0,0,0,18"
+            Background="#B0000000"
+            CornerRadius="12"
+            Padding="18,8"
+            IsHitTestVisible="False">
+
+                    <TextBlock x:Name="FaceGuideText"
+                   Text="Position your face inside the oval"
+                   Foreground="White"
+                   FontSize="18"
+                   FontWeight="SemiBold"
+                   TextAlignment="Center"/>
+
+                </Border>
+
+            </Grid>
 
             <!-- ========================================================
              HEADER / INSTRUCTIONS / STATUS

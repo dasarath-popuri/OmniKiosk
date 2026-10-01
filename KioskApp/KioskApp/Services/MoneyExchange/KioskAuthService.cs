@@ -1,9 +1,10 @@
+using OmniKiosk.Wpf.Config;
+using OmniKiosk.Wpf.Services.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.NetworkInformation;
 using System.Text.Json;
-using OmniKiosk.Wpf.Config;
 
 namespace OmniKiosk.Wpf.Services
 {
@@ -115,7 +116,31 @@ namespace OmniKiosk.Wpf.Services
 
                 var mac = GetThisKiosksMacAddress();
 
-                var response = await _http.PostAsJsonAsync("api/v1/Auth/kiosk-login", new { MacAddress = mac }, ct);
+                //var response = await _http.PostAsJsonAsync("api/v1/Auth/kiosk-login", new { MacAddress = mac }, ct);
+
+                using var loginRequest =
+    new HttpRequestMessage(
+        HttpMethod.Post,
+        "api/v1/Auth/kiosk-login")
+    {
+        Content =
+            JsonContent.Create(
+                new
+                {
+                    MacAddress =
+                        mac
+                })
+    };
+
+                var response =
+                    await ApiPerformanceLogger
+                        .SendAsync(
+                            _http,
+                            loginRequest,
+                            "Config",
+                            "Kiosk Login",
+                            attempt: 1,
+                            cancellationToken: ct);
 
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -269,19 +294,45 @@ namespace OmniKiosk.Wpf.Services
             string mac =
                 GetThisKiosksMacAddress();
 
+            //using HttpResponseMessage response =
+            //    await _http.PostAsJsonAsync(
+            //        "api/v1/Auth/validate-maintenance-pin",
+            //        new
+            //        {
+            //            MacAddress =
+            //                mac,
+
+            //            Pin =
+            //                pin
+            //        },
+            //        ct);
+
+            using var pinRequest =
+    new HttpRequestMessage(
+        HttpMethod.Post,
+        "api/v1/Auth/validate-maintenance-pin")
+    {
+        Content =
+            JsonContent.Create(
+                new
+                {
+                    MacAddress =
+                        mac,
+
+                    Pin =
+                        pin
+                })
+    };
+
             using HttpResponseMessage response =
-                await _http.PostAsJsonAsync(
-                    "api/v1/Auth/validate-maintenance-pin",
-                    new
-                    {
-                        MacAddress =
-                            mac,
-
-                        Pin =
-                            pin
-                    },
-                    ct);
-
+                await ApiPerformanceLogger
+                    .SendAsync(
+                        _http,
+                        pinRequest,
+                        "Config",
+                        "Validate Maintenance PIN",
+                        attempt: 1,
+                        cancellationToken: ct);
             string responseBody =
                 await response.Content
                     .ReadAsStringAsync(ct);

@@ -71,6 +71,11 @@ namespace OmniKiosk.Wpf.Services
 
         [DllImport("EcFaceCamSDK.dll", EntryPoint = "ECF_StartDetectAsyn", CallingConvention = CallingConvention.StdCall)]
         public static extern int ECF_StartDetectAsyn();
+        [DllImport("EcFaceCamSDK.dll", EntryPoint = "ECF_StartMonitor", CallingConvention = CallingConvention.StdCall)]
+        public static extern int ECF_StartMonitor();
+
+        [DllImport("EcFaceCamSDK.dll", EntryPoint = "ECF_SnapFrame", CallingConvention = CallingConvention.StdCall)]
+        public static extern int ECF_SnapFrame(int nImageType, byte[] pImgJpg, int[] pnJpgLen);
 
         [DllImport("EcFaceCamSDK.dll", EntryPoint = "ECF_Stop", CallingConvention = CallingConvention.StdCall)]
         public static extern int ECF_Stop();

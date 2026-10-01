@@ -65,6 +65,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\NewFolder\**" />
+    <EmbeddedResource Remove="Services\NewFolder\**" />
+    <None Remove="Services\NewFolder\**" />
+    <Page Remove="Services\NewFolder\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>

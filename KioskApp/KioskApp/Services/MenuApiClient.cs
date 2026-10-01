@@ -1,11 +1,12 @@
-﻿using System;
+﻿using OmniKiosk.Wpf.Config;
+using OmniKiosk.Wpf.Services.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using OmniKiosk.Wpf.Config;
 
 namespace OmniKiosk.Wpf.Services
 {
@@ -29,12 +30,43 @@ namespace OmniKiosk.Wpf.Services
             Timeout = TimeSpan.FromSeconds(15)
         };
 
-        private static async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> buildRequest, CancellationToken ct)
+        //private static async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> buildRequest, CancellationToken ct)
+        //{
+        //    var token = await KioskAuthService.GetTokenAsync(ct);
+        //    var request = buildRequest();
+        //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //    return await _http.SendAsync(request, ct);
+        //}
+        private static async Task<HttpResponseMessage>
+    SendAsync(
+        Func<HttpRequestMessage>
+            buildRequest,
+        CancellationToken ct)
         {
-            var token = await KioskAuthService.GetTokenAsync(ct);
-            var request = buildRequest();
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            return await _http.SendAsync(request, ct);
+            var token =
+                await KioskAuthService
+                    .GetTokenAsync(ct);
+
+            var request =
+                buildRequest();
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    token);
+
+            string apiName =
+                $"{request.Method.Method} " +
+                $"{request.RequestUri}";
+
+            return await ApiPerformanceLogger
+                .SendAsync(
+                    _http,
+                    request,
+                    "Config",
+                    apiName,
+                    attempt: 1,
+                    cancellationToken: ct);
         }
 
         // Returns the enabled menu cards in SortOrder. On any failure,

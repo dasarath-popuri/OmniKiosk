@@ -1,4 +1,6 @@
-﻿using System;
+﻿using OmniKiosk.Wpf.Config;
+using OmniKiosk.Wpf.Services.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -9,7 +11,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using OmniKiosk.Wpf.Config;
 
 namespace OmniKiosk.Wpf.Services.Ekyc
 {
@@ -349,6 +350,7 @@ namespace OmniKiosk.Wpf.Services.Ekyc
 
     public sealed class EkycFaceMatchClient
     {
+        private const decimal Innov8tifLivenessQualityThreshold =0.5m;
         private const double Innov8tifFaceMatchThreshold = 75.0;
         private const double Innov8tifLivenessProbabilityThreshold = 0.5;
         private static readonly HttpClient _http = new HttpClient
@@ -418,9 +420,35 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                     try
                     {
                         var url = baseUrl.TrimEnd('/') + "/Token";
-                        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-                        using var resp = await _http.PostAsync(url, content, ct);
-                        var body = await resp.Content.ReadAsStringAsync(ct);
+                        //using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        //using var resp = await _http.PostAsync(url, content, ct);
+                        //var body = await resp.Content.ReadAsStringAsync(ct);
+
+                        using var tokenRequest =
+    new HttpRequestMessage(
+        HttpMethod.Post,
+        url)
+    {
+        Content =
+            new StringContent(
+                json,
+                Encoding.UTF8,
+                "application/json")
+    };
+
+                        using var resp =
+                            await ApiPerformanceLogger
+                                .SendAsync(
+                                    _http,
+                                    tokenRequest,
+                                    "eKYC",
+                                    $"Token - {label}",
+                                    attempt: 1,
+                                    cancellationToken: ct);
+
+                        var body =
+                            await resp.Content
+                                .ReadAsStringAsync(ct);
 
                         if (!resp.IsSuccessStatusCode)
                         {
@@ -452,17 +480,78 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                 _tokenLock.Release();
             }
         }
-        private async Task<(HttpStatusCode status, string body)> SendAuthedAsync(
-            string url, string jsonBody, string token, CancellationToken ct)
+        //private async Task<(HttpStatusCode status, string body)> SendAuthedAsync(
+        //    string url, string jsonBody, string token, CancellationToken ct)
+        //{
+        //    using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        //    {
+        //        Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+        //    };
+        //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //    using var resp = await _http.SendAsync(request, ct);
+        //    var body = await resp.Content.ReadAsStringAsync(ct);
+        //    return (resp.StatusCode, body);
+        //}
+        private async Task<(
+    HttpStatusCode status,
+    string body)>
+    SendAuthedAsync(
+        string url,
+        string jsonBody,
+        string token,
+        CancellationToken ct,
+        long imageBytes = 0,
+        int attempt = 1)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            using var request =
+                new HttpRequestMessage(
+                    HttpMethod.Post,
+                    url)
+                {
+                    Content =
+                        new StringContent(
+                            jsonBody,
+                            Encoding.UTF8,
+                            "application/json")
+                };
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    token);
+
+            string apiName;
+
+            try
             {
-                Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
-            };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            using var resp = await _http.SendAsync(request, ct);
-            var body = await resp.Content.ReadAsStringAsync(ct);
-            return (resp.StatusCode, body);
+                apiName =
+                    new Uri(url)
+                        .AbsolutePath;
+            }
+            catch
+            {
+                apiName =
+                    url;
+            }
+
+            using var response =
+                await ApiPerformanceLogger
+                    .SendAsync(
+                        _http,
+                        request,
+                        "eKYC",
+                        apiName,
+                        attempt,
+                        ct,
+                        imageBytes);
+
+            string body =
+                await response.Content
+                    .ReadAsStringAsync(ct);
+
+            return (
+                response.StatusCode,
+                body);
         }
 
         public async Task<(bool ok, string? journeyId, string? error)> CreateJourneyIdAsync(
@@ -555,6 +644,14 @@ namespace OmniKiosk.Wpf.Services.Ekyc
             };
 
             var json = JsonSerializer.Serialize(req);
+            long documentImageBytes =
+    ApiPerformanceLogger
+        .GetBase64BinarySize(
+            frontImageBase64)
+    +
+    ApiPerformanceLogger
+        .GetBase64BinarySize(
+            backImageBase64);
             var attempts = new List<string>();
             bool retried = false;
 
@@ -566,7 +663,16 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                 try
                 {
                     var url = baseUrl.TrimEnd('/') + "/api/eKYC/eKYC_CentralizeOkayID_request";
-                    var (status, body) = await SendAuthedAsync(url, json, token, ct);
+                    //var (status, body) = await SendAuthedAsync(url, json, token, ct);
+                    var (status, body) =
+    await SendAuthedAsync(
+        url,
+        json,
+        token,
+        ct,
+        imageBytes:
+            documentImageBytes,
+        attempt: 1);
 
                     if (status == HttpStatusCode.Unauthorized && !retried)
                     {
@@ -582,7 +688,16 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                         }
 
                         token = freshToken;
-                        (status, body) = await SendAuthedAsync(url, json, token, ct);
+                        //(status, body) = await SendAuthedAsync(url, json, token, ct);
+                        (status, body) =
+    await SendAuthedAsync(
+        url,
+        json,
+        token,
+        ct,
+        imageBytes:
+            documentImageBytes,
+        attempt: 2);
                     }
 
                     if (status != HttpStatusCode.OK)
@@ -1685,6 +1800,14 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                 }
             };
             var json = JsonSerializer.Serialize(req);
+            long faceImageBytes =
+    ApiPerformanceLogger
+        .GetBase64BinarySize(
+            idCardImageBase64)
+    +
+    ApiPerformanceLogger
+        .GetBase64BinarySize(
+            liveImageBase64);
             var attempts = new List<string>();
             bool retried = false;
 
@@ -1695,7 +1818,16 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                 try
                 {
                     var url = baseUrl.TrimEnd('/') + "/api/eKYC/eKYC_CentralizeOkayFace_request";
-                    var (status, body) = await SendAuthedAsync(url, json, token, ct);
+                    //var (status, body) = await SendAuthedAsync(url, json, token, ct);
+                    var (status, body) =
+    await SendAuthedAsync(
+        url,
+        json,
+        token,
+        ct,
+        imageBytes:
+            faceImageBytes,
+        attempt: 1);
 
                     if (status == HttpStatusCode.Unauthorized && !retried)
                     {
@@ -1704,7 +1836,16 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                         var (freshToken, freshErr) = await EnsureBearerTokenAsync(ct);
                         if (freshToken == null) { attempts.Add($"{label} ({baseUrl}): {freshErr}"); continue; }
                         token = freshToken;
-                        (status, body) = await SendAuthedAsync(url, json, token, ct);
+                        //(status, body) = await SendAuthedAsync(url, json, token, ct);
+                        (status, body) =
+    await SendAuthedAsync(
+        url,
+        json,
+        token,
+        ct,
+        imageBytes:
+            faceImageBytes,
+        attempt: 2);
                     }
 
                     if (status != HttpStatusCode.OK)
@@ -1735,13 +1876,25 @@ namespace OmniKiosk.Wpf.Services.Ekyc
                         confidence >= Innov8tifFaceMatchThreshold;
 
                     bool livenessPassed =
-                        livenessProbability >= Innov8tifLivenessProbabilityThreshold;
+                        livenessProbability > Innov8tifLivenessProbabilityThreshold;
 
-                    bool matched =
-                        apiProcessedSuccessfully &&
-                        facePassed &&
-                        livenessPassed;
+                    bool qualityPassed =
+                        livenessQuality >
+                        Innov8tifLivenessQualityThreshold;
 
+                    //bool matched =
+                    //    apiProcessedSuccessfully &&
+                    //    facePassed &&
+                    //    livenessPassed;
+
+                    bool matched =apiProcessedSuccessfully && facePassed && livenessPassed && qualityPassed;
+
+                    if (apiProcessedSuccessfully && facePassed && livenessPassed && !qualityPassed)
+                    {
+                        friendly =
+                            "The selfie image was not clear enough. " +
+                            "Please look straight at the camera and hold still.";
+                    }
                     if (apiProcessedSuccessfully && !matched && string.IsNullOrWhiteSpace(friendly))
                     {
                         if (!facePassed && !livenessPassed)
@@ -1814,5 +1967,6 @@ namespace OmniKiosk.Wpf.Services.Ekyc
             }
             catch { return "0.0.0.0"; }
         }
+
     }
 }

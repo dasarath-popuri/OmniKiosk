@@ -35,7 +35,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         private bool _opened;
         private bool _stopping;
         private bool _handledThisSession;
-        private const int PreviewFps = 10;
+        private const int PreviewFps = 20;
         private static readonly long PreviewIntervalTicks =
             TimeSpan.TicksPerSecond / PreviewFps;
 
@@ -73,14 +73,49 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // SDK EVENTS
         // ================================================================
 
+        private const int CALLBACK_EVENT_GOODFACE = 0;
+        private const int CALLBACK_EVENT_NOFACE = 1;
+        private const int CALLBACK_EVENT_MULTIFACE = 2;
+        private const int CALLBACK_EVENT_HEADPOS = 3;
+        private const int CALLBACK_EVENT_BIGFACE = 4;
+        private const int CALLBACK_EVENT_SMALLFACE = 5;
+        private const int CALLBACK_EVENT_MOTIVE = 7;
+        private const int CALLBACK_EVENT_BRIGHT = 8;
+        private const int CALLBACK_EVENT_NOTCENTER = 9;
+        private const int CALLBACK_EVENT_NOTINROI = 12;
+
         private const int CALLBACK_EVENT_PREVIEW = 50;
 
         private const int CALLBACK_EVENT_SUCC = 100;
-
         private const int CALLBACK_EVENT_FAIL = 101;
-
         private const int CALLBACK_EVENT_TIMEOUT = 102;
+        private int _captureInProgress;
 
+        // Face-position analysis runs independently of Eyecool monitoring.
+        // Only one TaiSDK analysis is allowed at a time and stale preview
+        // frames are discarded so the customer always sees the latest image.
+        private readonly byte[] _previewBuffer = new byte[200 * 1024];
+        private readonly int[] _previewLengthBuffer = new int[1];
+        private byte[]? _latestPreviewJpeg;
+        private int _previewRenderScheduled;
+        private long _lastFaceAnalysisMs;
+        private int _faceAnalysisRunning;
+        private int _goodFaceSamples;
+
+        private const int FaceAnalysisIntervalMs = 300;
+        private const int RequiredGoodFaceSamples = 3;
+        private const int CameraWidth = 640;
+        private const int CameraHeight = 480;
+
+        private enum FaceGuidanceState
+        {
+            NoFace,
+            MultipleFaces,
+            MoveCloser,
+            MoveBack,
+            CenterFace,
+            Good
+        }
         //private const int CALLBACK_EVENT_MOTIVE = 7;
 
         // ================================================================
@@ -195,7 +230,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
             SetCameraSideLights(true);
 
-            await StartCameraAndDetectAsync();
+            await StartCameraAndMonitorAsync();
         }
 
         // ================================================================
@@ -277,9 +312,12 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             // Clear the last displayed frame so a stale image isn't left
             // on screen between sessions (e.g. Retry, or navigating away).
             VisImage.Source = null;
+            Interlocked.Exchange(ref _latestPreviewJpeg, null);
+            Interlocked.Exchange(ref _goodFaceSamples, 0);
 
             try
             {
+                // Safe even when no monitor/detection was started.
                 EcFaceCamSdkHelper.ECF_Stop();
             }
             catch (Exception ex)
@@ -342,23 +380,30 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // ================================================================
         // RETRY
         // ================================================================
-
-        //private async void Retry_Click(
-        //    object sender,
-        //    RoutedEventArgs e)
-        //{
-        //    await StartDetectAsync();
-        //}
-        private async void Retry_Click(object sender, RoutedEventArgs e)
+        private async void Retry_Click(
+    object sender,
+    RoutedEventArgs e)
         {
             WelcomePopup.IsOpen = false;
             FailPopup.IsOpen = false;
+
             _handledThisSession = false;
 
-            if (!_opened)
-                await StartCameraAndDetectAsync();
-            else
-                await StartDetectAsync();
+            Interlocked.Exchange(
+                ref _captureInProgress,
+                0);
+
+            _goodFaceSamples = 0;
+            Interlocked.Exchange(ref _lastFaceAnalysisMs, 0);
+            Interlocked.Exchange(ref _faceAnalysisRunning, 0);
+
+            StopCamera();
+
+            await Task.Delay(150);
+
+            SetCameraSideLights(true);
+
+            await StartCameraAndMonitorAsync();
         }
 
         // ================================================================
@@ -369,7 +414,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // See OnSdkEvent / HandlePreviewFrame below.
         // ================================================================
 
-        private async Task StartCameraAndDetectAsync()
+        private async Task StartCameraAndMonitorAsync()
         {
             StatusText.Text =
                 L10n.T(
@@ -387,6 +432,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             _stopping = false;
             Interlocked.Exchange(ref _lastPreviewTicks, 0);
             Interlocked.Exchange(ref _previewFrameNumber, 0);
+            Interlocked.Exchange(ref _previewRenderScheduled, 0);
+            Interlocked.Exchange(ref _lastFaceAnalysisMs, 0);
+            Interlocked.Exchange(ref _faceAnalysisRunning, 0);
+            Interlocked.Exchange(ref _goodFaceSamples, 0);
+            Interlocked.Exchange(ref _latestPreviewJpeg, null);
             VisImage.Source = null;
             try
             {
@@ -502,17 +552,27 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
                 _opened = true;
 
-                // Give the dual VIS/NIR camera a short stabilization window
-                // before starting the heavier liveness pipeline. The vendor
-                // JpegPull sample naturally gets this pause because Open and
-                // Start are separate button actions.
+                // Give the camera a short exposure/stabilization window.
                 await Task.Delay(500);
 
-                // --------------------------------------------------------
-                // START ASYNCHRONOUS LIVENESS
-                // --------------------------------------------------------
+                // IMPORTANT:
+                // Do NOT call ECF_StartMonitor() or ECF_StartDetectAsyn() here.
+                // Both start Eyecool face-analysis work and were observed on the
+                // physical kiosk to make the customer preview visibly lag.
+                // Preview frames continue after ECF_Open(); TaiSDK is used only
+                // on a sampled JPEG every few hundred milliseconds for geometry.
+                StatusText.Text =
+                    L10n.T(
+                        "Mx_Detecting",
+                        "Position your face");
 
-                await StartDetectAsync();
+                HintText.Text =
+                    L10n.T(
+                        "Mx_AlignFace",
+                        "Fit your face inside the oval");
+
+                FaceGuideText.Text =
+                    "Position your face inside the oval";
             }
             catch (Exception ex)
             {
@@ -525,62 +585,6 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     "❌ Camera Exception: " +
                     ex.Message);
             }
-        }
-
-        // ================================================================
-        // START DETECTION
-        // ================================================================
-
-        private Task StartDetectAsync()
-        {
-            if (!_opened ||
-                _stopping)
-            {
-                return Task.CompletedTask;
-            }
-
-            WelcomePopup.IsOpen = false;
-            FailPopup.IsOpen = false;
-
-            _handledThisSession = false;
-
-            BtnSkip.Visibility =
-                Visibility.Collapsed;
-
-            try
-            {
-                LogCameraPerformance("Before ECF_StartDetectAsyn");
-
-                int ret =
-                    EcFaceCamSdkHelper
-                        .ECF_StartDetectAsyn();
-
-                if (ret != 0)
-                {
-                    ShowSkipOption(
-                        $"❌ Start detection failed (Code {ret}).");
-
-                    return Task.CompletedTask;
-                }
-
-                StatusText.Text =
-                    L10n.T(
-                        "Mx_Detecting",
-                        "Detecting…");
-
-                HintText.Text =
-                    L10n.T(
-                        "Mx_LookStraight",
-                        "Please look straight");
-            }
-            catch (Exception ex)
-            {
-                ShowSkipOption(
-                    "❌ Start Detect Error: " +
-                    ex.Message);
-            }
-
-            return Task.CompletedTask;
         }
 
         // ================================================================
@@ -600,203 +604,11 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             if (_stopping)
                 return;
 
-            // ------------------------------------------------------------
-            // PREVIEW
-            // ------------------------------------------------------------
-
-            if (eventId ==
-                CALLBACK_EVENT_PREVIEW)
+            // In smooth-preview mode we intentionally do not start Eyecool
+            // monitor/liveness. The only SDK event needed here is PREVIEW.
+            if (eventId == CALLBACK_EVENT_PREVIEW)
             {
                 HandlePreviewFrame();
-                return;
-            }
-
-            // ------------------------------------------------------------
-            // MOTION BLUR
-            // ------------------------------------------------------------
-            //if (eventId == CALLBACK_EVENT_MOTIVE)
-            //{
-            //    long now = Environment.TickCount64;
-
-            //    if (now - Interlocked.Read(ref _lastMotionHintTicks) < 800)
-            //        return;
-
-            //    Interlocked.Exchange(ref _lastMotionHintTicks, now);
-
-            //    Dispatcher.BeginInvoke(
-            //        new Action(() =>
-            //        {
-            //            if (!IsLoaded || _stopping)
-            //                return;
-
-            //            HintText.Text = L10n.T(
-            //                "Mx_KeepStill",
-            //                "Please keep your face steady.");
-            //        }),
-            //        DispatcherPriority.Background);
-
-            //    return;
-            //}
-
-            //if (eventId ==
-            //    CALLBACK_EVENT_MOTIVE)
-            //{
-            //    Dispatcher.BeginInvoke(
-            //        new Action(() =>
-            //        {
-            //            if (!IsLoaded ||
-            //                _stopping)
-            //            {
-            //                return;
-            //            }
-
-            //            HintText.Text =
-            //                L10n.T(
-            //                    "Mx_KeepStill",
-            //                    "Please keep your face steady.");
-            //        }),
-            //        DispatcherPriority.Background);
-
-            //    return;
-            //}
-
-            // ------------------------------------------------------------
-            // SUCCESS
-            // ------------------------------------------------------------
-
-            if (eventId ==
-                CALLBACK_EVENT_SUCC)
-            {
-                LogCameraPerformance("Eyecool SUCCESS");
-                if (_handledThisSession)
-                    return;
-
-                _handledThisSession = true;
-
-                // Get image ONCE after successful detection.
-                //
-                // This is not preview processing.
-                byte[]? faceJpg =
-                    TryGetCapturedFaceJpeg();
-
-                if (faceJpg == null ||
-                    faceJpg.Length == 0)
-                {
-                    _handledThisSession = false;
-
-                    Dispatcher.BeginInvoke(
-                        new Action(() =>
-                        {
-                            ShowSkipOption(
-                                "❌ Could not read captured face image.");
-                        }),
-                        DispatcherPriority.Background);
-
-                    return;
-                }
-                Dispatcher.BeginInvoke(
-    new Action(async () =>
-    {
-        if (!IsLoaded || _stopping)
-            return;
-
-        StatusText.Text = L10n.T(
-            "Mx_CaptureSuccess",
-            "Capture success ✅");
-
-        _ctl.State.LiveFaceImageBase64 =
-            Convert.ToBase64String(faceJpg);
-
-        // Eyecool has finished its job.
-        // Close it BEFORE TaiSDK or Innov8tif processing starts.
-        StopCamera();
-
-        await HandleCaptureAsync(faceJpg);
-    }),
-    DispatcherPriority.Normal);
-
-                return;
-                //Dispatcher.BeginInvoke(
-                //    new Action(() =>
-                //    {
-                //        if (!IsLoaded ||
-                //            _stopping)
-                //        {
-                //            return;
-                //        }
-
-                //        StatusText.Text =
-                //            L10n.T(
-                //                "Mx_CaptureSuccess",
-                //                "Capture success ✅");
-
-                //        _ctl.State.LiveFaceImageBase64 =
-                //            Convert.ToBase64String(
-                //                faceJpg);
-
-                //        _ = HandleCaptureAsync(
-                //            faceJpg);
-                //    }),
-                //    DispatcherPriority.Background);
-
-                //return;
-            }
-
-            // ------------------------------------------------------------
-            // FAIL
-            // ------------------------------------------------------------
-
-            if (eventId ==
-                CALLBACK_EVENT_FAIL)
-            {
-                LogCameraPerformance("Eyecool FAIL");
-                _handledThisSession = false;
-
-                Dispatcher.BeginInvoke(
-                    new Action(() =>
-                    {
-                        if (!IsLoaded ||
-                            _stopping)
-                        {
-                            return;
-                        }
-
-                        ShowSkipOption(
-                            L10n.T(
-                                "Mx_LivenessFailed",
-                                "Liveness check failed ❌ Please try again."));
-                    }),
-                    DispatcherPriority.Background);
-
-                return;
-            }
-
-            // ------------------------------------------------------------
-            // TIMEOUT
-            // ------------------------------------------------------------
-
-            if (eventId ==
-                CALLBACK_EVENT_TIMEOUT)
-            {
-                _handledThisSession = false;
-
-                Dispatcher.BeginInvoke(
-                    new Action(() =>
-                    {
-                        if (!IsLoaded ||
-                            _stopping)
-                        {
-                            return;
-                        }
-
-                        ShowSkipOption(
-                            L10n.T(
-                                "Mx_DetectTimeout",
-                                "Timeout ⏳ No face detected."));
-                    }),
-                    DispatcherPriority.Background);
-
-                return;
             }
         }
 
@@ -818,52 +630,57 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
         // ================================================================
         private void HandlePreviewFrame()
         {
-            //if (_stopping || !_opened)
-            //    return;
-
-            //// The kiosk has substantially more UI/hardware work than the
-            //// vendor test application. Limit preview rendering to ~15 FPS
-            //// so JPEG preview work cannot compete aggressively with VIS/NIR
-            //// liveness detection. Detection callbacks are never throttled.
-            //long now = Environment.TickCount64;
-            //long last = Interlocked.Read(ref _lastPreviewDispatchMs);
-            //if (now - last < 66)
-            //    return;
-
-            //if (Interlocked.CompareExchange(ref _lastPreviewDispatchMs, now, last) != last)
-            //    return;
-
             if (_stopping || !_opened)
                 return;
 
-            long now = DateTime.UtcNow.Ticks;
-            long last = Interlocked.Read(ref _lastPreviewTicks);
+            long nowTicks = DateTime.UtcNow.Ticks;
+            long lastTicks = Interlocked.Read(ref _lastPreviewTicks);
 
-            if (now - last < PreviewIntervalTicks)
+            if (nowTicks - lastTicks < PreviewIntervalTicks)
                 return;
 
-            Interlocked.Exchange(ref _lastPreviewTicks, now);
+            Interlocked.Exchange(ref _lastPreviewTicks, nowTicks);
 
             try
             {
-                byte[] jpeg = new byte[200 * 1024];
-                int[] dataLen = new int[1];
+                _previewLengthBuffer[0] = 0;
 
-                int ret = EcFaceCamSdkHelper.ECF_CopyFrameWithAlphaProvider(
-                    IMAGE_TYPE_VIS, jpeg, dataLen, null);
+                int ret =
+                    EcFaceCamSdkHelper.ECF_CopyFrameWithAlphaProvider(
+                        IMAGE_TYPE_VIS,
+                        _previewBuffer,
+                        _previewLengthBuffer,
+                        null);
 
-                if (ret != 0 || dataLen[0] <= 0 || dataLen[0] > jpeg.Length)
+                int length = _previewLengthBuffer[0];
+
+                if (ret != 0 ||
+                    length <= 0 ||
+                    length > _previewBuffer.Length)
+                {
                     return;
+                }
 
-                int length = dataLen[0];
-                byte[] frameBytes = new byte[length];
-                Buffer.BlockCopy(jpeg, 0, frameBytes, 0, length);
+                // One allocation for the current JPEG is unavoidable because
+                // the SDK owns/reuses its source buffer. The important part is
+                // that old frames are REPLACED rather than queued to WPF.
+                byte[] current = new byte[length];
+                Buffer.BlockCopy(
+                    _previewBuffer,
+                    0,
+                    current,
+                    0,
+                    length);
+
                 Interlocked.Increment(ref _previewFrameNumber);
 
-                Dispatcher.BeginInvoke(
-                    new Action<byte[]>(ShowPreviewImage),
-                    DispatcherPriority.Background,
-                    frameBytes);
+                Interlocked.Exchange(
+                    ref _latestPreviewJpeg,
+                    current);
+
+                ScheduleLatestPreviewRender();
+                TryScheduleFaceAnalysis(current);
+                TryCaptureWhenStable();
             }
             catch (Exception ex)
             {
@@ -873,74 +690,559 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
             }
         }
 
-        private void ShowPreviewImage(byte[] jpeg)
+        private void ScheduleLatestPreviewRender()
         {
-            if (!IsLoaded || _stopping || jpeg == null || jpeg.Length == 0)
+            if (Interlocked.CompareExchange(
+                    ref _previewRenderScheduled,
+                    1,
+                    0) != 0)
+            {
+                return;
+            }
+
+            _ = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        while (!_stopping)
+                        {
+                            byte[]? jpeg =
+                                Interlocked.Exchange(
+                                    ref _latestPreviewJpeg,
+                                    null);
+
+                            if (jpeg == null || jpeg.Length == 0)
+                                break;
+
+                            BitmapImage image;
+
+                            using (var stream = new MemoryStream(jpeg, false))
+                            {
+                                image = new BitmapImage();
+                                image.BeginInit();
+                                image.CacheOption = BitmapCacheOption.OnLoad;
+                                image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                                image.StreamSource = stream;
+                                image.EndInit();
+                                image.Freeze();
+                            }
+
+                            await Dispatcher.InvokeAsync(
+                                () =>
+                                {
+                                    if (IsLoaded && !_stopping)
+                                    {
+                                        VisImage.Source = image;
+                                    }
+                                },
+                                DispatcherPriority.Render);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        KioskLocalLogger.LogError(
+                            "FaceVerification",
+                            "Preview render error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        Interlocked.Exchange(
+                            ref _previewRenderScheduled,
+                            0);
+
+                        // A frame may have arrived between the last exchange
+                        // and clearing the scheduled flag. Schedule once more
+                        // so the newest frame is never stranded.
+                        if (_latestPreviewJpeg != null && !_stopping)
+                        {
+                            ScheduleLatestPreviewRender();
+                        }
+                    }
+                });
+        }
+
+        private void TryScheduleFaceAnalysis(byte[] jpeg)
+        {
+            if (_stopping ||
+                !_opened ||
+                _handledThisSession)
+            {
+                return;
+            }
+
+            long now = Environment.TickCount64;
+            long last = Interlocked.Read(ref _lastFaceAnalysisMs);
+
+            if (now - last < FaceAnalysisIntervalMs)
                 return;
 
-            try
+            if (Interlocked.CompareExchange(
+                    ref _faceAnalysisRunning,
+                    1,
+                    0) != 0)
             {
-                using var stream = new MemoryStream(jpeg, false);
-                var image = new BitmapImage();
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                image.StreamSource = stream;
-                image.EndInit();
-                image.Freeze();
-                VisImage.Source = image;
+                return;
             }
-            catch (Exception ex)
-            {
-                KioskLocalLogger.LogError(
-                    "FaceVerification",
-                    "Preview render error: " + ex.Message);
-            }
+
+            Interlocked.Exchange(ref _lastFaceAnalysisMs, now);
+
+            _ = Task.Run(
+                () =>
+                {
+                    try
+                    {
+                        AnalyzeFacePosition(jpeg);
+                    }
+                    finally
+                    {
+                        Interlocked.Exchange(
+                            ref _faceAnalysisRunning,
+                            0);
+                    }
+                });
         }
 
-        // ================================================================
-        // GET CAPTURED FACE IMAGE
-        //
-        // ONLY called after SUCCESS.
-        //
-        // NEVER called for preview frames.
-        // ================================================================
-
-        private byte[]? TryGetCapturedFaceJpeg()
+        private void AnalyzeFacePosition(byte[] jpeg)
         {
+            if (_stopping ||
+                !_opened ||
+                _handledThisSession)
+            {
+                return;
+            }
+
+            var engine =
+                GlobalHardwareManager
+                    .GetOrCreateFaceEngine()
+                    .Current;
+
+            if (!engine.TryDetectFaces(
+                    jpeg,
+                    out var faces,
+                    out _))
+            {
+                SetFaceGuidance(
+                    FaceGuidanceState.NoFace);
+
+                return;
+            }
+
+            if (faces.Length > 1)
+            {
+                SetFaceGuidance(
+                    FaceGuidanceState.MultipleFaces);
+
+                return;
+            }
+
+            var face = faces[0];
+
+            int width = face.x2 - face.x1;
+            int height = face.y2 - face.y1;
+
+            if (width <= 0 || height <= 0)
+            {
+                SetFaceGuidance(
+                    FaceGuidanceState.NoFace);
+
+                return;
+            }
+
+            int minSide = Math.Min(width, height);
+
+            double centerX =
+                (face.x1 + face.x2) / 2.0;
+
+            double centerY =
+                (face.y1 + face.y2) / 2.0;
+
+            // Innov8tif notes that a minimum detected face side below about
+            // 180 px can reduce selfie/liveness quality. The maximum-size and
+            // centre tolerances below are kiosk guidance values for 640x480,
+            // chosen to keep the entire head comfortably inside the guide.
+            if (minSide < 180)
+            {
+                SetFaceGuidance(
+                    FaceGuidanceState.MoveCloser);
+
+                return;
+            }
+
+            if (height > 360 || width > 300)
+            {
+                SetFaceGuidance(
+                    FaceGuidanceState.MoveBack);
+
+                return;
+            }
+
+            if (Math.Abs(centerX - (CameraWidth / 2.0)) > 65 ||
+                Math.Abs(centerY - (CameraHeight / 2.0)) > 55)
+            {
+                SetFaceGuidance(
+                    FaceGuidanceState.CenterFace);
+
+                return;
+            }
+
+            SetFaceGuidance(
+                FaceGuidanceState.Good);
+        }
+
+        private void SetFaceGuidance(
+            FaceGuidanceState state)
+        {
+            if (_stopping || _handledThisSession)
+                return;
+
+            if (state == FaceGuidanceState.Good)
+            {
+                Interlocked.Increment(ref _goodFaceSamples);
+            }
+            else
+            {
+                Interlocked.Exchange(ref _goodFaceSamples, 0);
+            }
+
+            Dispatcher.BeginInvoke(
+                new Action(
+                    () =>
+                    {
+                        if (!IsLoaded ||
+                            _stopping ||
+                            _handledThisSession)
+                        {
+                            return;
+                        }
+
+                        switch (state)
+                        {
+                            case FaceGuidanceState.NoFace:
+                                FaceGuide.Stroke =
+                                    System.Windows.Media.Brushes.White;
+                                FaceGuideText.Text =
+                                    "Position your face inside the oval";
+                                StatusText.Text =
+                                    "Face not detected";
+                                HintText.Text =
+                                    "Look directly at the camera";
+                                break;
+
+                            case FaceGuidanceState.MultipleFaces:
+                                FaceGuide.Stroke =
+                                    System.Windows.Media.Brushes.OrangeRed;
+                                FaceGuideText.Text =
+                                    "Only one person should be visible";
+                                StatusText.Text =
+                                    "More than one face detected";
+                                HintText.Text =
+                                    "Please make sure only you are in the camera";
+                                break;
+
+                            case FaceGuidanceState.MoveCloser:
+                                FaceGuide.Stroke =
+                                    System.Windows.Media.Brushes.Orange;
+                                FaceGuideText.Text =
+                                    "Please move closer";
+                                StatusText.Text =
+                                    "You are too far away";
+                                HintText.Text =
+                                    "Move a little closer to the kiosk";
+                                break;
+
+                            case FaceGuidanceState.MoveBack:
+                                FaceGuide.Stroke =
+                                    System.Windows.Media.Brushes.Orange;
+                                FaceGuideText.Text =
+                                    "Please move slightly back";
+                                StatusText.Text =
+                                    "You are too close";
+                                HintText.Text =
+                                    "Move a little further from the kiosk";
+                                break;
+
+                            case FaceGuidanceState.CenterFace:
+                                FaceGuide.Stroke =
+                                    System.Windows.Media.Brushes.Orange;
+                                FaceGuideText.Text =
+                                    "Move your face into the centre";
+                                StatusText.Text =
+                                    "Please centre your face";
+                                HintText.Text =
+                                    "Keep your whole head inside the oval";
+                                break;
+
+                            case FaceGuidanceState.Good:
+                                FaceGuide.Stroke =
+                                    System.Windows.Media.Brushes.LimeGreen;
+                                FaceGuideText.Text =
+                                    "Perfect position — hold still";
+                                StatusText.Text =
+                                    "Perfect position";
+                                HintText.Text =
+                                    "Hold still while we capture your photo";
+                                break;
+                        }
+                    }),
+                DispatcherPriority.Background);
+        }
+
+        private void TryCaptureWhenStable()
+        {
+            if (_stopping ||
+                !_opened ||
+                _handledThisSession)
+            {
+                return;
+            }
+
+            if (Volatile.Read(ref _goodFaceSamples) <
+                RequiredGoodFaceSamples)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(
+                    ref _captureInProgress,
+                    1,
+                    0) != 0)
+            {
+                return;
+            }
+
+            CaptureGoodFace();
+        }
+
+        private void CaptureGoodFace()
+        {
+            if (_stopping ||
+                !_opened)
+            {
+                Interlocked.Exchange(
+                    ref _captureInProgress,
+                    0);
+
+                return;
+            }
+
             try
             {
-                // Match the provider JpegPull sample exactly: use a fixed
-                // output buffer and an int[1] length pointer. Avoid the old
-                // null-buffer size-query pattern, which the vendor sample
-                // does not use.
-                byte[] buffer = new byte[200 * 1024];
-                int[] dataLen = new int[1];
+                // Plenty for a native 640x480 JPEG.
+                byte[] buffer =
+                    new byte[1024 * 1024];
 
-                int ret = EcFaceCamSdkHelper.ECF_GetImageDataProvider(
-                    IMAGE_TYPE_CROP_VIS, buffer, dataLen);
+                int[] length =
+                    new int[1];
 
-                if (ret != 0 || dataLen[0] <= 0 || dataLen[0] > buffer.Length)
+                int ret =
+                    EcFaceCamSdkHelper
+                        .ECF_SnapFrame(
+                            IMAGE_TYPE_VIS,
+                            buffer,
+                            length);
+
+                //if (ret != 0 ||
+                //    length[0] <= 0 ||
+                //    length[0] > buffer.Length)
+                //{
+                //    Interlocked.Exchange(
+                //        ref _captureInProgress,
+                //        0);
+
+                //    return;
+                //}
+
+                if (ret != 0 ||
+    length[0] <= 0 ||
+    length[0] > buffer.Length)
                 {
-                    KioskLocalLogger.LogError(
-                        "FaceVerification",
-                        $"ECF_GetImageData failed. ret={ret}, len={dataLen[0]}");
-                    return null;
+                    Interlocked.Exchange(
+                        ref _captureInProgress,
+                        0);
+
+                    Interlocked.Exchange(ref _goodFaceSamples, 0);
+
+                    Dispatcher.BeginInvoke(
+                        new Action(() =>
+                        {
+                            FaceGuide.Stroke =
+                                System.Windows.Media.Brushes.Orange;
+
+                            FaceGuideText.Text =
+                                "Please hold still and try again";
+
+                            StatusText.Text =
+                                "Unable to capture photo";
+
+                            HintText.Text =
+                                "Please keep your face inside the oval";
+                        }),
+                        DispatcherPriority.Background);
+
+                    return;
                 }
 
-                byte[] result = new byte[dataLen[0]];
-                Buffer.BlockCopy(buffer, 0, result, 0, dataLen[0]);
-                return result;
+                byte[] rawJpeg =
+                    new byte[length[0]];
+
+                Buffer.BlockCopy(
+                    buffer,
+                    0,
+                    rawJpeg,
+                    0,
+                    length[0]);
+
+                _handledThisSession =
+                    true;
+
+                Dispatcher.BeginInvoke(
+                    new Action(async () =>
+                    {
+                        if (!IsLoaded ||
+                            _stopping)
+                        {
+                            return;
+                        }
+
+                        FaceGuide.Stroke =
+                            System.Windows.Media.Brushes.LimeGreen;
+
+                        FaceGuideText.Text =
+                            "Photo captured";
+
+                        StatusText.Text =
+                            L10n.T(
+                                "Mx_CaptureSuccess",
+                                "Capture success ✅");
+
+                        HintText.Text =
+                            "Verifying your identity...";
+
+                        byte[] selfie =
+                            NormalizeSelfieForEkyc(
+                                rawJpeg);
+
+                        _ctl.State
+                            .LiveFaceImageBase64 =
+                            Convert.ToBase64String(
+                                selfie);
+
+                        // Camera is finished.
+                        // Release it BEFORE TaiSDK/network work.
+                        StopCamera();
+
+                        await HandleCaptureAsync(
+                            selfie);
+                    }),
+                    DispatcherPriority.Normal);
             }
             catch (Exception ex)
             {
+                Interlocked.Exchange(
+                    ref _captureInProgress,
+                    0);
+
                 KioskLocalLogger.LogError(
                     "FaceVerification",
-                    "Get captured face error: " + ex.Message);
-                return null;
+                    "SnapFrame failed: " +
+                    ex.Message);
             }
         }
+        private static byte[] NormalizeSelfieForEkyc(
+    byte[] sourceJpeg)
+        {
+            using var input =
+                new MemoryStream(
+                    sourceJpeg,
+                    false);
 
+            BitmapFrame frame =
+                BitmapFrame.Create(
+                    input,
+                    BitmapCreateOptions
+                        .PreservePixelFormat,
+                    BitmapCacheOption
+                        .OnLoad);
+
+            if (frame.PixelWidth < 450 ||
+                frame.PixelHeight < 450)
+            {
+                throw new InvalidOperationException(
+                    $"Captured selfie resolution is too small: " +
+                    $"{frame.PixelWidth}x{frame.PixelHeight}.");
+            }
+
+            int squareSize =
+                Math.Min(
+                    frame.PixelWidth,
+                    frame.PixelHeight);
+
+            int x =
+                (frame.PixelWidth -
+                 squareSize) / 2;
+
+            int y =
+                (frame.PixelHeight -
+                 squareSize) / 2;
+
+            var crop =
+                new CroppedBitmap(
+                    frame,
+                    new Int32Rect(
+                        x,
+                        y,
+                        squareSize,
+                        squareSize));
+
+            BitmapSource output =
+                crop;
+
+            // Native input is currently 640x480,
+            // therefore centre-crop produces 480x480.
+            //
+            // If another camera resolution is ever used,
+            // make sure the output still meets Innov8tif's
+            // minimum 450x450 requirement.
+            if (crop.PixelWidth != 480 ||
+                crop.PixelHeight != 480)
+            {
+                double scaleX =
+                    480.0 /
+                    crop.PixelWidth;
+
+                double scaleY =
+                    480.0 /
+                    crop.PixelHeight;
+
+                output =
+                    new TransformedBitmap(
+                        crop,
+                        new System.Windows.Media
+                            .ScaleTransform(
+                                scaleX,
+                                scaleY));
+            }
+
+            var encoder =
+                new JpegBitmapEncoder
+                {
+                    QualityLevel =
+                        95
+                };
+
+            encoder.Frames.Add(
+                BitmapFrame.Create(
+                    output));
+
+            using var outputStream =
+                new MemoryStream();
+
+            encoder.Save(
+                outputStream);
+
+            return outputStream.ToArray();
+        }
         // ================================================================
         // SHOW SKIP
         // ================================================================
@@ -1296,6 +1598,23 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                     : $"{L10n.T("Mx_Mismatch", "Verification failed ❌")} — Face {scoreLabel}, Liveness {liveLabel}";
 
                 _ctl.State.FaceVerified = false;
+                if (IsRetryableFaceFailure(outcome))
+                {
+                    StatusText.Text =
+                        outcome.FriendlyMessage
+                        ?? "Please adjust your position and try again.";
+
+                    HintText.Text =
+                        "Press Retry and follow the camera guide.";
+
+                    BtnRetry.Visibility =
+                        Visibility.Visible;
+
+                    BtnSkip.Visibility =
+                        Visibility.Visible;
+
+                    return;
+                }
                 FailPopup.IsOpen = true;
                 return;
             }
@@ -1411,7 +1730,41 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
 
             await ShowWelcomeAndNext();
         }
+        private bool IsRetryableFaceFailure(
+    FaceMatchOutcome outcome)
+        {
+            string code =
+                outcome.MessageCode ?? "";
 
+            return
+                code.Equals(
+                    "FACE_TOO_SMALL",
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                code.Equals(
+                    "FACE_TOO_CLOSE",
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                code.Equals(
+                    "FACE_CLOSE_TO_BORDER",
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                code.Equals(
+                    "FACE_CROPPED",
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                code.Equals(
+                    "FACE_ANGLE_TOO_LARGE",
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                code.Equals(
+                    "FACE_NOT_FOUND",
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                code.Equals(
+                    "EYES_CLOSED",
+                    StringComparison.OrdinalIgnoreCase);
+        }
         //private async Task HandleNewCustomerEkycAsync(
         //    Models.MoneyExchange.CustomerProfile cust,
         //    byte[] faceJpg)

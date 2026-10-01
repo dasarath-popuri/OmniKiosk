@@ -1,7 +1,8 @@
+using OmniKiosk.Wpf.Config;
+using OmniKiosk.Wpf.Services.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using OmniKiosk.Wpf.Config;
 
 namespace OmniKiosk.Wpf.Services.MoneyExchange
 {
@@ -125,25 +126,92 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
             BaseAddress = new Uri(KioskSettings.MoneyExchangeApiBaseUrl),
             Timeout = TimeSpan.FromSeconds(15)
         };
-
-        private static async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> buildRequest, CancellationToken ct)
+        private static async Task<HttpResponseMessage>
+    SendAsync(
+        Func<HttpRequestMessage> buildRequest,
+        CancellationToken ct,
+        long imageBytes = 0)
         {
-            var token = await KioskAuthService.GetTokenAsync(ct);
-            var request = buildRequest();
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await _http.SendAsync(request, ct);
+            var token =
+                await KioskAuthService
+                    .GetTokenAsync(ct);
 
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            var request =
+                buildRequest();
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    token);
+
+            string apiName =
+                $"{request.Method.Method} " +
+                $"{request.RequestUri}";
+
+            HttpResponseMessage response =
+                await ApiPerformanceLogger
+                    .SendAsync(
+                        _http,
+                        request,
+                        "MoneyExchange",
+                        apiName,
+                        attempt: 1,
+                        cancellationToken: ct,
+                        imageBytes: imageBytes);
+
+            if (response.StatusCode ==
+                System.Net.HttpStatusCode
+                    .Unauthorized)
             {
-                KioskAuthService.InvalidateToken();
-                var retryToken = await KioskAuthService.GetTokenAsync(ct);
-                var retryRequest = buildRequest();
-                retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", retryToken);
-                response = await _http.SendAsync(retryRequest, ct);
+                response.Dispose();
+
+                KioskAuthService
+                    .InvalidateToken();
+
+                var retryToken =
+                    await KioskAuthService
+                        .GetTokenAsync(ct);
+
+                var retryRequest =
+                    buildRequest();
+
+                retryRequest.Headers.Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        retryToken);
+
+                response =
+                    await ApiPerformanceLogger
+                        .SendAsync(
+                            _http,
+                            retryRequest,
+                            "MoneyExchange",
+                            apiName,
+                            attempt: 2,
+                            cancellationToken: ct,
+                            imageBytes: imageBytes);
             }
 
             return response;
         }
+        //private static async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> buildRequest, CancellationToken ct)
+        //{
+        //    var token = await KioskAuthService.GetTokenAsync(ct);
+        //    var request = buildRequest();
+        //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //    var response = await _http.SendAsync(request, ct);
+
+        //    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        //    {
+        //        KioskAuthService.InvalidateToken();
+        //        var retryToken = await KioskAuthService.GetTokenAsync(ct);
+        //        var retryRequest = buildRequest();
+        //        retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", retryToken);
+        //        response = await _http.SendAsync(retryRequest, ct);
+        //    }
+
+        //    return response;
+        //}
 
         public async Task<List<ApiCurrency>> GetCurrenciesAsync(CancellationToken ct = default)
         {
@@ -291,9 +359,33 @@ namespace OmniKiosk.Wpf.Services.MoneyExchange
 
         // Only call this after CheckCustomerAsync comes back Found=false -
         // creates a new SenderMaster record and returns its real SenderID.
-        public async Task<int> CreateCustomerAsync(CreateCustomerApiRequest request, CancellationToken ct = default)
+        public async Task<int>
+    CreateCustomerAsync(
+        CreateCustomerApiRequest request,
+        CancellationToken ct = default)
         {
-            var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, "api/v1/Customers") { Content = JsonContent.Create(request) }, ct);
+            long imageBytes =
+                ApiPerformanceLogger
+                    .GetBase64BinarySize(
+                        request.Picture1Base64)
+                +
+                ApiPerformanceLogger
+                    .GetBase64BinarySize(
+                        request.IdDocumentImageBase64);
+
+            var response =
+                await SendAsync(
+                    () =>
+                        new HttpRequestMessage(
+                            HttpMethod.Post,
+                            "api/v1/Customers")
+                        {
+                            Content =
+                                JsonContent.Create(
+                                    request)
+                        },
+                    ct,
+                    imageBytes);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<CreateCustomerResult>(cancellationToken: ct);
             return result?.SenderId ?? 0;

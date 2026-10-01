@@ -1,5 +1,6 @@
 using OmniKiosk.Wpf.Config;
 using OmniKiosk.Wpf.Controls;
+using OmniKiosk.Wpf.Helpers;
 using OmniKiosk.Wpf.Models.MoneyExchange;
 using OmniKiosk.Wpf.Sdk.IC;
 using OmniKiosk.Wpf.Sdk.Passport;
@@ -201,6 +202,7 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                         if (string.IsNullOrWhiteSpace(doc.PassportNumber)) { Thread.Sleep(200); continue; }
 
                         bool isPassport = doc.DetectedDocType == "Passport";
+                        _selectedDocType =isPassport? "Passport": "IC";
                         bool stopEarly = false;
 
                         Dispatcher.Invoke(() =>
@@ -243,8 +245,39 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                                 return;
                             }
 
-                            if (!string.IsNullOrWhiteSpace(fullPageImagePath) && File.Exists(fullPageImagePath))
-                                cust.IdDocumentImageBase64 = Convert.ToBase64String(File.ReadAllBytes(fullPageImagePath));
+                            //if (!string.IsNullOrWhiteSpace(fullPageImagePath) && File.Exists(fullPageImagePath))
+                            //    cust.IdDocumentImageBase64 = Convert.ToBase64String(File.ReadAllBytes(fullPageImagePath));
+
+                            if (!string.IsNullOrWhiteSpace(
+        fullPageImagePath) &&
+    File.Exists(
+        fullPageImagePath))
+                            {
+                                byte[] documentBytes =
+                                    File.ReadAllBytes(
+                                        fullPageImagePath);
+
+                                cust.IdDocumentImageBase64 =
+                                    Convert.ToBase64String(
+                                        documentBytes);
+
+                                try
+                                {
+                                    var fileInfo =
+                                        new FileInfo(
+                                            fullPageImagePath);
+
+                                    KioskLocalLogger.LogInfo(
+                                        "CustomerDetails",
+                                        $"Document scan ready. " +
+                                        $"Type={(isPassport ? "Passport" : "MyKad")}, " +
+                                        $"Path={fullPageImagePath}, " +
+                                        $"Bytes={fileInfo.Length}");
+                                }
+                                catch
+                                {
+                                }
+                            }
 
                             StatusText.Text = L10n.T("Mx_VerifyingDocument", "Verifying document…");
                         });
@@ -361,6 +394,10 @@ namespace OmniKiosk.Wpf.Views.MoneyExchange.Steps
                                         "Mx_VerifyingDocument",
                                         "Checking document details...");
                                 });
+                                EkycDocumentDebugHelper.SaveUatSample(
+    cust2.IdDocumentImageBase64,
+    _selectedDocType,
+    journeyId);
 
                                 var idResult = _ekyc.VerifyDocumentAsync(
                                     journeyId!,
